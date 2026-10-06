@@ -11,6 +11,7 @@ from oscar.core.loading import get_model
 
 from market.addresses import decode_address
 from market.models import Flower, Listing, Settlement, Shop, WeeklyHours
+from market.widgets import FlowerTagSelect
 
 
 class SignupForm(UserCreationForm):
@@ -33,7 +34,7 @@ class ProductForm(forms.Form):
         label="Цветы в составе",
         queryset=Flower.objects.all(),
         required=False,
-        widget=forms.CheckboxSelectMultiple,
+        widget=FlowerTagSelect,
         help_text="Выберите все цветы в составе. Часто используемые вами цветы показаны первыми.",
     )
     price = forms.DecimalField(

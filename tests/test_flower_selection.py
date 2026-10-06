@@ -36,7 +36,7 @@ def test_explicit_login_destination_is_preserved(client, owner, shop):
 def test_fixed_flowers_reject_unknown_values(shop):
     form = ProductForm(shop=shop)
     field = form.fields["flowers"]
-    assert field.queryset.count() == 50
+    assert field.queryset.count() == 53
     with pytest.raises(ValidationError):
         field.clean(["999999"])
 
@@ -112,3 +112,26 @@ def test_four_categories_and_no_partner_promotion(client):
     html = client.get("/").content.decode()
     assert "Стать партнёром" not in html
     assert ">Партнёрам<" not in html
+
+
+def test_flower_picker_renders_search_colours_and_saved_selection(
+    client, owner, shop, listing
+):
+    from market.models import Flower
+
+    red = Flower.objects.get(name="Роза красная")
+    white = Flower.objects.get(name="Роза белая")
+    cornflower = Flower.objects.get(name="Василёк")
+    assert len({red.tag_palette, white.tag_palette, cornflower.tag_palette}) == 3
+    listing.flowers.set([red, white])
+    client.force_login(owner)
+    html = client.get(f"/partner/{shop.slug}/products/{listing.pk}/").content.decode()
+    assert "data-flower-search" in html
+    assert "data-flower-selected" in html
+    assert "flower-palette-red" in html
+    assert "flower-palette-ivory" in html
+    assert html.count('name="flowers"') == 53
+    assert html.count("checked") == 3  # two flowers and public-product checkbox
+    assert (
+        "flower-palette-red" in client.get(f"/products/{listing.pk}/").content.decode()
+    )

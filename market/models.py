@@ -168,6 +168,12 @@ class Flower(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def tag_palette(self):
+        from market.flower_colours import FLOWER_PALETTES
+
+        return FLOWER_PALETTES.get(self.name, "blush")
+
 
 class Listing(models.Model):
     product = models.OneToOneField(

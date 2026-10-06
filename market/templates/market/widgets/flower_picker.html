@@ -1,0 +1,14 @@
+<div class="flower-picker-body" data-flower-picker>
+  <div class="flower-selected-zone" data-flower-selected-zone hidden>
+    <p class="flower-picker-caption">Выбрано <span data-flower-count aria-live="polite">0</span></p>
+    <div class="flower-chip-list" data-flower-selected aria-label="Выбранные цветы"></div>
+  </div>
+  <div class="flower-search" data-flower-search-zone hidden>
+    <label class="visually-hidden" for="{{ widget.attrs.id }}_search">Найти цветок</label>
+    <input type="search" id="{{ widget.attrs.id }}_search" data-flower-search placeholder="Найти цветок…" autocomplete="off" aria-controls="{{ widget.attrs.id }}">
+  </div>
+  <div class="flower-chip-list flower-available" id="{{ widget.attrs.id }}" data-flower-available aria-label="Доступные цветы">
+    {% for group, options, index in widget.optgroups %}{% for option in options %}{% include option.template_name with widget=option %}{% endfor %}{% endfor %}
+  </div>
+  <p class="flower-search-empty" data-flower-empty role="status" hidden>Цветы не найдены. Попробуйте другое название.</p>
+</div>

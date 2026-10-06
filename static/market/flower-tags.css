@@ -1,0 +1,34 @@
+.flower-picker{border:0;padding:0;min-width:0}
+.flower-picker legend{font-size:14px;font-weight:600;margin-bottom:12px}
+.flower-picker-body{padding:16px;border:1px solid var(--border-soft);border-radius:16px;background:#fafaf7}
+.flower-picker-caption{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 10px}
+.flower-picker-caption span{display:inline-flex;justify-content:center;min-width:22px;margin-left:4px;color:var(--forest);background:#e4ecd9;border-radius:6px;padding:2px 5px}
+.flower-selected-zone{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border-soft)}
+.flower-chip-list,.flower-tags{display:flex;flex-wrap:wrap;gap:9px;align-content:start}
+.flower-available{max-height:320px;overflow:auto;padding:3px 3px 8px}
+.flower-search{margin-bottom:14px}
+.flower-picker .flower-search input{width:100%;border:1px solid var(--border-input);border-radius:10px;background:white;padding:11px 13px;font-size:14px}
+.flower-picker .flower-chip,.flower-tags .flower-chip{position:relative;display:inline-flex;align-items:center;gap:9px;min-height:38px;margin:0;padding:9px 12px;border:1px solid var(--flower-border);border-radius:11px;background:var(--flower-bg);color:var(--flower-fg);font-size:13px;font-weight:500;line-height:1.35;cursor:pointer;transition:box-shadow .15s,transform .15s}
+.flower-chip:hover{transform:translateY(-1px);box-shadow:0 3px 8px #24221b14}
+.flower-picker .flower-chip input[type=checkbox]{position:absolute;width:1px;height:1px;padding:0;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;opacity:0}
+.flower-chip:has(input:focus-visible),.flower-tags a:focus-visible{outline:3px solid #345c3b;outline-offset:3px}
+.flower-chip:has(input:checked){box-shadow:inset 0 0 0 1px var(--flower-fg);font-weight:600}
+.flower-tag-mark{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:#ffffff66;font-size:14px;flex:none}
+.flower-tag-mark::before{content:"+"}
+.flower-chip:has(input:checked) .flower-tag-mark::before{content:"✓"}
+.flower-picker [hidden],.flower-chip[hidden]{display:none}
+.flower-search-empty{font-size:13px;line-height:1.6;color:var(--muted);margin:12px 0 0}
+.flower-tags{margin-top:18px}
+.flower-palette-red{--flower-bg:#fa8290;--flower-fg:#571420;--flower-border:#ea6175}
+.flower-palette-pink{--flower-bg:#f5aad2;--flower-fg:#681b48;--flower-border:#e789ba}
+.flower-palette-blush{--flower-bg:#ffd2dc;--flower-fg:#7d3348;--flower-border:#f1aabb}
+.flower-palette-ivory{--flower-bg:#fff8e7;--flower-fg:#655434;--flower-border:#e1cfa8}
+.flower-palette-daisy{--flower-bg:linear-gradient(115deg,#fffef6 20%,#ffe98b);--flower-fg:#675318;--flower-border:#e4cb6e}
+.flower-palette-blue{--flower-bg:#95beff;--flower-fg:#14366c;--flower-border:#699be9}
+.flower-palette-violet{--flower-bg:#b2a0f3;--flower-fg:#342064;--flower-border:#9380db}
+.flower-palette-lilac{--flower-bg:#dbbaf3;--flower-fg:#593174;--flower-border:#c59ee2}
+.flower-palette-gold{--flower-bg:#ffe078;--flower-fg:#624b0f;--flower-border:#e9c64e}
+.flower-palette-orange{--flower-bg:#ffbe79;--flower-fg:#713a0e;--flower-border:#e9a152}
+.flower-palette-coral{--flower-bg:#ffb3a4;--flower-fg:#763326;--flower-border:#ee9686}
+@media(max-width:760px){.flower-picker-body{padding:12px}.flower-picker .flower-chip,.flower-tags .flower-chip{font-size:12px;padding:8px 10px;min-height:36px}.flower-chip-list{gap:8px}}
+@media(prefers-reduced-motion:reduce){.flower-chip{transition:none}.flower-chip:hover{transform:none}}

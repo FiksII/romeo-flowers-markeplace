@@ -1,5 +1,46 @@
 "use strict";
 
+document.querySelectorAll("[data-flower-picker]").forEach((picker) => {
+  const search = picker.querySelector("[data-flower-search]");
+  const available = picker.querySelector("[data-flower-available]");
+  const selected = picker.querySelector("[data-flower-selected]");
+  const selectedZone = picker.querySelector("[data-flower-selected-zone]");
+  const count = picker.querySelector("[data-flower-count]");
+  const empty = picker.querySelector("[data-flower-empty]");
+  const tags = [...picker.querySelectorAll("[data-flower-tag]")];
+  const normalize = (text) => text.toLocaleLowerCase("ru").replaceAll("ё", "е").trim();
+  const refresh = () => {
+    const focused = document.activeElement;
+    const query = normalize(search.value);
+    let chosen = 0, matches = 0;
+    tags.forEach((tag) => {
+      const checked = tag.querySelector('input[type="checkbox"]').checked;
+      if (checked) {
+        chosen += 1;
+        tag.hidden = false;
+        selected.append(tag);
+      } else {
+        tag.hidden = !normalize(tag.dataset.flowerName).includes(query);
+        if (!tag.hidden) matches += 1;
+        available.append(tag);
+      }
+    });
+    count.textContent = String(chosen);
+    selectedZone.hidden = chosen === 0;
+    available.hidden = matches === 0;
+    empty.hidden = matches > 0;
+    empty.textContent = chosen === tags.length ? "Все цветы выбраны." : "Цветы не найдены. Попробуйте другое название.";
+    if (picker.contains(focused) && document.activeElement !== focused) focused.focus({ preventScroll: true });
+  };
+  picker.querySelector("[data-flower-search-zone]").hidden = false;
+  picker.addEventListener("change", (event) => {
+    if (event.target.matches('input[type="checkbox"]')) refresh();
+  });
+  search.addEventListener("input", refresh);
+  picker.closest("form")?.addEventListener("reset", () => setTimeout(refresh, 0));
+  refresh();
+});
+
 document.querySelectorAll("[data-address-form]").forEach((form) => {
   const input = form.querySelector("[data-address-input]");
   const token = form.querySelector('[name="address_token"]');
