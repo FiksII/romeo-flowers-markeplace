@@ -1,1 +1,24 @@
-{% extends 'market/base.html' %}{% load market_tags %}{% block title %}Заказ {{ order.number }} — Ромео{% endblock %}{% block content %}<section class="shell section-space"><a class="back-link" href="{% url 'market:account' %}">← Мои заказы</a><div class="page-heading"><span class="eyebrow">{{ order.date_placed|date:'d.m.Y H:i' }}</span><h1>Заказ № {{ order.number }}</h1><p>Сумма при оформлении {{ order.total_incl_tax|rub }}</p></div><p class="notice">Оплата не подключена. Неоплаченные части можно отменить; резерв действует 30 минут.</p><div class="parts-grid">{% for part in parts %}<section class="group-card"><div class="section-heading"><h2>{{ part.shop.name }}</h2><span class="status-chip">{{ part.get_status_display }}</span></div><p class="payment-label">{{ part.get_payment_status_display }}</p><p><strong>{{ part.get_method_display }}</strong> · {{ part.slot_start|date:'d.m H:i' }}–{{ part.slot_end|date:'H:i' }}<br>{{ part.address }}</p>{% for line in part.lines %}<div class="summary-row"><span>{{ line.title }} × {{ line.quantity }}</span><span>{{ line.line_price_incl_tax|rub }}</span></div>{% endfor %}<div class="summary-row"><span>Доставка</span><span>{{ part.delivery_total|rub }}</span></div><div class="summary-row total-row"><strong>Итого по магазину</strong><strong>{{ part.total|rub }}</strong></div>{% if part.instructions %}<p class="muted">{{ part.instructions }}</p>{% endif %}{% if part.payment_status == 'pending' and part.status != 'cancelled' %}<form method="post" action="{% url 'market:customer-cancel' part.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить эту часть заказа</button></form>{% endif %}</section>{% endfor %}</div></section>{% endblock %}
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}Заказ {{ order.number }} — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <a class="back-link" href="{% url 'market:account' %}">← Мои заказы</a>
+  <div class="page-heading"><span class="eyebrow">{{ order.date_placed|date:'d.m.Y H:i' }}</span><h1>Заказ № {{ order.number }}</h1><p>Сумма при оформлении {{ order.total_incl_tax|rub }}</p></div>
+  <p class="notice">Оплата не подключена. Неоплаченные части можно отменить; резерв действует 30 минут.</p>
+  <div class="parts-grid">
+    {% for part in parts %}
+    <section class="group-card">
+      <div class="section-heading"><h2>{{ part.shop.name }}</h2><span class="status-chip">{{ part.get_status_display }}</span></div>
+      <p class="payment-label">{{ part.get_payment_status_display }}</p>
+      <p><strong>{{ part.get_method_display }}</strong> · {{ part.slot_start|date:'d.m H:i' }}–{{ part.slot_end|date:'H:i' }}<br>{{ part.address }}</p>
+      {% for line in part.lines %}<div class="summary-row"><span>{{ line.title }} × {{ line.quantity }}</span><span>{{ line.line_price_incl_tax|rub }}</span></div>{% endfor %}
+      {% if part.pickup_discount_total %}<p class="field-help">В цене цветов учтена скидка за самовывоз {{ part.pickup_discount_total|rub }}.</p>{% endif %}
+      <div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>
+      <div class="summary-row total-row"><strong>Итого по магазину</strong><strong>{{ part.total|rub }}</strong></div>
+      {% if part.instructions %}<p class="muted">{{ part.instructions }}</p>{% endif %}
+      {% if part.payment_status == 'pending' and part.status != 'cancelled' %}<form method="post" action="{% url 'market:customer-cancel' part.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить эту часть заказа</button></form>{% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -87,7 +87,7 @@ class Command(BaseCommand):
                     "prep_minutes": 60,
                     "minimum_order": 1500,
                     "pickup_instructions": "Вход с улицы. Назовите номер заказа флористу.",
-                    "commission_percent": Decimal(10),
+                    "markup_percent": Decimal(10),
                 },
             )
             if created:

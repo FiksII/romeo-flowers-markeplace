@@ -1,11 +1,10 @@
 import uuid
-from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from oscar.core.loading import get_model
@@ -21,6 +20,7 @@ from market.models import (
     WeeklyHours,
 )
 from market.orders import transition_shop_order
+from market.reporting import dashboard_report
 
 
 def partner_index(request):
@@ -32,27 +32,17 @@ def partner_index(request):
 def partner_dashboard(request, slug):
     shop = get_shop_for_user(request.user, slug)
     parts = shop.shop_orders.select_related("order").order_by("-created_at")
-    live = parts.exclude(status="cancelled")
-    stats = {
-        "orders": live.count(),
-        "created_total": live.aggregate(value=Sum("goods_total"))["value"]
-        or Decimal(0),
-        "paid_total": live.filter(payment_status="paid").aggregate(
-            value=Sum("goods_total")
-        )["value"]
-        or Decimal(0),
-        "expected_commission": live.aggregate(value=Sum("commission_total"))["value"]
-        or Decimal(0),
-        "payout_total": Decimal(0),
-    }
+    report = dashboard_report(parts, request.GET.get("days"))
     return render(
         request,
         "market/dashboard.html",
         {
             "shop": shop,
-            "parts": parts,
+            "parts": Paginator(report["period_parts"], 20).get_page(
+                request.GET.get("page")
+            ),
             "listings": shop.listings.select_related("product"),
-            "stats": stats,
+            **report,
         },
     )
 
@@ -141,7 +131,7 @@ def product_edit(request, slug, pk=None):
             "is_public": listing.product.is_public,
             "category": listing.category,
             "flower_kind": listing.flower_kind,
-            "price": listing.price,
+            "price": listing.base_price,
             "stock": listing.stockrecord.num_in_stock,
         }
         if listing
@@ -260,14 +250,18 @@ def partner_order(request, slug, pk):
 def operator_index(request):
     if not request.user.is_superuser:
         raise PermissionDenied
+    report = dashboard_report(ShopOrder.objects.all(), request.GET.get("days"))
     return render(
         request,
         "market/operator.html",
         {
             "shops": Shop.objects.select_related("settlement"),
-            "parts": ShopOrder.objects.select_related("shop", "order")[:30],
+            "parts": Paginator(
+                report["period_parts"].select_related("shop", "order"), 20
+            ).get_page(request.GET.get("page")),
             "audit": AuditEntry.objects.select_related("actor", "shop").order_by(
                 "-created_at"
             )[:30],
+            **report,
         },
     )

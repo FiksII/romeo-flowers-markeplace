@@ -1,0 +1,19 @@
+flowers.aestory.space {
+    encode zstd gzip
+    request_body {
+        max_size 6MB
+    }
+    handle_path /static/* {
+        root * /srv/romeo-marketplace/current/staticfiles
+        file_server
+    }
+    handle_path /media/* {
+        root * /srv/romeo-marketplace/shared/media
+        file_server
+    }
+    handle {
+        reverse_proxy 127.0.0.1:8002 {
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}

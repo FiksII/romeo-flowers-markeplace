@@ -45,6 +45,7 @@ def shop(city, owner):
         latitude=Decimal("55.75"),
         longitude=Decimal("37.61"),
         status="active",
+        markup_percent=0,
         prep_minutes=60,
         delivery_fee=Decimal(350),
         radius_km=Decimal(15),
@@ -73,6 +74,7 @@ def other_shop(oblast, stranger):
         latitude=Decimal("55.89"),
         longitude=Decimal("37.44"),
         status="active",
+        markup_percent=0,
         prep_minutes=30,
     )
     Membership.objects.create(shop=shop, user=stranger)

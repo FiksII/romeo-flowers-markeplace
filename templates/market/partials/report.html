@@ -1,0 +1,28 @@
+{% load market_tags %}
+<div class="report-toolbar">
+  <div><h2>Обзор за период</h2><p class="muted">{{ period_start|date:'d.m.Y' }} — {{ period_end|date:'d.m.Y' }}</p></div>
+  <form method="get"><label for="report-days">Период</label><select id="report-days" name="days">{% for value in period_options %}<option value="{{ value }}" {% if days == value %}selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>
+</div>
+{% if demo_mode %}<p class="notice">Демо-история: оплата, возвраты и выплаты имитированы для просмотра кабинетов. Все суммы и реквизиты вымышлены.</p>{% endif %}
+<div class="stats-grid report-stats">
+  <div><span>Заказы магазинов</span><strong>{{ stats.orders }}</strong></div>
+  <div><span>Оплаченные товары · цена покупателей</span><strong>{{ stats.paid_total|rub }}</strong></div>
+  <div><span>Наценка с оплаченных товаров</span><strong>{{ stats.commission_total|rub }}</strong></div>
+  <div><span>Сумма магазинов за оплаченные товары</span><strong>{{ stats.paid_base_total|rub }}</strong></div>
+  <div><span>Доставка Ромео</span><strong>{{ stats.delivery_revenue|rub }}</strong></div>
+  <div><span>Наценка и доставка платформы</span><strong>{{ stats.platform_total|rub }}</strong></div>
+  <div><span>{% if demo_mode %}Демо-выплаты{% else %}Выплачено{% endif %}</span><strong>{{ stats.payout_total|rub }}</strong></div>
+  <div><span>К перечислению по полученным заказам · за всё время</span><strong>{{ stats.payout_pending|rub }}</strong></div>
+  <div><span>Возвращено покупателям</span><strong>{{ stats.refunded_total|rub }}</strong></div>
+</div>
+<p class="field-help">Стоимость товаров в созданных, неотменённых заказах {{ stats.created_total|rub }}. Доставка не входит в продажи товаров. {% if not demo_mode %}Выплаты появятся после подключения платёжного сервиса.{% endif %}</p>
+<section class="sales-chart" aria-label="Продажи оплаченных товаров по дням">
+  <div class="section-heading"><h2>Продажи по дням</h2><span class="muted">{{ stats.paid_total|rub }}</span></div>
+  {{ trend|json_script:'sales-trend-data' }}
+  <div class="sales-chart-plot" hidden><canvas id="sales-chart" role="img" aria-label="Продажи оплаченных товаров по дням" aria-describedby="sales-chart-values">Данные продаж доступны в таблице ниже.</canvas></div>
+  <details class="chart-data" id="sales-chart-values" open><summary>Продажи по дням в таблице</summary><div class="table-wrap"><table class="market-table chart-values"><thead><tr><th>Дата</th><th>Оплаченные товары</th></tr></thead><tbody>{% for point in trend %}<tr><td>{{ point.day|date:'d.m.Y' }}</td><td>{{ point.value|rub }}</td></tr>{% endfor %}</tbody></table></div></details>
+</section>
+{% if demo_mode %}
+<h2 class="spaced-heading">Последние демо-выплаты за период</h2>
+<div class="table-wrap"><table class="market-table"><thead><tr><th>Дата</th><th>Магазин</th><th>Заказ</th><th>Сумма магазину</th></tr></thead><tbody>{% for payout in payouts %}<tr><td data-order="{{ payout.paid_at|date:'c' }}">{{ payout.paid_at|date:'d.m.Y' }}</td><td>{{ payout.part.shop.name }}</td><td><a class="text-link" href="{% url 'market:partner-order' payout.part.shop.slug payout.part.pk %}">{{ payout.part.order.number }}</a></td><td data-order="{{ payout.amount|unlocalize_money }}">{{ payout.amount|rub }}</td></tr>{% empty %}<tr><td colspan="4">За этот период демонстрационных выплат ещё нет.</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}

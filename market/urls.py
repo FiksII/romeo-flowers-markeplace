@@ -3,6 +3,7 @@ from django.urls import path
 
 from market import portal_views as portal
 from market import storefront_views as views
+from market import table_views as tables
 
 app_name = "market"
 urlpatterns = [
@@ -29,6 +30,11 @@ urlpatterns = [
     path("partner/", portal.partner_index, name="partner"),
     path("partner/new/", portal.shop_new, name="shop-new"),
     path("partner/<slug:slug>/", portal.partner_dashboard, name="partner-shop"),
+    path(
+        "partner/<slug:slug>/orders/data/",
+        tables.partner_orders,
+        name="partner-orders-data",
+    ),
     path("partner/<slug:slug>/settings/", portal.shop_settings, name="shop-settings"),
     path("partner/<slug:slug>/hours/", portal.hours_settings, name="hours"),
     path(
@@ -48,6 +54,7 @@ urlpatterns = [
         name="partner-order",
     ),
     path("operator/", portal.operator_index, name="operator"),
+    path("operator/orders/data/", tables.operator_orders, name="operator-orders-data"),
     path(
         "operator/<slug:slug>/",
         portal.shop_settings,

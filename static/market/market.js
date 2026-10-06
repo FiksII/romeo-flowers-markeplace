@@ -75,20 +75,27 @@ if (checkout) {
   const money = (value) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 2 }).format(value);
   const totals = () => {
     let goods = 0, shipping = 0;
-    groups.forEach((group) => { goods += Number(group.dataset.goods); shipping += Number(group.querySelector("[data-method]").selectedOptions[0]?.dataset.fee || 0); });
-    checkout.querySelector("[data-shipping-total]").textContent = money(shipping);
-    checkout.querySelector("[data-order-total]").textContent = money(goods + shipping);
+    groups.forEach((group) => {
+      const selected = group.querySelector("[data-method]").selectedOptions[0];
+      const amount = Math.round(Number(selected?.dataset.goods ?? group.dataset.goods) * 100);
+      goods += amount;
+      shipping += Math.round(Number(selected?.dataset.fee || 0) * 100);
+      group.querySelector("[data-group-goods]").textContent = money(amount / 100);
+    });
+    checkout.querySelector("[data-goods-total]").textContent = money(goods / 100);
+    checkout.querySelector("[data-shipping-total]").textContent = money(shipping / 100);
+    checkout.querySelector("[data-order-total]").textContent = money((goods + shipping) / 100);
   };
   groups.forEach((group) => {
     const method = group.querySelector("[data-method]"), slot = group.querySelector("[data-slot]");
-    const update = () => {
-      slot.value = "";
+    const update = (resetSlot = false) => {
+      if (resetSlot) slot.value = "";
       slot.querySelectorAll("optgroup").forEach((options) => { options.disabled = options.dataset.slotMethod !== method.value; options.hidden = options.disabled; });
       group.querySelector("[data-pickup-note]").hidden = method.value !== "pickup";
       group.querySelector("[data-delivery-note]").hidden = method.value !== "delivery";
       totals();
     };
-    method.addEventListener("change", update);
+    method.addEventListener("change", () => update(true));
     update();
   });
 }

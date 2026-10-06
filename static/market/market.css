@@ -1,4 +1,32 @@
 /* Marketplace layouts share the original Romeo palette and typefaces. */
+.report-toolbar{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:32px 0 22px}
+.report-toolbar h2{font-size:25px;margin-bottom:8px}
+.report-toolbar form{display:flex;align-items:center;gap:12px;font-size:12px}
+.report-toolbar select{padding:10px 12px;border:1px solid var(--border-input);border-radius:6px;background:var(--white)}
+.stats-grid.report-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.report-stats strong{font-size:clamp(20px,2.4vw,28px);overflow-wrap:anywhere}
+.sales-chart{padding:24px;border:1px solid var(--border-soft);border-radius:10px;margin-top:26px;background:var(--white)}
+.sales-chart h2{font-size:24px}
+.sales-chart-plot{position:relative;height:280px;width:100%;margin-top:20px}
+.sales-chart-plot[hidden]{display:none}
+.chart-data{margin-top:18px;font-size:12px;color:var(--muted)}
+.chart-data summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.chart-data .table-wrap{max-height:320px;overflow:auto;margin-top:12px}
+.orders-enhanced>.pagination{display:none}
+div.dt-container{font-family:var(--sans);font-size:12px;color:var(--forest);--dt-row-stripe:#f7f8f4;--dt-row-hover:#edf1e8;--dt-html-background:var(--white);--dt-column-ordering:rgba(48,75,57,.035)}
+div.dt-container .dt-layout-row:not(.dt-layout-table){gap:18px;padding:8px 0;flex-wrap:wrap}
+div.dt-container .dt-input{font:inherit;color:var(--forest);padding:9px 12px;border:1px solid var(--border-input);border-radius:6px;background:var(--white)}
+div.dt-container .dt-search .dt-input{min-width:220px;margin-left:8px}
+div.dt-container .dt-length .dt-input{margin:0 8px}
+div.dt-container .dt-paging button.dt-paging-button{font:inherit;border:1px solid var(--border-soft)!important;border-radius:6px;background:var(--white)!important;color:var(--forest)!important;box-shadow:none!important;min-width:34px}
+div.dt-container .dt-paging button.dt-paging-button.current,div.dt-container .dt-paging button.dt-paging-button:hover{background:var(--forest)!important;color:var(--white)!important;border-color:var(--forest)!important}
+div.dt-container .dt-paging button.dt-paging-button.disabled{opacity:.45;cursor:default}
+div.dt-container .dt-paging button.dt-paging-button.disabled:hover{background:var(--white)!important;color:var(--forest)!important}
+div.dt-container .dt-info{color:var(--muted)}
+table.market-table.dataTable th,table.market-table.dataTable td{text-align:left}
+table.market-table.dataTable td.dt-empty{text-align:center;color:var(--muted);padding:28px 16px}
+table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>td{border-bottom-color:var(--border-soft)}
+@media(max-width:760px){.report-toolbar{align-items:start;flex-direction:column;gap:16px}.report-toolbar form{flex-wrap:wrap}.stats-grid.report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.report-stats .money{white-space:normal}.sales-chart{padding:18px}.sales-chart .section-heading{flex-wrap:wrap}.sales-chart-plot{height:240px}div.dt-container .dt-layout-row:not(.dt-layout-table){align-items:start;justify-content:start;gap:14px}div.dt-container .dt-search .dt-input{min-width:180px;max-width:65vw}div.dt-container .dt-paging{overflow-wrap:anywhere}}
 .demo-band{background:var(--sage-note);color:var(--forest);padding:7px 24px;text-align:center;font-size:11px;letter-spacing:.02em}
 .site-header{position:relative;border-bottom:1px solid var(--border-soft);background:var(--white)}
 .market-header{display:flex;align-items:center;gap:28px;min-height:100px}

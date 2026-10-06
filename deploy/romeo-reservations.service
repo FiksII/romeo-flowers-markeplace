@@ -1,0 +1,15 @@
+[Unit]
+Description=Release expired unpaid Romeo marketplace reservations
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=romeo-marketplace
+Group=romeo-marketplace
+WorkingDirectory=/srv/romeo-marketplace/current
+EnvironmentFile=/srv/romeo-marketplace/shared/runtime.env
+ExecStart=/srv/romeo-marketplace/current/.venv/bin/python manage.py expire_reservations
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict

@@ -24,6 +24,7 @@ from market.context import ContextForm, get_context
 from market.forms import CheckoutContactForm, SignupForm
 from market.models import Listing, Shop
 from market.orders import basket_groups, cancel_shop_order, place_market_order
+from market.pricing import quote_product
 
 
 def safe_next(request, fallback="market:catalogue"):
@@ -87,7 +88,13 @@ def product_detail(request, pk):
         product__is_public=True,
         shop__settlement__region__in=["77", "50"],
     )
-    options = receiving_options(listing.shop, get_context(request))
+    context = get_context(request)
+    options = receiving_options(listing.shop, context)
+    listing.display_price = (
+        quote_product(listing.shop, listing.base_price, context.method).customer
+        if listing.base_price is not None
+        else None
+    )
     return render(
         request,
         "market/product.html",
@@ -258,6 +265,26 @@ def _basket_display(request):
     groups = basket_groups(request.basket)
     for group in groups:
         shop = group["shop"]
+        group["base_total"] = 0
+        group["delivery_goods_total"] = 0
+        group["pickup_goods_total"] = 0
+        for item in group["lines"]:
+            stock = item["listing"].stockrecord
+            if stock and stock.price is not None:
+                delivery_quote = quote_product(shop, stock.price)
+                pickup_quote = quote_product(shop, stock.price, "pickup")
+                quantity = item["line"].quantity
+                group["base_total"] += delivery_quote.base * quantity
+                group["delivery_goods_total"] += delivery_quote.customer * quantity
+                group["pickup_goods_total"] += pickup_quote.customer * quantity
+                item["customer_price"] = (
+                    pickup_quote if context.method == "pickup" else delivery_quote
+                ).customer
+        group["pickup_savings"] = (
+            group["delivery_goods_total"] - group["pickup_goods_total"]
+        )
+        group["selected_method"] = request.POST.get(f"method_{shop.pk}", "")
+        group["selected_slot"] = request.POST.get(f"slot_{shop.pk}", "")
         group["slot_options"] = {}
         for method in ["delivery", "pickup"]:
             if getattr(shop, f"{method}_enabled"):

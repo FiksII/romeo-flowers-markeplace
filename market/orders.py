@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from types import SimpleNamespace
 
 from django.conf import settings
@@ -16,6 +16,7 @@ from market.addresses import validate_address
 from market.availability import available_slots, location_matches
 from market.context import FulfillmentContext
 from market.models import Listing, Shop, ShopOrder
+from market.pricing import quote_product
 from market.strategy import MarketplaceStrategy
 
 CENT = Decimal("0.01")
@@ -94,7 +95,6 @@ def place_market_order(user, basket, choices, address, contact, now=None):
                 f"Недостаточно цветов для «{line.product.title}». Обновите корзину."
             )
         line.stockrecord = stock
-        line._info = basket.strategy.fetch_for_product(line.product, stockrecord=stock)
         groups[listing.shop_id].append((line, stock))
     shops = {
         row.pk: row
@@ -105,6 +105,10 @@ def place_market_order(user, basket, choices, address, contact, now=None):
     }
     if set(choices) != set(groups):
         raise ValidationError("Выберите получение для каждого магазина.")
+    basket.strategy = MarketplaceStrategy(
+        methods={shop_id: choice.get("method") for shop_id, choice in choices.items()},
+        shops=shops,
+    )
     prepared = []
     shipping_total = Decimal(0)
     goods_total = Decimal(0)
@@ -149,18 +153,24 @@ def place_market_order(user, basket, choices, address, contact, now=None):
                     f"Магазин «{shop.name}» не доставляет по этому адресу."
                 )
             has_delivery = True
-        goods = sum(
-            (stock.price * line.quantity for line, stock in items), Decimal(0)
-        ).quantize(CENT)
-        if goods < shop.minimum_order:
+        goods, base_goods, discount = Decimal(0), Decimal(0), Decimal(0)
+        for line, stock in items:
+            quote = quote_product(shop, stock.price, method)
+            line._info = basket.strategy.fetch_for_product(
+                line.product, stockrecord=stock
+            )
+            goods += quote.customer * line.quantity
+            base_goods += quote.base * line.quantity
+            discount += quote.discount * line.quantity
+        if base_goods < shop.minimum_order:
             raise ValidationError(
                 f"Минимальная сумма товаров в «{shop.name}»: {shop.minimum_order} ₽."
             )
         fee = shop.delivery_fee if method == "delivery" else Decimal(0)
-        commission = (goods * shop.commission_percent / 100).quantize(
-            CENT, rounding=ROUND_HALF_UP
+        commission = goods - base_goods
+        prepared.append(
+            (shop, method, slot, goods, base_goods, fee, commission, discount)
         )
-        prepared.append((shop, method, slot, goods, fee, commission))
         goods_total += goods
         shipping_total += fee
     shipping_address = None
@@ -192,12 +202,14 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         basket=basket,
         user=user,
         total=total,
-        shipping_method=SimpleNamespace(name="Получение от магазинов", code="market"),
+        shipping_method=SimpleNamespace(
+            name="Доставка Ромео и самовывоз", code="market"
+        ),
         shipping_charge=charge,
         shipping_address=shipping_address,
         status="AwaitingPayment",
     )
-    for shop, method, slot, goods, fee, commission in prepared:
+    for shop, method, slot, goods, base_goods, fee, commission, discount in prepared:
         ShopOrder.objects.create(
             order=order,
             shop=shop,
@@ -211,10 +223,13 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             contact_phone=contact["phone"][:25],
             instructions=contact.get("instructions", "")[:1000],
             goods_total=goods,
+            base_goods_total=base_goods,
+            pickup_discount_total=discount,
             delivery_total=fee,
-            commission_percent=shop.commission_percent,
+            delivery_owner="platform",
+            commission_percent=shop.markup_percent,
             commission_total=commission,
-            partner_total=goods + fee - commission,
+            partner_total=base_goods,
         )
     basket.submit()
     return order

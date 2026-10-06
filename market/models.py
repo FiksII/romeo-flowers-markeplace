@@ -101,11 +101,18 @@ class Shop(models.Model):
     inn = models.CharField("ИНН", max_length=12, blank=True)
     bank_account = models.CharField("Расчётный счёт", max_length=20, blank=True)
     bank_bik = models.CharField("БИК", max_length=9, blank=True)
-    commission_percent = models.DecimalField(
-        "Комиссия, %",
+    markup_percent = models.DecimalField(
+        "Наценка платформы, % от цены магазина",
         max_digits=5,
         decimal_places=2,
-        default=0,
+        default=10,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+    pickup_discount_percent = models.DecimalField(
+        "Скидка за самовывоз, % от наценки",
+        max_digits=5,
+        decimal_places=2,
+        default=50,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -194,9 +201,29 @@ class Listing(models.Model):
         )
 
     @property
-    def price(self):
+    def base_price(self):
         stock = self.stockrecord
         return stock.price if stock else None
+
+    @property
+    def price(self):
+        from market.pricing import quote_product
+
+        return (
+            quote_product(self.shop, self.base_price).customer
+            if self.base_price is not None
+            else None
+        )
+
+    @property
+    def pickup_price(self):
+        from market.pricing import quote_product
+
+        return (
+            quote_product(self.shop, self.base_price, "pickup").customer
+            if self.base_price is not None
+            else None
+        )
 
     @property
     def image_url(self):
@@ -289,7 +316,16 @@ class ShopOrder(models.Model):
     contact_phone = models.CharField(max_length=25)
     instructions = models.TextField(blank=True)
     goods_total = models.DecimalField(max_digits=12, decimal_places=2)
+    base_goods_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pickup_discount_total = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0
+    )
     delivery_total = models.DecimalField(max_digits=12, decimal_places=2)
+    delivery_owner = models.CharField(
+        max_length=8,
+        default="platform",
+        choices=[("platform", "Ромео"), ("partner", "Магазин")],
+    )
     commission_percent = models.DecimalField(max_digits=5, decimal_places=2)
     commission_total = models.DecimalField(max_digits=12, decimal_places=2)
     partner_total = models.DecimalField(max_digits=12, decimal_places=2)
@@ -316,6 +352,10 @@ class ShopOrder(models.Model):
         return self.goods_total + self.delivery_total
 
     @property
+    def platform_delivery_total(self):
+        return self.delivery_total if self.delivery_owner == "platform" else Decimal(0)
+
+    @property
     def lines(self):
         return self.order.lines.filter(partner_id=self.shop.partner_id)
 
@@ -327,3 +367,23 @@ class AuditEntry(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.PROTECT)
     action = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class DemoPayout(models.Model):
+    """Fixture transfers for local dashboard previews; never a payment ledger."""
+
+    part = models.OneToOneField(
+        ShopOrder, on_delete=models.CASCADE, related_name="demo_payout"
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    paid_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-paid_at", "-pk"]
+        verbose_name = "Демонстрационная выплата"
+        verbose_name_plural = "Демонстрационные выплаты"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0), name="market_demo_payout_nonnegative"
+            )
+        ]

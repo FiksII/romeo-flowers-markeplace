@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from market.availability import receiving_options
 from market.models import Listing
+from market.pricing import quote_product
 
 
 def _money(value):
@@ -50,15 +51,18 @@ def public_listings(context, filters=None, now=None):
         stock = listing.stockrecord
         if not stock or stock.price is None or stock.net_stock_level <= 0:
             continue
-        if (low is not None and stock.price < low) or (
-            high is not None and stock.price > high
+        customer_price = quote_product(
+            listing.shop, stock.price, context.method
+        ).customer
+        if (low is not None and customer_price < low) or (
+            high is not None and customer_price > high
         ):
             continue
         options = receiving_options(listing.shop, context, now)
         if options:
             listing.receiving_options = options
             listing.nearest_slot = min(options.values(), key=lambda slot: slot.start)
-            listing.display_price = stock.price
+            listing.display_price = customer_price
             listings.append(listing)
     sort = filters.get("sort", "newest")
     if sort in {"price-asc", "price-desc"}:

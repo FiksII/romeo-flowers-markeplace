@@ -30,7 +30,11 @@ class ProductForm(forms.Form):
     )
     flower_kind = forms.CharField(label="Вид цветов", max_length=80, required=False)
     price = forms.DecimalField(
-        label="Цена, ₽", min_value=Decimal("0.01"), max_digits=10, decimal_places=2
+        label="Цена магазина, ₽",
+        min_value=Decimal("0.01"),
+        max_digits=10,
+        decimal_places=2,
+        help_text="Эта сумма за товар причитается магазину. Ромео автоматически добавит свою наценку для покупателя.",
     )
     stock = forms.IntegerField(
         label="Количество в наличии", min_value=0, max_value=1000000
@@ -117,7 +121,6 @@ class ShopForm(forms.ModelForm):
             "pickup_enabled",
             "delivery_settlements",
             "radius_km",
-            "delivery_fee",
             "minimum_order",
             "prep_minutes",
             "pickup_instructions",
@@ -143,13 +146,28 @@ class ShopForm(forms.ModelForm):
             self.fields["status"] = forms.ChoiceField(
                 label="Статус", choices=Shop.STATUSES, initial=self.instance.status
             )
-            self.fields["commission_percent"] = forms.DecimalField(
-                label="Комиссия, %",
+            self.fields["markup_percent"] = forms.DecimalField(
+                label="Наценка платформы, % от цены магазина",
                 min_value=0,
                 max_value=100,
                 max_digits=5,
                 decimal_places=2,
-                initial=self.instance.commission_percent,
+                initial=self.instance.markup_percent,
+            )
+            self.fields["pickup_discount_percent"] = forms.DecimalField(
+                label="Скидка за самовывоз, % от нашей наценки",
+                min_value=0,
+                max_value=100,
+                max_digits=5,
+                decimal_places=2,
+                initial=self.instance.pickup_discount_percent,
+            )
+            self.fields["delivery_fee"] = forms.DecimalField(
+                label="Доставка Ромео из этого магазина, ₽",
+                min_value=0,
+                max_digits=9,
+                decimal_places=2,
+                initial=self.instance.delivery_fee,
             )
         self.operator = operator
 
@@ -190,7 +208,11 @@ class ShopForm(forms.ModelForm):
         instance = super().save(commit=False)
         if self.operator:
             instance.status = self.cleaned_data["status"]
-            instance.commission_percent = self.cleaned_data["commission_percent"]
+            instance.markup_percent = self.cleaned_data["markup_percent"]
+            instance.pickup_discount_percent = self.cleaned_data[
+                "pickup_discount_percent"
+            ]
+            instance.delivery_fee = self.cleaned_data["delivery_fee"]
         if commit:
             instance.full_clean()
             if instance.pk:
@@ -201,7 +223,12 @@ class ShopForm(forms.ModelForm):
                 ]
                 fields += ["latitude", "longitude"]
                 if self.operator:
-                    fields += ["status", "commission_percent"]
+                    fields += [
+                        "status",
+                        "markup_percent",
+                        "pickup_discount_percent",
+                        "delivery_fee",
+                    ]
                 instance.save(update_fields=fields)
             else:
                 instance.save()
