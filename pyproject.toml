@@ -1,0 +1,24 @@
+[project]
+name = "romeo-marketplace"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2,<5.3",
+    "django-oscar[sorl-thumbnail]==4.2",
+    "django-environ>=0.14.0",
+    "dj-database-url>=3.1.2",
+    "django-storages[s3]>=1.14.6",
+    "pillow>=12.3.0",
+    "psycopg2-binary>=2.9.12",
+]
+
+[dependency-groups]
+dev = ["pytest>=9.1.1", "pytest-django>=4.14.0", "ruff>=0.16.5"]
+
+[tool.ruff.lint.per-file-ignores]
+"romeo_market/*settings.py" = ["F403", "F405"]
+"*/migrations/*.py" = ["RUF012"]
+# Django owns and copies these declarative class attributes.
+"market/admin.py" = ["RUF012"]
+"market/forms.py" = ["RUF012"]
+"market/models.py" = ["RUF012"]

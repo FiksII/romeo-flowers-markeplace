@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-labelledby="title desc">
+  <title id="title">Заглушка изображения букета</title>
+  <desc id="desc">Стилизованный букет на тёплом кремовом фоне</desc>
+  <rect width="640" height="640" fill="#f4f1e9"/>
+  <path d="M320 534c-22-91-29-170-22-238" fill="none" stroke="#244b2b" stroke-linecap="round" stroke-width="18"/>
+  <path d="M312 404c-45-28-83-51-112-98M315 367c50-34 88-70 113-111M310 448c43-13 84-12 124 7" fill="none" stroke="#55745c" stroke-linecap="round" stroke-width="14"/>
+  <g fill="#d89aa3">
+    <circle cx="245" cy="245" r="58"/><circle cx="324" cy="191" r="63"/><circle cx="401" cy="252" r="56"/><circle cx="282" cy="316" r="59"/><circle cx="373" cy="329" r="60"/>
+  </g>
+  <g fill="#fffdf9">
+    <circle cx="245" cy="245" r="24"/><circle cx="324" cy="191" r="25"/><circle cx="401" cy="252" r="23"/><circle cx="282" cy="316" r="24"/><circle cx="373" cy="329" r="24"/>
+  </g>
+  <path d="M264 493h112l-20 73h-72z" fill="#c59a62"/>
+</svg>
