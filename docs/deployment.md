@@ -4,7 +4,7 @@
 
 ## Текущая версия
 
-- Релиз: `/srv/romeo-marketplace/releases/20261006-colour-tags-v1`; `/srv/romeo-marketplace/current` указывает на него. Точный коммит исходников записывается в файл `RELEASE_COMMIT` внутри релиза.
+- Релиз: `/srv/romeo-marketplace/releases/20261006-colour-tags-v2`; `/srv/romeo-marketplace/current` указывает на него. Точный коммит исходников записывается в файл `RELEASE_COMMIT` внутри релиза.
 - Python 3.13.15, Django 5.2, Gunicorn, PostgreSQL 18. Отдельные пользователь Linux и роль/база PostgreSQL: `romeo-marketplace` и `romeo_marketplace` соответственно. У рабочей роли нет прав суперпользователя и создания баз.
 - `romeo-marketplace.service` включена и слушает только `127.0.0.1:8002`. Caddy обслуживает HTTPS, статику и media. `romeo-reservations.timer` каждую минуту освобождает истёкшие резервы.
 - Служебный сокет Gunicorn находится в `/run/romeo-marketplace/gunicorn.ctl`; каталог создаёт systemd с владельцем приложения и правами `0750`. Защита `ProtectSystem=strict` сохранена.
