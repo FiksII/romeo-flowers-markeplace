@@ -6,10 +6,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count, Q
 from oscar.core.loading import get_model
 
 from market.addresses import decode_address
-from market.models import Listing, Settlement, Shop, WeeklyHours
+from market.models import Flower, Listing, Settlement, Shop, WeeklyHours
 
 
 class SignupForm(UserCreationForm):
@@ -28,7 +29,13 @@ class ProductForm(forms.Form):
     category = forms.ChoiceField(
         label="Категория", choices=Listing._meta.get_field("category").choices
     )
-    flower_kind = forms.CharField(label="Вид цветов", max_length=80, required=False)
+    flowers = forms.ModelMultipleChoiceField(
+        label="Цветы в составе",
+        queryset=Flower.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Выберите все цветы в составе. Часто используемые вами цветы показаны первыми.",
+    )
     price = forms.DecimalField(
         label="Цена магазина, ₽",
         min_value=Decimal("0.01"),
@@ -43,6 +50,13 @@ class ProductForm(forms.Form):
     is_public = forms.BooleanField(
         label="Показывать в каталоге", required=False, initial=True
     )
+
+    def __init__(self, *args, shop=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if shop is not None:
+            self.fields["flowers"].queryset = Flower.objects.annotate(
+                usage=Count("listings", filter=Q(listings__shop=shop))
+            ).order_by("-usage", "rank", "name")
 
     def clean_photo(self):
         photo = self.cleaned_data.get("photo")
@@ -98,11 +112,14 @@ def save_listing(shop, data, listing=None):
     )
     stock.save()
     listing = listing or Listing(product=product, shop=shop)
-    listing.category, listing.flower_kind = data["category"], data["flower_kind"]
+    listing.category = data["category"]
+    listing.flower_kind = data.get("flower_kind", "")
     if data.get("photo"):
         listing.photo = data["photo"]
     listing.full_clean()
     listing.save()
+    if "flowers" in data:
+        listing.flowers.set(data["flowers"])
     return listing
 
 

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -22,7 +23,7 @@ from market.availability import (
 from market.catalogue import public_listings
 from market.context import ContextForm, get_context
 from market.forms import CheckoutContactForm, SignupForm
-from market.models import Listing, Shop
+from market.models import Flower, Listing, Shop
 from market.orders import basket_groups, cancel_shop_order, place_market_order
 from market.pricing import quote_product
 
@@ -38,6 +39,23 @@ def safe_next(request, fallback="market:catalogue"):
         )
         else reverse(fallback)
     )
+
+
+class MarketLoginView(LoginView):
+    template_name = "market/login.html"
+
+    def get_default_redirect_url(self):
+        from market.access import shops_for_user
+
+        user = self.request.user
+        if user.is_superuser:
+            return reverse("market:operator")
+        shops = list(shops_for_user(user)[:2])
+        if len(shops) == 1:
+            return reverse("market:partner-shop", kwargs={"slug": shops[0].slug})
+        if shops:
+            return reverse("market:partner")
+        return super().get_default_redirect_url()
 
 
 def home(request):
@@ -65,17 +83,12 @@ def catalogue(request):
             "page": Paginator(items, 12).get_page(request.GET.get("page")),
             "total_count": len(items),
             "filters": request.GET,
+            "categories": Listing._meta.get_field("category").choices,
             "query_string": query.urlencode(),
             "shops": Shop.objects.filter(
                 status="active", settlement__region__in=["77", "50"]
             ),
-            "flowers": Listing.objects.filter(
-                shop__status="active", product__is_public=True
-            )
-            .exclude(flower_kind="")
-            .values_list("flower_kind", flat=True)
-            .distinct()
-            .order_by("flower_kind"),
+            "flowers": Flower.objects.all(),
         },
     )
 

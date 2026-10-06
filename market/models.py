@@ -156,19 +156,36 @@ class Membership(models.Model):
         ]
 
 
+class Flower(models.Model):
+    name = models.CharField("Цветок", max_length=80, unique=True)
+    rank = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["rank", "name"]
+        verbose_name = "Цветок"
+        verbose_name_plural = "Цветы"
+
+    def __str__(self):
+        return self.name
+
+
 class Listing(models.Model):
     product = models.OneToOneField(
         "catalogue.Product", on_delete=models.CASCADE, related_name="market_listing"
     )
     shop = models.ForeignKey(Shop, on_delete=models.PROTECT, related_name="listings")
     flower_kind = models.CharField("Вид цветов", max_length=80, blank=True)
+    flowers = models.ManyToManyField(
+        Flower, blank=True, related_name="listings", verbose_name="Цветы в составе"
+    )
     category = models.CharField(
         "Категория",
         max_length=20,
         choices=[
-            ("bouquet", "Букеты"),
+            ("bouquet", "Монобукеты"),
             ("composition", "Композиции"),
-            ("stems", "Цветы поштучно"),
+            ("basket", "Корзины"),
+            ("box", "В коробке"),
         ],
         default="bouquet",
     )

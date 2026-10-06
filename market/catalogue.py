@@ -26,6 +26,7 @@ def public_listings(context, filters=None, now=None):
         )
         .select_related("product", "shop", "shop__settlement")
         .prefetch_related(
+            "flowers",
             "product__stockrecords",
             "shop__hours",
             "shop__date_exceptions",
@@ -39,10 +40,24 @@ def public_listings(context, filters=None, now=None):
             | Q(product__description__icontains=term)
             | Q(shop__name__icontains=term)
         )
-    if filters.get("category") in {"bouquet", "composition", "stems"}:
+    if filters.get("category") in dict(Listing._meta.get_field("category").choices):
         query = query.filter(category=filters["category"])
     if filters.get("flower"):
-        query = query.filter(flower_kind__iexact=filters["flower"][:80])
+        flower = filters["flower"][:80]
+        if flower.isdecimal():
+            query = query.filter(flowers__pk=flower).distinct()
+        else:
+            canonical = {
+                "розы": "Роза",
+                "пионы": "Пион",
+                "тюльпаны": "Тюльпан",
+                "хризантемы": "Хризантема",
+                "лилии": "Лилия",
+                "герберы": "Гербера",
+            }.get(flower.casefold(), flower)
+            query = query.filter(
+                Q(flowers__name__iexact=canonical) | Q(flower_kind__iexact=flower)
+            ).distinct()
     if filters.get("shop"):
         query = query.filter(shop__slug=filters["shop"][:100])
     low, high = _money(filters.get("min_price")), _money(filters.get("max_price"))

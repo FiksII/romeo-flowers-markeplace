@@ -90,6 +90,8 @@ uv run python manage.py runserver 127.0.0.1:8010 --settings=romeo_market.demo_se
 
 ## Рабочее окружение
 
+Опубликованное HTTPS-демо и порядок отката описаны в [инструкции развёртывания](docs/deployment.md). Пароли серверных аккаунтов отличаются от локальных примеров.
+
 1. Создайте новую PostgreSQL-базу. Скопируйте `.env.example` в `.env` и заполните отдельные значения: случайный `SECRET_KEY` (50+ символов), `DATABASE_URL`, реальные `ALLOWED_HOSTS`, токен [DaData](https://dadata.ru/api/suggest/address/).
 2. Запускайте команды и сервер с `--settings=romeo_market.production_settings`. Этот модуль требует PostgreSQL и отдельный секрет, отключает демо, включает HTTPS и защищённые cookies. За обратным прокси `TRUST_PROXY_HTTPS=True` допустим только при очистке входящего заголовка прокси.
 3. Выполните миграции, `createsuperuser` и `collectstatic`. Создайте населённые пункты регионов 77/50 через `/admin/`. Магазины подключаются через `/partner/new/` и публикуются супер администратором через `/operator/`.

@@ -140,13 +140,17 @@ class Command(BaseCommand):
                     price=Decimal(1900 + index * 250),
                     num_in_stock=20,
                 )
-                Listing.objects.create(
+                listing = Listing.objects.create(
                     product=product,
                     shop=shop,
                     flower_kind="Розы" if index % 3 else "Сезонные цветы",
                     category="composition" if index % 4 == 0 else "bouquet",
                     seed_image=f"market/bouquets/bouquet-{index:02}.png",
                 )
+                if index % 3:
+                    from market.models import Flower
+
+                    listing.flowers.add(Flower.objects.get(name="Роза"))
         if options["with_accounts"]:
             for username, superuser in [
                 ("buyer", False),

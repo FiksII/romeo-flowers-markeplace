@@ -130,14 +130,16 @@ def product_edit(request, slug, pk=None):
             "description": listing.product.description,
             "is_public": listing.product.is_public,
             "category": listing.category,
-            "flower_kind": listing.flower_kind,
+            "flowers": listing.flowers.all(),
             "price": listing.base_price,
             "stock": listing.stockrecord.num_in_stock,
         }
         if listing
         else None
     )
-    form = ProductForm(request.POST or None, request.FILES or None, initial=initial)
+    form = ProductForm(
+        request.POST or None, request.FILES or None, initial=initial, shop=shop
+    )
     if request.method == "POST" and form.is_valid():
         try:
             item = save_listing(shop, form.cleaned_data, listing)
