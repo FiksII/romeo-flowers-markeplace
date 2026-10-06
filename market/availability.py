@@ -53,7 +53,13 @@ def _daily_windows(shop, day, method, rules):
             start, end = max(window[0], midnight), min(window[1], tomorrow)
             if start < end:
                 windows.append((start, end))
-    return sorted(windows)
+    merged = []
+    for start, end in sorted(windows):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged
 
 
 def _ready_at(shop, now, rules):

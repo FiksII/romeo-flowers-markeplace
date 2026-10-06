@@ -98,7 +98,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         groups[listing.shop_id].append((line, stock))
     shops = {
         row.pk: row
-        for row in Shop.objects.select_for_update()
+        for row in Shop.objects.select_for_update(of=("self",))
         .select_related("settlement")
         .filter(pk__in=sorted(groups))
         .order_by("pk")
@@ -243,7 +243,7 @@ def _cancel_locked(part):
 def cancel_shop_order(part, actor):
     get_model("order", "Order").objects.select_for_update().get(pk=part.order_id)
     part = (
-        ShopOrder.objects.select_for_update()
+        ShopOrder.objects.select_for_update(of=("self",))
         .select_related("order", "shop")
         .get(pk=part.pk)
     )
@@ -277,7 +277,7 @@ def expire_unpaid_orders(now=None, limit=100):
             if order.date_placed > cutoff:
                 continue
             parts = (
-                ShopOrder.objects.select_for_update()
+                ShopOrder.objects.select_for_update(of=("self",))
                 .select_related("order", "shop")
                 .filter(order=order, payment_status="pending")
                 .exclude(status__in=["cancelled", "completed"])
@@ -294,7 +294,11 @@ def transition_shop_order(part, actor, target):
     order = (
         get_model("order", "Order").objects.select_for_update().get(pk=part.order_id)
     )
-    part = ShopOrder.objects.select_for_update().select_related("shop").get(pk=part.pk)
+    part = (
+        ShopOrder.objects.select_for_update(of=("self",))
+        .select_related("shop")
+        .get(pk=part.pk)
+    )
     if not shops_for_user(actor).filter(pk=part.shop_id).exists():
         raise PermissionDenied
     if target == "cancelled":

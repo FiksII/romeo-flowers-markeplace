@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -176,6 +177,7 @@ def address_suggestions(request):
 
 
 @require_POST
+@transaction.atomic
 def basket_add(request, pk):
     listing = next(
         (row for row in public_listings(get_context(request)) if row.pk == pk), None
@@ -186,10 +188,11 @@ def basket_add(request, pk):
         )
         return redirect(safe_next(request))
     try:
+        basket = editable_basket(request)
         quantity = int(request.POST.get("quantity", "1"))
         current = sum(
             line.quantity
-            for line in request.basket.all_lines()
+            for line in basket.all_lines()
             if line.product_id == listing.product_id
         )
         if (
@@ -197,20 +200,25 @@ def basket_add(request, pk):
             or current + quantity > listing.stockrecord.net_stock_level
         ):
             raise ValueError
-        request.basket.add_product(listing.product, quantity=quantity)
+        basket.add_product(listing.product, quantity=quantity)
         messages.success(request, f"«{listing.product.title}» добавлен в корзину.")
     except (ValueError, TypeError):
         messages.error(request, "Проверьте количество и наличие товара.")
+    except ValidationError as error:
+        messages.error(request, "; ".join(error.messages))
     return redirect(safe_next(request))
 
 
 @require_POST
+@transaction.atomic
 def basket_update(request, pk):
-    line = get_object_or_404(request.basket.lines, pk=pk)
     try:
+        basket = editable_basket(request)
+        line = get_object_or_404(basket.lines, pk=pk)
         quantity = int(request.POST.get("quantity", "0"))
         if not 0 <= quantity <= 101 or (
-            quantity and quantity > line.stockrecord.net_stock_level
+            quantity
+            and (not line.stockrecord or quantity > line.stockrecord.net_stock_level)
         ):
             raise ValueError
         if quantity == 0:
@@ -218,10 +226,31 @@ def basket_update(request, pk):
         else:
             line.quantity = quantity
             line.save(update_fields=["quantity"])
-        request.basket.reset_offer_applications()
+        basket.reset_offer_applications()
     except (ValueError, TypeError):
         messages.error(request, "Проверьте количество и наличие товара.")
+    except ValidationError as error:
+        messages.error(request, "; ".join(error.messages))
     return redirect("market:basket")
+
+
+def editable_basket(request):
+    """All writes acquire the same basket lock as checkout, then recheck status."""
+    Basket = get_model("basket", "Basket")
+    if not request.basket.pk:
+        request.basket.save()
+    strategy = request.basket.strategy
+    basket = Basket.objects.select_for_update().get(pk=request.basket.pk)
+    expected_owner = request.user.pk if request.user.is_authenticated else None
+    if basket.owner_id != expected_owner:
+        raise PermissionDenied
+    basket.strategy = strategy
+    request.basket = basket
+    if basket.status != Basket.OPEN:
+        raise ValidationError(
+            "Эта корзина уже оформляется. Обновите страницу перед изменением товаров."
+        )
+    return basket
 
 
 def _basket_display(request):

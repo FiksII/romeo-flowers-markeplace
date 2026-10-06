@@ -3,11 +3,42 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from market.availability import next_slot, shop_can_receive
+from market.availability import available_slots, next_slot, shop_can_receive
 from market.context import FulfillmentContext
 from market.models import DateException, WeeklyHours
 
 pytestmark = pytest.mark.django_db
+
+
+def test_overlapping_night_hours_do_not_double_count_prep(shop):
+    shop.hours.filter(method="work").delete()
+    WeeklyHours.objects.create(
+        shop=shop, weekday=0, method="work", start_minute=1320, end_minute=120
+    )
+    WeeklyHours.objects.create(
+        shop=shop, weekday=1, method="work", start_minute=0, end_minute=240
+    )
+    shop.prep_minutes = 180
+    shop.save()
+    now = datetime(2026, 10, 6, 0, tzinfo=ZoneInfo("Europe/Moscow"))
+    assert next_slot(shop, "pickup", now).start.hour == 3
+
+
+def test_overlapping_receiving_hours_emit_each_slot_once(shop):
+    shop.hours.filter(method="pickup").delete()
+    WeeklyHours.objects.create(
+        shop=shop, weekday=0, method="pickup", start_minute=1320, end_minute=120
+    )
+    WeeklyHours.objects.create(
+        shop=shop, weekday=1, method="pickup", start_minute=0, end_minute=240
+    )
+    shop.prep_minutes = 0
+    shop.save()
+    now = datetime(2026, 10, 6, 0, tzinfo=ZoneInfo("Europe/Moscow"))
+    slots = available_slots(shop, "pickup", now, day=now.date())
+    assert [slot.start.hour for slot in slots] == [0, 1, 2, 3]
+
+
 MOSCOW = ZoneInfo("Europe/Moscow")
 NOW = datetime(2026, 10, 6, 10, 0, tzinfo=MOSCOW)
 

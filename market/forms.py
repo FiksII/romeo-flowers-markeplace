@@ -62,10 +62,10 @@ def save_listing(shop, data, listing=None):
         get_model("catalogue", "ProductClass"),
     )
     if listing:
-        product = Product.objects.select_for_update().get(pk=listing.product_id)
         stock = Stock.objects.select_for_update().get(
-            product=product, partner=shop.partner
+            product_id=listing.product_id, partner=shop.partner
         )
+        product = Product.objects.select_for_update().get(pk=listing.product_id)
         if data["stock"] < (stock.num_allocated or 0):
             raise ValidationError(
                 "Наличие не может быть меньше количества, зарезервированного в заказах."
