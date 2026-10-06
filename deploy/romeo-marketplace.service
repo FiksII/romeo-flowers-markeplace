@@ -8,7 +8,9 @@ User=romeo-marketplace
 Group=romeo-marketplace
 WorkingDirectory=/srv/romeo-marketplace/current
 EnvironmentFile=/srv/romeo-marketplace/shared/runtime.env
-ExecStart=/srv/romeo-marketplace/current/.venv/bin/gunicorn romeo_market.wsgi:application --bind 127.0.0.1:8002 --workers 2 --timeout 60 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile -
+ExecStart=/srv/romeo-marketplace/current/.venv/bin/gunicorn romeo_market.wsgi:application --bind 127.0.0.1:8002 --workers 2 --timeout 60 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --control-socket /run/romeo-marketplace/gunicorn.ctl
+RuntimeDirectory=romeo-marketplace
+RuntimeDirectoryMode=0750
 Restart=on-failure
 RestartSec=3
 UMask=0022
@@ -16,7 +18,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
-ReadWritePaths=/srv/romeo-marketplace/shared/media
+ReadWritePaths=/srv/romeo-marketplace/shared/media /run/romeo-marketplace
 
 [Install]
 WantedBy=multi-user.target
