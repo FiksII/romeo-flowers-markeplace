@@ -38,7 +38,7 @@ def test_product_creation_owned_and_cannot_set_shop(client, owner, shop, other_s
             "description": "Розы",
             "category": "bouquet",
             "flower_kind": "Розы",
-            "price": "3300",
+            "pickup_price": "3300",
             "stock": "9",
             "is_public": "on",
             "shop": other_shop.pk,
@@ -56,7 +56,7 @@ def test_seller_cannot_approve_own_shop(client, owner, shop):
 
     form = ShopForm(instance=shop)
     assert "status" not in form.fields
-    assert "markup_percent" not in form.fields
+    assert "commission_percent" not in form.fields
 
 
 @override_settings(MARKET_DEMO=True)

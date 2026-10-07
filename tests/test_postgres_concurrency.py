@@ -147,7 +147,7 @@ def test_product_edit_and_checkout_no_deadlock(owner, shop, listing):
                     "title": "Новая цена",
                     "description": "Розы",
                     "is_public": True,
-                    "price": 3300,
+                    "pickup_price": 3300,
                     "stock": 5,
                     "category": "bouquet",
                     "flower_kind": "Розы",

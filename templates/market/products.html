@@ -1,0 +1,26 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}{{ shop.name }} · Букеты — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <a class="back-link" href="{% url 'market:partner' %}">← Мои магазины</a>
+  <div class="section-heading"><div class="page-heading"><span class="eyebrow">Кабинет партнёра · {{ shop.settlement.name }}</span><h1>Букеты</h1><p>Все букеты магазина: в продаже и распроданные. Распроданный букет не показывается в каталоге, пока вы не пополните количество.</p></div><a class="button button-primary" href="{% url 'market:product-new' shop.slug %}">+ Добавить букет</a></div>
+  {% include 'market/partials/partner_nav.html' %}
+  {% if shop.own_delivery and bouquets.no_delivery_price %}<p class="notice">У {{ bouquets.no_delivery_price }} {{ bouquets.no_delivery_price|ru_plural:"букета,букетов,букетов" }} не указана цена с доставкой: покупатели платят цену самовывоза.</p>{% endif %}
+  <nav class="filter-links" aria-label="Фильтр букетов">
+    <a href="?show=all"{% if show == 'all' %} aria-current="true"{% endif %}>Все · {{ bouquets.total }}</a>
+    <a href="?show=on-sale"{% if show == 'on-sale' %} aria-current="true"{% endif %}>В продаже · {{ bouquets.on_sale }}</a>
+    <a href="?show=sold-out"{% if show == 'sold-out' %} aria-current="true"{% endif %}>Распроданные · {{ bouquets.sold_out }}</a>
+    <a href="?show=hidden"{% if show == 'hidden' %} aria-current="true"{% endif %}>Скрытые · {{ bouquets.hidden }}</a>
+  </nav>
+  <div class="table-wrap"><table class="market-table"><thead><tr><th>Букет</th><th>Цена самовывозом</th>{% if shop.own_delivery %}<th>Цена с доставкой</th>{% endif %}<th>Количество</th><th>Публикация</th><th></th></tr></thead><tbody>
+  {% for item in listings %}<tr>
+    <td><div class="table-product"><img src="{{ item.image_url }}" width="56" height="56" alt="">{{ item.product.title }}</div></td>
+    <td>{{ item.pickup_price|rub }}</td>
+    {% if shop.own_delivery %}<td>{% if item.delivery_price %}{{ item.delivery_price|rub }}{% else %}<span class="status-chip chip-warn">Укажите цену</span>{% endif %}</td>{% endif %}
+    <td>{% if item.always_in_stock %}<span class="status-chip">Всегда в наличии</span>{% elif item.sold_out %}<span class="status-chip chip-warn">Распродан · 0</span>{% else %}{{ item.stockrecord.num_in_stock }}{% if item.stockrecord.num_allocated %} <span class="muted">· в резерве {{ item.stockrecord.num_allocated }}</span>{% endif %}{% endif %}</td>
+    <td>{{ item.product.is_public|yesno:'Опубликован,Скрыт' }}</td>
+    <td><a class="text-link" href="{% url 'market:product-edit' shop.slug item.pk %}">Изменить</a></td>
+  </tr>{% empty %}<tr><td colspan="{% if shop.own_delivery %}6{% else %}5{% endif %}">{% if show == 'all' %}Добавьте первый букет с ценой и фото.{% else %}В этом списке пока нет букетов.{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

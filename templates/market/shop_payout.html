@@ -1,0 +1,37 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}{{ shop.name }} · Реквизиты и зона доставки — Ромео{% endblock %}
+{% block map_assets %}{% include 'market/partials/map_assets.html' with geoman=True %}{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <a class="back-link" href="{% url 'market:partner' %}">← Мои магазины</a>
+  <div class="section-heading"><div class="page-heading"><span class="eyebrow">Кабинет партнёра · {{ shop.settlement.name }}</span><h1>Реквизиты и зона доставки</h1><p>Реквизиты нужны, чтобы переводить вам деньги за заказы. Зона показывает, куда вы или Ромео привозите букеты.</p></div><span class="status-chip">{{ shop.get_status_display }}</span></div>
+  {% include 'market/partials/partner_nav.html' %}
+  <form method="post" class="info-layout" data-zone-form novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <section class="form-card">
+      <h2>Реквизиты для переводов</h2>
+      <div class="two-fields">
+        {% include 'market/partials/field.html' with field=form.legal_name %}
+        {% include 'market/partials/field.html' with field=form.inn %}
+        {% include 'market/partials/field.html' with field=form.bank_account %}
+        {% include 'market/partials/field.html' with field=form.bank_bik %}
+      </div>
+      <p class="field-help">{% if demo_mode %}Демо: реквизиты вымышленные, деньги не переводятся.{% else %}Выплаты появятся после подключения платёжного сервиса. Реквизиты проверяются администратором перед первой выплатой.{% endif %}</p>
+    </section>
+    <section class="form-card">
+      <h2>Зона доставки</h2>
+      <p class="field-help">Выберите на панели слева инструмент «многоугольник» или «прямоугольник», отметьте углы зоны и замкните её на первой точке. Нижние кнопки панели меняют углы, двигают зону и стирают её. Покупатель увидит доставку, только если его адрес внутри зоны.</p>
+      {% include 'market/partials/field.html' with field=form.delivery_zone %}
+      <div class="shop-map shop-map-tall" data-shop-map="zone" data-lat="{{ shop.latitude|unlocalize_money }}" data-lon="{{ shop.longitude|unlocalize_money }}" role="application" aria-label="Карта зоны доставки"></div>
+      <p class="field-help zone-status" data-zone-status role="status">{% if shop.delivery_zone %}Зона задана.{% else %}Зона ещё не нарисована.{% endif %}</p>
+      <noscript><p class="notice error">Для рисования зоны нужен JavaScript.</p></noscript>
+      <div class="two-fields">
+        {% include 'market/partials/field.html' with field=form.minimum_order %}
+      </div>
+      {% include 'market/partials/field.html' with field=form.delivery_settlements %}
+    </section>
+    <button class="button button-primary">Сохранить</button>
+  </form>
+</section>
+{% endblock %}

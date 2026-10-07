@@ -335,8 +335,9 @@ class Command(BaseCommand):
             Stock = get_model("partner", "StockRecord")
             for line in part.lines:
                 stock = Stock.objects.select_for_update().get(pk=line.stockrecord_id)
-                stock.num_in_stock += line.quantity
-                stock.save(update_fields=["num_in_stock"])
+                if stock.num_in_stock is not None:
+                    stock.num_in_stock += line.quantity
+                    stock.save(update_fields=["num_in_stock"])
             if scenario == "refunded":
                 part.payment_status = "refunded"
                 part.status = "cancelled"

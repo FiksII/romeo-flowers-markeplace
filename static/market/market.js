@@ -77,6 +77,7 @@ document.querySelectorAll("[data-address-form]").forEach((form) => {
             token.value = row.token;
             if (city) city.value = "";
             status.textContent = "Адрес выбран. Примените условия получения.";
+            form.dispatchEvent(new CustomEvent("address:selected", { detail: row }));
             close();
             input.focus();
           });

@@ -2,7 +2,7 @@
 {% block title %}Оформить заказ — Ромео{% endblock %}
 {% block content %}<section class="shell section-space">
   <a class="back-link" href="{% url 'market:basket' %}">← Корзина</a>
-  <div class="page-heading"><h1>Всё готово к красивому моменту</h1><p>Один общий адрес доставки. Ромео доставляет заказы каждого магазина отдельно; при самовывозе действует скидка.</p></div>
+  <div class="page-heading"><h1>Всё готово к красивому моменту</h1><p>Один общий адрес доставки. Заказы каждого магазина привозит Ромео или сам магазин; цена букета при доставке и самовывозе может отличаться.</p></div>
   {% if groups %}{% include 'market/partials/receiving.html' with compact=True %}
   <form method="post" class="checkout-layout" data-checkout>{% csrf_token %}
     <input type="hidden" name="basket_id" value="{{ request.basket.pk }}">
@@ -15,8 +15,8 @@
         <div class="field"><label for="method-{{ group.shop.pk }}">Получение</label>
           <select id="method-{{ group.shop.pk }}" name="method_{{ group.shop.pk }}" data-method required>
             <option value="">Выберите способ</option>
-            {% if group.slot_options.delivery %}<option value="delivery" data-goods="{{ group.delivery_goods_total|unlocalize_money }}" data-fee="{{ group.shop.delivery_fee|unlocalize_money }}" {% if group.selected_method == 'delivery' %}selected{% endif %}>Доставка Ромео · {{ group.shop.delivery_fee|rub }}</option>{% endif %}
-            {% if group.slot_options.pickup %}<option value="pickup" data-goods="{{ group.pickup_goods_total|unlocalize_money }}" data-fee="0" {% if group.selected_method == 'pickup' %}selected{% endif %}>Самовывоз · экономия {{ group.pickup_savings|rub }}</option>{% endif %}
+            {% if group.slot_options.delivery %}<option value="delivery" data-goods="{{ group.delivery_goods_total|unlocalize_money }}" data-fee="{{ group.delivery_fee|unlocalize_money }}" {% if group.selected_method == 'delivery' %}selected{% endif %}>{% if group.own_delivery %}Доставка магазина · включена в цену{% else %}Доставка Ромео · {{ group.delivery_fee|rub }}{% endif %}</option>{% endif %}
+            {% if group.slot_options.pickup %}<option value="pickup" data-goods="{{ group.pickup_goods_total|unlocalize_money }}" data-fee="0" {% if group.selected_method == 'pickup' %}selected{% endif %}>Самовывоз{% if group.pickup_savings > 0 %} · экономия {{ group.pickup_savings|rub }}{% endif %}</option>{% endif %}
           </select>
         </div>
         <div class="field"><label for="slot-{{ group.shop.pk }}">Интервал получения</label>
@@ -26,17 +26,17 @@
           </select>
         </div>
       </div>
-      <p class="notice" data-pickup-note hidden>Экономия на товарах {{ group.pickup_savings|rub }}.<br>{{ group.shop.settlement.name }}, {{ group.shop.address }}<br>{{ group.shop.pickup_instructions }}</p>
+      <p class="notice" data-pickup-note hidden>{% if group.pickup_savings > 0 %}Экономия на товарах {{ group.pickup_savings|rub }}.<br>{% endif %}{{ group.shop.settlement.name }}, {{ group.shop.address }}<br>{{ group.shop.pickup_instructions }}</p>
       <p data-delivery-note hidden>{% if receiving.address %}{{ receiving.address.value }}{% else %}<span class="error-text">Для доставки выберите точный адрес выше.</span>{% endif %}</p>
       {% if not group.available %}<p class="notice error">Этот магазин или его товары недоступны. Вернитесь в корзину.</p>{% endif %}
-      <p class="field-help">Минимум по цене магазина {{ group.shop.minimum_order|rub }}. Время — московское.</p>
+      <p class="field-help">Минимальная сумма товаров {{ group.shop.minimum_order|rub }}. Время — московское.</p>
     </section>
     {% endfor %}
     <section class="group-card"><h2>Кому передать цветы?</h2>{% include 'market/partials/form_fields.html' %}</section>
     </div>
     <aside class="summary-card"><h2>Общий заказ</h2>
       <div class="summary-row"><span>Товары</span><strong data-goods-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
-      <div class="summary-row"><span>Доставка Ромео</span><strong data-shipping-total>После выбора</strong></div>
+      <div class="summary-row"><span>Доставка</span><strong data-shipping-total>После выбора</strong></div>
       <div class="summary-row total-row"><span>Итого</span><strong data-order-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
       <p class="notice">Приём оплаты пока не подключён. Созданный заказ будет ожидать оплаты.</p>
       <button class="button button-primary button-block">Создать заказ</button>

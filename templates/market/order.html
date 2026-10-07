@@ -13,7 +13,7 @@
       <p><strong>{{ part.get_method_display }}</strong> · {{ part.slot_start|date:'d.m H:i' }}–{{ part.slot_end|date:'H:i' }}<br>{{ part.address }}</p>
       {% for line in part.lines %}<div class="summary-row"><span>{{ line.title }} × {{ line.quantity }}</span><span>{{ line.line_price_incl_tax|rub }}</span></div>{% endfor %}
       {% if part.pickup_discount_total %}<p class="field-help">В цене цветов учтена скидка за самовывоз {{ part.pickup_discount_total|rub }}.</p>{% endif %}
-      <div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>
+      {% if part.method == 'delivery' and part.delivery_owner == 'partner' and not part.delivery_total %}<div class="summary-row"><span>Доставка магазина</span><span>включена в цену</span></div>{% else %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
       <div class="summary-row total-row"><strong>Итого по магазину</strong><strong>{{ part.total|rub }}</strong></div>
       {% if part.instructions %}<p class="muted">{{ part.instructions }}</p>{% endif %}
       {% if part.payment_status == 'pending' and part.status != 'cancelled' %}<form method="post" action="{% url 'market:customer-cancel' part.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить эту часть заказа</button></form>{% endif %}

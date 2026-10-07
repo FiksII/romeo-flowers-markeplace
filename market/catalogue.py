@@ -6,7 +6,6 @@ from django.utils import timezone
 
 from market.availability import receiving_options
 from market.models import Listing
-from market.pricing import quote_product
 
 # Old links used plural names (?flower=розы); they map to directory names.
 CANONICAL_FLOWERS = {
@@ -112,7 +111,7 @@ def catalogue_candidates(context, filters=None, now=None):
             shop__status="active",
             shop__settlement__region__in=["77", "50"],
         )
-        .select_related("product", "shop", "shop__settlement")
+        .select_related("product__product_class", "shop", "shop__settlement")
         .prefetch_related(
             "flowers",
             "product__stockrecords",
@@ -133,15 +132,13 @@ def catalogue_candidates(context, filters=None, now=None):
     listings = []
     for listing in query:
         stock = listing.stockrecord
-        if not stock or stock.price is None or stock.net_stock_level <= 0:
+        if not stock or stock.price is None or not listing.can_supply(1):
             continue
         options = receiving_options(listing.shop, context, now)
         if options:
             listing.receiving_options = options
             listing.nearest_slot = min(options.values(), key=lambda slot: slot.start)
-            listing.display_price = quote_product(
-                listing.shop, stock.price, context.method
-            ).customer
+            listing.display_price = listing.price_for(context.method)
             listings.append(listing)
     return listings
 

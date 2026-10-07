@@ -90,6 +90,9 @@ LOGOUT_REDIRECT_URL = "/"
 MARKET_DEMO = False
 MARKET_RESERVATION_MINUTES = 30
 DADATA_TOKEN = env("DADATA_TOKEN", default="")
+# Without a DaData token, addresses are searched on OpenStreetMap (no key needed).
+OSM_ADDRESS_SEARCH = env.bool("OSM_ADDRESS_SEARCH", default=True)
+OSM_USER_AGENT = env("OSM_USER_AGENT", default="romeo-marketplace/1.0")
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 WSGI_APPLICATION = "romeo_market.wsgi.application"
 ASGI_APPLICATION = "romeo_market.asgi.application"

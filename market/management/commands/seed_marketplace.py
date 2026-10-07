@@ -7,6 +7,7 @@ from django.db import transaction
 from oscar.core.loading import get_model
 
 from market.models import Listing, Membership, Settlement, Shop, WeeklyHours
+from market.zones import circle_zone
 
 
 class Command(BaseCommand):
@@ -82,12 +83,14 @@ class Command(BaseCommand):
                     "longitude": lon,
                     "status": "active",
                     "description": "Небольшая мастерская цветов. Собираем сезонные букеты с вниманием к оттенкам и каждой детали.",
-                    "radius_km": 15,
+                    "delivery_zone": circle_zone(lat, lon, 15),
+                    # Only «Тихий сад» brings bouquets itself, the others use Romeo.
+                    "own_delivery": slug == "garden-studio",
                     "delivery_fee": fee,
                     "prep_minutes": 60,
                     "minimum_order": 1500,
                     "pickup_instructions": "Вход с улицы. Назовите номер заказа флористу.",
-                    "markup_percent": Decimal(10),
+                    "commission_percent": Decimal(10),
                 },
             )
             if created:
@@ -102,10 +105,25 @@ class Command(BaseCommand):
                             end_minute=end,
                         )
             shops.append(shop)
-        cls, _ = get_model("catalogue", "ProductClass").objects.get_or_create(
-            slug="market-flowers",
-            defaults={"name": "Цветы", "track_stock": True, "requires_shipping": True},
-        )
+        classes = {
+            True: get_model("catalogue", "ProductClass").objects.get_or_create(
+                slug="market-flowers",
+                defaults={
+                    "name": "Цветы",
+                    "track_stock": True,
+                    "requires_shipping": True,
+                },
+            )[0],
+            # «Всегда в наличии»: Oscar does not count or reserve stock for this class.
+            False: get_model("catalogue", "ProductClass").objects.get_or_create(
+                slug="market-flowers-unlimited",
+                defaults={
+                    "name": "Цветы без учёта остатков",
+                    "track_stock": False,
+                    "requires_shipping": True,
+                },
+            )[0],
+        }
         names = [
             "Тихое счастье",
             "Розовое облако",
@@ -122,11 +140,12 @@ class Command(BaseCommand):
         ]
         for index, title in enumerate(names, 1):
             shop = shops[(index - 1) // 4]
+            tracked = index != 2
             product, created = get_model("catalogue", "Product").objects.get_or_create(
                 upc=f"DEMO-ROMEO-{index:02}",
                 defaults={
                     "title": title,
-                    "product_class": cls,
+                    "product_class": classes[tracked],
                     "description": "Авторский букет в нежной палитре. Состав: розы, сезонные цветы и свежая зелень. Флорист бережно упакует цветы перед получением.",
                     "is_public": True,
                 },
@@ -138,13 +157,16 @@ class Command(BaseCommand):
                     partner_sku=f"DEMO-{index:02}",
                     price_currency="RUB",
                     price=Decimal(1900 + index * 250),
-                    num_in_stock=20,
+                    num_in_stock=20 if tracked else None,
                 )
                 listing = Listing.objects.create(
                     product=product,
                     shop=shop,
                     flower_kind="Розы" if index % 3 else "Сезонные цветы",
                     category="composition" if index % 4 == 0 else "bouquet",
+                    delivery_price=Decimal(1900 + index * 250 + 400)
+                    if shop.own_delivery
+                    else None,
                     seed_image=f"market/bouquets/bouquet-{index:02}.png",
                 )
                 if index % 3:

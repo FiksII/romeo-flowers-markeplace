@@ -7,10 +7,10 @@
 <div class="stats-grid report-stats">
   <div><span>Заказы магазинов</span><strong>{{ stats.orders }}</strong></div>
   <div><span>Оплаченные товары · цена покупателей</span><strong>{{ stats.paid_total|rub }}</strong></div>
-  <div><span>Наценка с оплаченных товаров</span><strong>{{ stats.commission_total|rub }}</strong></div>
+  <div><span>Комиссия с оплаченных товаров</span><strong>{{ stats.commission_total|rub }}</strong></div>
   <div><span>Сумма магазинов за оплаченные товары</span><strong>{{ stats.paid_base_total|rub }}</strong></div>
   <div><span>Доставка Ромео</span><strong>{{ stats.delivery_revenue|rub }}</strong></div>
-  <div><span>Наценка и доставка платформы</span><strong>{{ stats.platform_total|rub }}</strong></div>
+  <div><span>Комиссия и доставка платформы</span><strong>{{ stats.platform_total|rub }}</strong></div>
   <div><span>{% if demo_mode %}Демо-выплаты{% else %}Выплачено{% endif %}</span><strong>{{ stats.payout_total|rub }}</strong></div>
   <div><span>К перечислению по полученным заказам · за всё время</span><strong>{{ stats.payout_pending|rub }}</strong></div>
   <div><span>Возвращено покупателям</span><strong>{{ stats.refunded_total|rub }}</strong></div>

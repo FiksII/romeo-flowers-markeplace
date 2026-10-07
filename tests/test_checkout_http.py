@@ -75,9 +75,11 @@ def test_home_listing_and_all_portal_forms_render(client, owner, shop, listing):
     client.force_login(owner)
     for url in [
         f"/partner/{shop.slug}/",
-        f"/partner/{shop.slug}/hours/",
-        f"/partner/{shop.slug}/settings/",
+        f"/partner/{shop.slug}/products/",
+        f"/partner/{shop.slug}/info/",
+        f"/partner/{shop.slug}/payout/",
         f"/partner/{shop.slug}/products/{listing.pk}/",
+        f"/partner/{shop.slug}/products/new/",
         "/partner/new/",
     ]:
         assert client.get(url).status_code == 200

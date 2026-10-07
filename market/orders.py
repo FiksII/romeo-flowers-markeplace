@@ -69,6 +69,8 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         .filter(pk__in=stock_ids)
         .order_by("pk")
     }
+    # Sellers edit a listing only while holding its stock row, which is locked above, so
+    # these rows cannot change under this checkout.
     listing_rows = {
         row.product_id: row
         for row in Listing.objects.select_related("shop__settlement").filter(
@@ -90,12 +92,14 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             raise ValidationError(
                 "Одно из предложений больше недоступно. Обновите корзину."
             )
-        if stock.price is None or stock.net_stock_level < line.quantity:
+        if stock.price is None or not (
+            listing.always_in_stock or stock.net_stock_level >= line.quantity
+        ):
             raise ValidationError(
                 f"Недостаточно цветов для «{line.product.title}». Обновите корзину."
             )
         line.stockrecord = stock
-        groups[listing.shop_id].append((line, stock))
+        groups[listing.shop_id].append((line, stock, listing))
     shops = {
         row.pk: row
         for row in Shop.objects.select_for_update(of=("self",))
@@ -153,23 +157,33 @@ def place_market_order(user, basket, choices, address, contact, now=None):
                     f"Магазин «{shop.name}» не доставляет по этому адресу."
                 )
             has_delivery = True
-        goods, base_goods, discount = Decimal(0), Decimal(0), Decimal(0)
-        for line, stock in items:
-            quote = quote_product(shop, stock.price, method)
+        goods, payout, commission = Decimal(0), Decimal(0), Decimal(0)
+        for line, stock, listing in items:
+            quote = quote_product(shop, stock.price, listing.delivery_price, method)
             line._info = basket.strategy.fetch_for_product(
                 line.product, stockrecord=stock
             )
             goods += quote.customer * line.quantity
-            base_goods += quote.base * line.quantity
-            discount += quote.discount * line.quantity
-        if base_goods < shop.minimum_order:
+            payout += quote.payout * line.quantity
+            commission += quote.commission * line.quantity
+        if goods < shop.minimum_order:
             raise ValidationError(
                 f"Минимальная сумма товаров в «{shop.name}»: {shop.minimum_order} ₽."
             )
-        fee = shop.delivery_fee if method == "delivery" else Decimal(0)
-        commission = goods - base_goods
+        # A shop with its own delivery brings the bouquet itself and has it in the price.
+        own = method == "delivery" and shop.own_delivery
+        fee = shop.delivery_fee if method == "delivery" and not own else Decimal(0)
         prepared.append(
-            (shop, method, slot, goods, base_goods, fee, commission, discount)
+            (
+                shop,
+                method,
+                slot,
+                goods,
+                payout,
+                fee,
+                commission,
+                "partner" if own else "platform",
+            )
         )
         goods_total += goods
         shipping_total += fee
@@ -209,7 +223,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         shipping_address=shipping_address,
         status="AwaitingPayment",
     )
-    for shop, method, slot, goods, base_goods, fee, commission, discount in prepared:
+    for shop, method, slot, goods, payout, fee, commission, owner in prepared:
         ShopOrder.objects.create(
             order=order,
             shop=shop,
@@ -223,13 +237,12 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             contact_phone=contact["phone"][:25],
             instructions=contact.get("instructions", "")[:1000],
             goods_total=goods,
-            base_goods_total=base_goods,
-            pickup_discount_total=discount,
+            base_goods_total=payout,
             delivery_total=fee,
-            delivery_owner="platform",
-            commission_percent=shop.markup_percent,
+            delivery_owner=owner,
+            commission_percent=shop.commission_percent,
             commission_total=commission,
-            partner_total=base_goods,
+            partner_total=payout,
         )
     basket.submit()
     return order

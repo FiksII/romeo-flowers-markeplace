@@ -22,8 +22,6 @@ def shop_data(shop):
         "delivery_enabled": True,
         "pickup_enabled": True,
         "delivery_settlements": [shop.settlement_id],
-        "radius_km": 15,
-        "delivery_fee": 350,
         "minimum_order": 0,
         "prep_minutes": 60,
     }
@@ -33,12 +31,12 @@ def test_partner_profile_cannot_overwrite_new_moderation(shop):
     form = ShopForm(shop_data(shop), instance=shop)
     assert form.is_valid(), form.errors
     Shop.objects.filter(pk=shop.pk).update(
-        status="suspended", markup_percent=Decimal(17)
+        status="suspended", commission_percent=Decimal(17)
     )
     form.save()
     shop.refresh_from_db()
     assert shop.status == "suspended"
-    assert shop.markup_percent == Decimal(17)
+    assert shop.commission_percent == Decimal(17)
 
 
 def test_unpaid_fulfillment_and_paid_completion(owner, shop, listing):
@@ -58,28 +56,44 @@ def test_unpaid_fulfillment_and_paid_completion(owner, shop, listing):
     assert order.status == "Completed"
 
 
+def info_post(shop, **hours):
+    """The «Информация о магазине» form: the weekly grid is the whole schedule."""
+    return {
+        "name": shop.name,
+        "description": "",
+        "settlement": shop.settlement_id,
+        "address": shop.address,
+        "phone": "",
+        "pickup_enabled": "on",
+        "delivery_enabled": "on",
+        "prep_minutes": "60",
+        "pickup_instructions": "",
+        **hours,
+    }
+
+
 def test_schedule_settings_and_operator_scope(
     client, owner, stranger, shop, other_shop, listing
 ):
     client.force_login(owner)
-    assert (
-        client.post(
-            f"/partner/{shop.slug}/hours/",
-            {"weekday": "0", "method": "work", "start": "22:00", "end": "06:00"},
-        ).status_code
-        == 302
+    response = client.post(
+        f"/partner/{shop.slug}/info/",
+        info_post(shop, work_0_start="22:00", work_0_end="06:00"),
     )
+    assert response.status_code == 302
     assert shop.hours.get(weekday=0, method="work").start_minute == 1320
+    # Days left empty in the grid are days off.
+    assert shop.hours.count() == 1
     assert (
         client.post(
-            f"/partner/{other_shop.slug}/hours/",
-            {"weekday": "0", "method": "work", "start": "00:00", "end": "24:00"},
+            f"/partner/{other_shop.slug}/info/",
+            info_post(other_shop, work_0_start="00:00", work_0_end="24:00"),
         ).status_code
         == 404
     )
     assert (
         client.post(
-            f"/partner/{shop.slug}/hours/",
+            f"/partner/{shop.slug}/info/",
             {
                 "form_kind": "exception",
                 "day": "2026-12-31",
@@ -108,7 +122,6 @@ def test_new_shop_requires_signed_local_address_and_approval(client, owner, city
         "address_token": encode_address(ADDRESS),
         "delivery_enabled": "on",
         "pickup_enabled": "on",
-        "radius_km": "10",
         "delivery_fee": "200",
         "minimum_order": "1500",
         "prep_minutes": "30",

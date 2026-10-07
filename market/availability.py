@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
-from math import asin, cos, radians, sin, sqrt
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
+
+from market.zones import point_in_zone
 
 
 @dataclass(frozen=True)
@@ -109,15 +110,6 @@ def next_slot(shop, method, now=None, day=None, hour=None):
     return slots[0] if slots else None
 
 
-def distance_km(lat1, lon1, lat2, lon2):
-    lat1, lon1, lat2, lon2 = map(radians, map(float, [lat1, lon1, lat2, lon2]))
-    value = (
-        sin((lat2 - lat1) / 2) ** 2
-        + cos(lat1) * cos(lat2) * sin((lon2 - lon1) / 2) ** 2
-    )
-    return 6371.0088 * 2 * asin(sqrt(min(1, max(0, value))))
-
-
 def context_day(context, shop, now):
     today = now.astimezone(ZoneInfo(shop.timezone)).date()
     if context.when == "today":
@@ -132,14 +124,10 @@ def location_matches(shop, method, context):
         if context.address.get("region") not in {"77", "50"}:
             return False
         if method == "delivery":
-            return (
-                distance_km(
-                    shop.latitude,
-                    shop.longitude,
-                    context.address["latitude"],
-                    context.address["longitude"],
-                )
-                <= float(shop.radius_km) + 1e-9
+            return point_in_zone(
+                context.address["latitude"],
+                context.address["longitude"],
+                shop.delivery_zone,
             )
         return (
             shop.settlement.name.casefold()

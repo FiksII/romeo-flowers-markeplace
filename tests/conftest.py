@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from oscar.core.loading import get_model
 
 from market.models import Listing, Membership, Settlement, Shop, WeeklyHours
+from market.zones import circle_zone
 
 
 @pytest.fixture
@@ -45,10 +46,10 @@ def shop(city, owner):
         latitude=Decimal("55.75"),
         longitude=Decimal("37.61"),
         status="active",
-        markup_percent=0,
+        commission_percent=0,
         prep_minutes=60,
         delivery_fee=Decimal(350),
-        radius_km=Decimal(15),
+        delivery_zone=circle_zone(55.75, 37.61, 15),
     )
     Membership.objects.create(shop=shop, user=owner)
     shop.delivery_settlements.add(city)
@@ -74,8 +75,9 @@ def other_shop(oblast, stranger):
         latitude=Decimal("55.89"),
         longitude=Decimal("37.44"),
         status="active",
-        markup_percent=0,
+        commission_percent=0,
         prep_minutes=30,
+        delivery_zone=circle_zone(55.89, 37.44, 10),
     )
     Membership.objects.create(shop=shop, user=stranger)
     shop.delivery_settlements.add(oblast)

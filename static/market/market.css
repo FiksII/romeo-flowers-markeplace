@@ -332,3 +332,32 @@ html:not(.js) .live-only{display:none}
   .portal-nav{gap:8px}
   .portal-nav a{padding:8px 14px;font-size:13px}
 }
+
+/* ---------- Partner cabinet: sections, bouquets, schedule grid, maps ---------- */
+.portal-nav a[aria-current=page]{background:var(--forest);border-color:var(--forest);color:#fff}
+.filter-links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.filter-links a{padding:8px 16px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:14px}
+.filter-links a:hover{background:var(--sage);border-color:var(--sage-strong)}
+.filter-links a[aria-current=true]{background:var(--sage-note);border-color:var(--sage-strong);font-weight:500}
+.status-chip.chip-warn{background:var(--bad);color:var(--red-dark)}
+.checkbox-field .field-help,.checkbox-field .errorlist{order:3;flex-basis:100%}
+.info-layout .form-card{margin-bottom:24px}
+.info-layout .two-fields{margin-top:0}
+.shop-map{height:340px;margin:8px 0 12px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--cream);overflow:hidden;z-index:0}
+.shop-map-tall{height:480px}
+.shop-map.leaflet-container{font-family:var(--sans)}
+.zone-status{margin-bottom:20px}
+.field ul:has(input[type=checkbox]){display:flex;flex-wrap:wrap;gap:8px 24px;margin:8px 0 0;padding:0;list-style:none}
+.field ul:has(input[type=checkbox]) label{display:flex;align-items:center;gap:10px;color:var(--text)}
+.field ul:has(input[type=checkbox]) input{width:20px;height:20px;accent-color:var(--forest)}
+.hours-table{width:100%;min-width:640px;border-collapse:collapse;font-size:14px}
+.hours-table th,.hours-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.hours-table thead th{background:var(--cream);font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.hours-table tbody th{font-weight:500;white-space:nowrap}
+.hours-table .day-short{display:none}
+.time-pair{display:flex;align-items:center;gap:8px}
+.time-pair input{width:76px;padding:9px 10px;border:1px solid var(--border-input);border-radius:var(--r-sm);font:inherit;text-align:center}
+.hours-table .errorlist{margin:6px 0 0;font-size:12px}
+.hours-tools{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:16px}
+.hours-tools[hidden]{display:none}
+@media(max-width:760px){.hours-table .day-full{display:none}.hours-table .day-short{display:inline}.shop-map{height:280px}.shop-map-tall{height:380px}}

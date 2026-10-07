@@ -39,7 +39,6 @@ from market.filters import (
 from market.forms import CheckoutContactForm, SignupForm
 from market.models import Flower, Listing, Shop
 from market.orders import basket_groups, cancel_shop_order, place_market_order
-from market.pricing import quote_product
 
 # Flower circles under the headings: directory name, plural label, illustration.
 FLOWER_RAIL = (
@@ -214,11 +213,7 @@ def product_detail(request, pk):
     )
     context = get_context(request)
     options = receiving_options(listing.shop, context)
-    listing.display_price = (
-        quote_product(listing.shop, listing.base_price, context.method).customer
-        if listing.base_price is not None
-        else None
-    )
+    listing.display_price = listing.price_for(context.method)
     return render(
         request,
         "market/product.html",
@@ -326,10 +321,7 @@ def basket_add(request, pk):
             for line in basket.all_lines()
             if line.product_id == listing.product_id
         )
-        if (
-            not 1 <= quantity <= 101
-            or current + quantity > listing.stockrecord.net_stock_level
-        ):
+        if not 1 <= quantity <= 101 or not listing.can_supply(current + quantity):
             raise ValueError
         basket.add_product(listing.product, quantity=quantity)
         messages.success(request, f"«{listing.product.title}» добавлен в корзину.")
@@ -347,9 +339,12 @@ def basket_update(request, pk):
         basket = editable_basket(request)
         line = get_object_or_404(basket.lines, pk=pk)
         quantity = int(request.POST.get("quantity", "0"))
+        listing = Listing.objects.filter(product_id=line.product_id).first()
         if not 0 <= quantity <= 101 or (
             quantity
-            and (not line.stockrecord or quantity > line.stockrecord.net_stock_level)
+            and (
+                not line.stockrecord or not listing or not listing.can_supply(quantity)
+            )
         ):
             raise ValueError
         if quantity == 0:
@@ -389,24 +384,26 @@ def _basket_display(request):
     groups = basket_groups(request.basket)
     for group in groups:
         shop = group["shop"]
-        group["base_total"] = 0
         group["delivery_goods_total"] = 0
         group["pickup_goods_total"] = 0
         for item in group["lines"]:
-            stock = item["listing"].stockrecord
-            if stock and stock.price is not None:
-                delivery_quote = quote_product(shop, stock.price)
-                pickup_quote = quote_product(shop, stock.price, "pickup")
+            listing = item["listing"]
+            delivery_unit, pickup_unit = (
+                listing.price_for("delivery"),
+                listing.price_for("pickup"),
+            )
+            if delivery_unit is not None:
                 quantity = item["line"].quantity
-                group["base_total"] += delivery_quote.base * quantity
-                group["delivery_goods_total"] += delivery_quote.customer * quantity
-                group["pickup_goods_total"] += pickup_quote.customer * quantity
+                group["delivery_goods_total"] += delivery_unit * quantity
+                group["pickup_goods_total"] += pickup_unit * quantity
                 item["customer_price"] = (
-                    pickup_quote if context.method == "pickup" else delivery_quote
-                ).customer
+                    pickup_unit if context.method == "pickup" else delivery_unit
+                )
         group["pickup_savings"] = (
             group["delivery_goods_total"] - group["pickup_goods_total"]
         )
+        group["own_delivery"] = shop.own_delivery
+        group["delivery_fee"] = 0 if shop.own_delivery else shop.delivery_fee
         group["selected_method"] = request.POST.get(f"method_{shop.pk}", "")
         group["selected_slot"] = request.POST.get(f"slot_{shop.pk}", "")
         group["slot_options"] = {}
@@ -426,7 +423,7 @@ def _basket_display(request):
             shop.status == "active"
             and all(
                 item["listing"].stockrecord
-                and item["listing"].stockrecord.net_stock_level >= item["line"].quantity
+                and item["listing"].can_supply(item["line"].quantity)
                 for item in group["lines"]
             )
             and any(group["slot_options"].values())

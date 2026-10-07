@@ -33,7 +33,7 @@ class MarketplaceStrategy(Default):
             return Unavailable()
         shop = self.shops.get(listing.shop_id, listing.shop)
         method = self.methods.get(shop.pk, self.method)
-        quote = quote_product(shop, stockrecord.price, method)
+        quote = quote_product(shop, stockrecord.price, listing.delivery_price, method)
         return FixedPrice(
             currency=stockrecord.price_currency, excl_tax=quote.customer, tax=Decimal(0)
         )

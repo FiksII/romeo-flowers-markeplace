@@ -1,1 +1,9 @@
-<nav class="portal-nav" aria-label="Кабинет магазина"><a href="{% url 'market:partner-shop' shop.slug %}">Обзор</a><a href="{% url 'market:product-new' shop.slug %}">Добавить товар</a><a href="{% url 'market:hours' shop.slug %}">Расписание</a><a href="{% url 'market:shop-settings' shop.slug %}">Настройки и реквизиты</a>{% if shop.status == 'active' %}<a href="{% url 'market:shop' shop.slug %}">Витрина ↗</a>{% endif %}</nav>
+{% with current=request.resolver_match.url_name %}
+<nav class="portal-nav" aria-label="Кабинет магазина">
+  <a href="{% url 'market:partner-shop' shop.slug %}"{% if current == 'partner-shop' or current == 'partner-order' %} aria-current="page"{% endif %}>Дашборд</a>
+  <a href="{% url 'market:products' shop.slug %}"{% if current == 'products' or current == 'product-new' or current == 'product-edit' %} aria-current="page"{% endif %}>Букеты</a>
+  <a href="{% url 'market:shop-info' shop.slug %}"{% if current == 'shop-info' %} aria-current="page"{% endif %}>Информация о магазине</a>
+  <a href="{% url 'market:shop-payout' shop.slug %}"{% if current == 'shop-payout' %} aria-current="page"{% endif %}>Реквизиты и зона доставки</a>
+  {% if shop.status == 'active' %}<a href="{% url 'market:shop' shop.slug %}">Витрина ↗</a>{% endif %}
+</nav>
+{% endwith %}

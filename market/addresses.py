@@ -1,6 +1,8 @@
+import hashlib
 import json
 from decimal import Decimal, InvalidOperation
 from urllib.error import URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from django.conf import settings
@@ -9,6 +11,11 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 
 SALT = "market-receiving-address"
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+# ISO 3166-2 codes of the two launch regions as OpenStreetMap reports them.
+NOMINATIM_REGIONS = {"RU-MOW": "77", "RU-MOS": "50"}
+# Moscow and the oblast: left, top, right, bottom as Nominatim expects them.
+NOMINATIM_VIEWBOX = "34.8,57.2,40.6,54.0"
 DEMO_ADDRESSES = [
     {
         "value": "Москва, Тверская улица, дом 1",
@@ -75,6 +82,52 @@ def address_from_suggestion(item):
     )
 
 
+def address_from_nominatim(item):
+    """OpenStreetMap result to our address; only exact houses in regions 77 and 50."""
+    data = item.get("address", {})
+    if not data.get("house_number"):
+        raise ValidationError("Уточните адрес до дома.")
+    city = (
+        data.get("city")
+        or data.get("town")
+        or data.get("village")
+        or data.get("municipality")
+        or data.get("state")
+    )
+    street = data.get("road") or data.get("pedestrian") or data.get("hamlet") or ""
+    value = ", ".join(
+        part for part in [city, street, f"дом {data['house_number']}"] if part
+    )
+    return validate_address(
+        {
+            "value": value[:300],
+            "region": NOMINATIM_REGIONS.get(data.get("ISO3166-2-lvl4"), ""),
+            "city": city,
+            "latitude": item.get("lat"),
+            "longitude": item.get("lon"),
+        }
+    )
+
+
+def _suggestions(items, convert, cache_key):
+    results = []
+    for item in items:
+        try:
+            address = convert(item)
+        except ValidationError:
+            continue
+        results.append(
+            {
+                "value": address["value"],
+                "token": encode_address(address),
+                "latitude": str(address["latitude"]),
+                "longitude": str(address["longitude"]),
+            }
+        )
+    cache.set(cache_key, results, 300)
+    return results
+
+
 def encode_address(address):
     return signing.dumps(validate_address(address), salt=SALT, compress=True)
 
@@ -94,15 +147,25 @@ def suggest_addresses(query):
         return []
     if settings.MARKET_DEMO:
         return [
-            {"value": row["value"], "token": encode_address(row)}
+            {
+                "value": row["value"],
+                "token": encode_address(row),
+                "latitude": row["latitude"],
+                "longitude": row["longitude"],
+            }
             for row in DEMO_ADDRESSES
             if query.casefold() in row["value"].casefold()
         ]
-    if not settings.DADATA_TOKEN:
+    provider = "dadata" if settings.DADATA_TOKEN else "osm"
+    if provider == "osm" and not settings.OSM_ADDRESS_SEARCH:
         return []
-    cached = cache.get("address:" + query.casefold())
+    digest = hashlib.sha256(query.casefold().encode()).hexdigest()
+    cache_key = f"address:{provider}:{digest}"
+    cached = cache.get(cache_key)
     if cached is not None:
         return cached
+    if provider == "osm":
+        return _search_nominatim(query, cache_key)
     body = json.dumps(
         {
             "query": query,
@@ -127,14 +190,35 @@ def suggest_addresses(query):
             items = json.load(response).get("suggestions", [])
     except (URLError, TimeoutError, ValueError):
         return []
-    results = []
-    for item in items:
-        try:
-            address = address_from_suggestion(item)
-            results.append(
-                {"value": address["value"], "token": encode_address(address)}
-            )
-        except ValidationError:
-            continue
-    cache.set("address:" + query.casefold(), results, 300)
-    return results
+    return _suggestions(items, address_from_suggestion, cache_key)
+
+
+def _search_nominatim(query, cache_key):
+    """The public OpenStreetMap geocoder needs no key. Its usage policy allows about one
+    request per second with an identifying User-Agent, so bursts are dropped."""
+    if not cache.add("address:osm:throttle", 1, 1):
+        return []
+    params = urlencode(
+        {
+            "q": query,
+            "format": "jsonv2",
+            "addressdetails": 1,
+            "limit": 8,
+            "countrycodes": "ru",
+            "accept-language": "ru",
+            "viewbox": NOMINATIM_VIEWBOX,
+            "bounded": 1,
+        }
+    )
+    request = Request(
+        f"{NOMINATIM_URL}?{params}",
+        headers={"Accept": "application/json", "User-Agent": settings.OSM_USER_AGENT},
+    )
+    try:
+        with urlopen(request, timeout=4) as response:
+            items = json.load(response)
+    except (URLError, TimeoutError, ValueError):
+        return []
+    if not isinstance(items, list):
+        return []
+    return _suggestions(items, address_from_nominatim, cache_key)

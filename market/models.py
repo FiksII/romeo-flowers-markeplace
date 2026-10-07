@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from market.zones import validate_zone
+
 
 class Settlement(models.Model):
     REGIONS = [("77", "Москва"), ("50", "Московская область")]
@@ -64,21 +66,22 @@ class Shop(models.Model):
     )
     delivery_enabled = models.BooleanField("Доставка", default=True)
     pickup_enabled = models.BooleanField("Самовывоз", default=True)
+    own_delivery = models.BooleanField("Своя доставка", default=False)
     delivery_settlements = models.ManyToManyField(
         Settlement,
         related_name="delivering_shops",
         blank=True,
         verbose_name="Города доставки",
     )
-    radius_km = models.DecimalField(
-        "Радиус доставки, км",
-        max_digits=6,
-        decimal_places=2,
-        default=10,
-        validators=[MinValueValidator(Decimal("0.01")), MaxValueValidator(300)],
+    delivery_zone = models.JSONField(
+        "Зона доставки",
+        default=list,
+        blank=True,
+        validators=[validate_zone],
+        help_text="Многоугольник на карте: [[широта, долгота], ...].",
     )
     delivery_fee = models.DecimalField(
-        "Доставка, ₽",
+        "Доставка Ромео, ₽",
         max_digits=9,
         decimal_places=2,
         default=0,
@@ -101,18 +104,11 @@ class Shop(models.Model):
     inn = models.CharField("ИНН", max_length=12, blank=True)
     bank_account = models.CharField("Расчётный счёт", max_length=20, blank=True)
     bank_bik = models.CharField("БИК", max_length=9, blank=True)
-    markup_percent = models.DecimalField(
-        "Наценка платформы, % от цены магазина",
+    commission_percent = models.DecimalField(
+        "Комиссия платформы, % от цены букета",
         max_digits=5,
         decimal_places=2,
         default=10,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
-    )
-    pickup_discount_percent = models.DecimalField(
-        "Скидка за самовывоз, % от наценки",
-        max_digits=5,
-        decimal_places=2,
-        default=50,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -135,6 +131,12 @@ class Shop(models.Model):
             raise ValidationError({"timezone": "Укажите действительный часовой пояс."})
         if not self.delivery_enabled and not self.pickup_enabled:
             raise ValidationError("Включите доставку или самовывоз.")
+        if self.own_delivery and not self.delivery_enabled:
+            raise ValidationError(
+                {
+                    "own_delivery": "Своя доставка работает только при включённой доставке."
+                }
+            )
 
     def __str__(self):
         return self.name
@@ -195,6 +197,15 @@ class Listing(models.Model):
         ],
         default="bouquet",
     )
+    delivery_price = models.DecimalField(
+        "Цена с доставкой магазина, ₽",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Только для магазинов со своей доставкой.",
+    )
     photo = models.ImageField("Фото", upload_to="listings/%Y/%m/", blank=True)
     seed_image = models.CharField(max_length=128, blank=True, editable=False)
 
@@ -224,29 +235,44 @@ class Listing(models.Model):
         )
 
     @property
-    def base_price(self):
+    def pickup_price(self):
+        """The price the shop set for a bouquet picked up in the shop."""
         stock = self.stockrecord
         return stock.price if stock else None
 
+    def price_for(self, method):
+        """What the buyer pays for one bouquet with this way of receiving it."""
+        from market.pricing import customer_price
+
+        pickup = self.pickup_price
+        if pickup is None:
+            return None
+        return customer_price(self.shop, pickup, self.delivery_price, method)
+
     @property
     def price(self):
-        from market.pricing import quote_product
-
-        return (
-            quote_product(self.shop, self.base_price).customer
-            if self.base_price is not None
-            else None
-        )
+        return self.price_for("delivery")
 
     @property
-    def pickup_price(self):
-        from market.pricing import quote_product
+    def always_in_stock(self):
+        """Oscar's own switch: classes that do not track stock are always available."""
+        return not self.product.get_product_class().track_stock
 
-        return (
-            quote_product(self.shop, self.base_price, "pickup").customer
-            if self.base_price is not None
-            else None
-        )
+    @property
+    def stock_left(self):
+        """Bouquets that can still be bought; ``None`` means no limit."""
+        if self.always_in_stock:
+            return None
+        stock = self.stockrecord
+        return max(0, stock.net_stock_level) if stock else 0
+
+    @property
+    def sold_out(self):
+        return self.stock_left == 0
+
+    def can_supply(self, quantity=1):
+        left = self.stock_left
+        return left is None or left >= quantity
 
     @property
     def image_url(self):

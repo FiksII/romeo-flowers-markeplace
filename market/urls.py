@@ -36,7 +36,9 @@ urlpatterns = [
         name="partner-orders-data",
     ),
     path("partner/<slug:slug>/settings/", portal.shop_settings, name="shop-settings"),
-    path("partner/<slug:slug>/hours/", portal.hours_settings, name="hours"),
+    path("partner/<slug:slug>/info/", portal.shop_info, name="shop-info"),
+    path("partner/<slug:slug>/payout/", portal.shop_payout, name="shop-payout"),
+    path("partner/<slug:slug>/products/", portal.product_list, name="products"),
     path(
         "partner/<slug:slug>/exceptions/<int:pk>/remove/",
         portal.exception_remove,

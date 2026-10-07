@@ -48,16 +48,16 @@ def test_mixed_order_and_idempotent_submission(owner, shop, other_shop, listing)
         num_in_stock=5,
     )
     second = Listing.objects.create(product=product, shop=other_shop)
-    shop.markup_percent = Decimal(10)
+    shop.commission_percent = Decimal(10)
     shop.save()
     basket = basket_for(owner, listing, second)
     choices = {shop.pk: choice(shop, "delivery"), other_shop.pk: choice(other_shop)}
     order = place_market_order(owner, basket, choices, ADDRESS, CONTACT, NOW)
-    assert order.total_incl_tax == Decimal(4900)
+    assert order.total_incl_tax == Decimal(4650)
     assert order.shop_orders.count() == 2
     first = order.shop_orders.get(shop=shop)
     assert first.commission_total == Decimal(250)
-    assert first.partner_total == Decimal(2500)
+    assert first.partner_total == Decimal(2250)
     assert first.address == ADDRESS["value"]
     assert (
         order.shop_orders.get(shop=other_shop).address
@@ -72,8 +72,8 @@ def test_mixed_order_and_idempotent_submission(owner, shop, other_shop, listing)
     stock.price = 9900
     stock.save()
     first.refresh_from_db()
-    assert first.goods_total == Decimal(2750)
-    assert first.lines.get().line_price_incl_tax == Decimal(2750)
+    assert first.goods_total == Decimal(2500)
+    assert first.lines.get().line_price_incl_tax == Decimal(2500)
 
 
 def test_delivery_requires_verified_address(owner, shop, listing):

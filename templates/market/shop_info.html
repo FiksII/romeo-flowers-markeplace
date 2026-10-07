@@ -1,0 +1,67 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}{{ shop.name }} · Информация о магазине — Ромео{% endblock %}
+{% block map_assets %}{% include 'market/partials/map_assets.html' %}{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <a class="back-link" href="{% url 'market:partner' %}">← Мои магазины</a>
+  <div class="section-heading"><div class="page-heading"><span class="eyebrow">Кабинет партнёра · {{ shop.settlement.name }}</span><h1>Информация о магазине</h1><p>Адрес, способы получения и расписание по дням недели. Время — московское.</p></div><span class="status-chip">{{ shop.get_status_display }}</span></div>
+  {% include 'market/partials/partner_nav.html' %}
+  <form method="post" class="info-layout" data-address-form novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <section class="form-card">
+      <h2>Магазин и адрес</h2>
+      <div class="two-fields">
+        {% include 'market/partials/field.html' with field=form.name %}
+        {% include 'market/partials/field.html' with field=form.phone %}
+      </div>
+      {% include 'market/partials/field.html' with field=form.description %}
+      <div class="two-fields">
+        {% include 'market/partials/field.html' with field=form.settlement %}
+        {% include 'market/partials/field.html' with field=form.address %}
+      </div>
+      {% include 'market/partials/field.html' with field=form.address_token %}
+      <div class="shop-map" data-shop-map="location" data-lat="{{ shop.latitude|unlocalize_money }}" data-lon="{{ shop.longitude|unlocalize_money }}" role="img" aria-label="Карта: расположение магазина {{ shop.address }}"></div>
+      <p class="field-help">Карта © участники <a class="text-link" href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a>. После выбора адреса из подсказок маркер переместится, и адрес сохранится вместе с координатами.</p>
+      <noscript><p class="field-help">Для карты и подсказок адреса нужен JavaScript. Сейчас сохранён адрес: {{ shop.address }}.</p></noscript>
+    </section>
+    <section class="form-card">
+      <h2>Получение заказов</h2>
+      {% include 'market/partials/field.html' with field=form.pickup_enabled %}
+      {% include 'market/partials/field.html' with field=form.delivery_enabled %}
+      {% include 'market/partials/field.html' with field=form.own_delivery %}
+      <div class="two-fields">
+        {% include 'market/partials/field.html' with field=form.prep_minutes %}
+      </div>
+      {% include 'market/partials/field.html' with field=form.pickup_instructions %}
+    </section>
+    <section class="form-card" id="schedule">
+      <h2>Расписание по дням недели</h2>
+      <p class="field-help">Оставьте день пустым, если в этот день не работаете. 00:00–24:00 — круглосуточно; если конец раньше начала, интервал переходит на следующие сутки. Подготовка заказа идёт только в рабочие часы.</p>
+      {{ hours_form.non_field_errors }}
+      <div class="table-wrap"><table class="hours-table" data-hours-table>
+        <thead><tr><th scope="col">День</th>{% for method, label in hours_form.methods %}<th scope="col" data-method="{{ method }}">{{ label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in hours_form.rows %}<tr data-day="{{ row.day }}"><th scope="row"><span class="day-full">{{ row.label }}</span><span class="day-short" aria-hidden="true">{{ row.short }}</span></th>
+          {% for cell in row.cells %}<td data-method="{{ cell.method }}"><div class="time-pair">{{ cell.start }}<span aria-hidden="true">–</span>{{ cell.end }}</div>{{ cell.start.errors }}{{ cell.end.errors }}</td>{% endfor %}
+        </tr>{% endfor %}
+        </tbody>
+      </table></div>
+      <div class="hours-tools" hidden data-hours-tools>
+        <button type="button" class="muted-link" data-copy-monday>Скопировать понедельник на все дни</button>
+        <button type="button" class="muted-link" data-copy-work>Доставка и самовывоз — как работа магазина</button>
+      </div>
+    </section>
+    <button class="button button-primary">Сохранить информацию</button>
+  </form>
+
+  <h2 class="spaced-heading" id="exceptions">Особые даты</h2>
+  <p class="field-help">Праздники и выходные, когда расписание отличается от обычной недели. Особая дата заменяет расписание на этот день.</p>
+  <div class="parts-grid">
+    <form method="post" class="form-card">{% csrf_token %}<h2>Добавить особую дату</h2><input type="hidden" name="form_kind" value="exception">{% include 'market/partials/form_fields.html' with form=exception_form %}<button class="button button-primary">Сохранить дату</button></form>
+    <div class="form-card"><h2>Заданные даты</h2>
+      {% for row in exceptions %}<div class="summary-row"><span>{{ row.day|date:'d.m.Y' }} · {{ row.get_method_display }} · {% if row.closed %}Выходной{% else %}{{ row.start_minute|clock_minute }}–{{ row.end_minute|clock_minute }}{% endif %}</span><form method="post" action="{% url 'market:exception-remove' shop.slug row.pk %}">{% csrf_token %}<button class="muted-link">Удалить</button></form></div>{% empty %}<p class="muted">Особых дат нет.</p>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
