@@ -10,7 +10,15 @@ from django.db.models import Count, Q
 from oscar.core.loading import get_model
 
 from market.addresses import decode_address
-from market.models import Flower, Listing, Settlement, Shop, ShopOrder, WeeklyHours
+from market.models import (
+    Flower,
+    Listing,
+    Membership,
+    Settlement,
+    Shop,
+    ShopOrder,
+    WeeklyHours,
+)
 from market.widgets import FlowerTagSelect
 from market.zones import clean_zone
 
@@ -334,6 +342,41 @@ class ShopForm(ShopFormBase):
             "description": forms.Textarea(attrs={"rows": 3}),
             "pickup_instructions": forms.Textarea(attrs={"rows": 3}),
         }
+
+
+class ShopMemberChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, user):
+        return (
+            f"{user.get_username()} · {user.email}"
+            if user.email
+            else user.get_username()
+        )
+
+
+class OperatorShopForm(ShopForm):
+    members = ShopMemberChoiceField(
+        label="Владельцы и сотрудники магазина",
+        queryset=get_user_model().objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Выбранные пользователи получат доступ к кабинету этого магазина. Снимите отметку, чтобы отозвать доступ. Суперадминистраторы имеют доступ ко всем магазинам автоматически.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, operator=True, **kwargs)
+        self.fields["members"].queryset = get_user_model().objects.order_by("username")
+        self.initial["members"] = (
+            list(self.instance.memberships.values_list("user_id", flat=True))
+            if self.instance.pk
+            else []
+        )
+
+    def save_memberships(self):
+        """Called alongside saving the shop, within the view's transaction."""
+        selected = {user.pk for user in self.cleaned_data["members"]}
+        self.instance.memberships.exclude(user_id__in=selected).delete()
+        for user_id in selected:
+            Membership.objects.get_or_create(shop=self.instance, user_id=user_id)
 
 
 class ShopInfoForm(ShopFormBase):

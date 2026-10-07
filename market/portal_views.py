@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from oscar.core.loading import get_model
@@ -12,6 +13,7 @@ from oscar.core.loading import get_model
 from market.access import get_shop_for_user, shops_for_user
 from market.forms import (
     ExceptionForm,
+    OperatorShopForm,
     ProductForm,
     ShopForm,
     ShopInfoForm,
@@ -76,8 +78,11 @@ def partner_dashboard(request, slug):
 
 
 @login_required
-def shop_new(request):
-    form = ShopForm(request.POST or None)
+def shop_new(request, operator=False):
+    if operator and not request.user.is_superuser:
+        raise PermissionDenied
+    form_class = OperatorShopForm if operator else ShopForm
+    form = form_class(request.POST if request.method == "POST" else None)
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             shop = form.save(commit=False)
@@ -85,17 +90,27 @@ def shop_new(request):
             shop.partner = get_model("partner", "Partner").objects.create(
                 name=shop.name, code=shop.slug
             )
-            shop.status = "review"
+            if not operator:
+                shop.status = "review"
             shop.full_clean()
             shop.save()
             form.save_m2m()
-            Membership.objects.create(shop=shop, user=request.user)
+            if operator:
+                form.save_memberships()
+            else:
+                Membership.objects.create(shop=shop, user=request.user)
             AuditEntry.objects.create(
-                shop=shop, actor=request.user, action="Заявка на подключение магазина"
+                shop=shop,
+                actor=request.user,
+                action="Магазин создан администратором"
+                if operator
+                else "Заявка на подключение магазина",
             )
         messages.success(
             request,
-            "Магазин отправлен на проверку. Можно добавить товары и настроить расписание.",
+            "Магазин создан. Добавьте товары и настройте расписание."
+            if operator
+            else "Магазин отправлен на проверку. Можно добавить товары и настроить расписание.",
         )
         return redirect("market:partner-shop", slug=shop.slug)
     return render(
@@ -103,8 +118,9 @@ def shop_new(request):
         "market/form.html",
         {
             "form": form,
-            "heading": "Подключить магазин",
-            "button": "Отправить на проверку",
+            "heading": "Создать магазин" if operator else "Подключить магазин",
+            "button": "Создать магазин" if operator else "Отправить на проверку",
+            "operator_form": operator,
             "address_form": True,
         },
     )
@@ -113,15 +129,18 @@ def shop_new(request):
 @login_required
 def shop_settings(request, slug, operator=False):
     """The administrator's page with every profile field; sellers use the cabinet pages."""
+    if operator and not request.user.is_superuser:
+        raise PermissionDenied
     shop = get_shop_for_user(request.user, slug)
     if not operator:
         return redirect("market:shop-info", slug=slug)
-    if not request.user.is_superuser:
-        raise PermissionDenied
-    form = ShopForm(request.POST or None, instance=shop, operator=True)
+    form = OperatorShopForm(
+        request.POST if request.method == "POST" else None, instance=shop
+    )
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             form.save()
+            form.save_memberships()
             AuditEntry.objects.create(
                 shop=shop,
                 actor=request.user,
@@ -138,6 +157,7 @@ def shop_settings(request, slug, operator=False):
             "heading": "Настройки магазина",
             "button": "Сохранить",
             "address_form": True,
+            "operator_form": True,
         },
     )
 
@@ -315,11 +335,34 @@ def operator_index(request):
     if not request.user.is_superuser:
         raise PermissionDenied
     report = dashboard_report(ShopOrder.objects.all(), request.GET.get("days"))
+    shops = Shop.objects.select_related("settlement").prefetch_related(
+        "memberships__user"
+    )
+    query = request.GET.get("q", "").strip()[:180]
+    status = request.GET.get("status", "")
+    if query:
+        shops = shops.filter(
+            Q(name__icontains=query)
+            | Q(address__icontains=query)
+            | Q(settlement__name__icontains=query)
+            | Q(phone__icontains=query)
+            | Q(memberships__user__username__icontains=query)
+            | Q(memberships__user__email__icontains=query)
+        ).distinct()
+    if status in dict(Shop.STATUSES):
+        shops = shops.filter(status=status)
+    else:
+        status = ""
     return render(
         request,
         "market/operator.html",
         {
-            "shops": Shop.objects.select_related("settlement"),
+            "shops": Paginator(shops.order_by("name", "pk"), 25).get_page(
+                request.GET.get("shop_page")
+            ),
+            "shop_query": query,
+            "shop_status": status,
+            "shop_statuses": Shop.STATUSES,
             "parts": Paginator(
                 report["period_parts"].select_related("shop", "order"), 20
             ).get_page(request.GET.get("page")),

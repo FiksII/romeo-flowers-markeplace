@@ -122,6 +122,7 @@
   function enhanceTables() {
     if (!window.DataTable) return;
     document.querySelectorAll("table.market-table").forEach(table => {
+      if (table.hasAttribute("data-server-paginated")) return;
       if (table.dataset.ordersUrl) {
         serverTable(table);
       } else if (!table.classList.contains("chart-values") && !table.querySelector("tbody [colspan]")) {

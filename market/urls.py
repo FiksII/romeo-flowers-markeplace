@@ -57,6 +57,9 @@ urlpatterns = [
         name="partner-order",
     ),
     path("operator/", portal.operator_index, name="operator"),
+    path(
+        "operator/new/", portal.shop_new, {"operator": True}, name="operator-shop-new"
+    ),
     path("operator/orders/data/", tables.operator_orders, name="operator-orders-data"),
     path(
         "operator/<slug:slug>/",

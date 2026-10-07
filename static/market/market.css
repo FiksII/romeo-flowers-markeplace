@@ -335,6 +335,14 @@ html:not(.js) .live-only{display:none}
 
 /* ---------- Partner cabinet: sections, bouquets, schedule grid, maps ---------- */
 .portal-nav a[aria-current=page]{background:var(--forest);border-color:var(--forest);color:#fff}
+.operator-shop-filters{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:24px 0}
+.operator-shop-filters .field{flex:1 1 240px;margin:0}
+.operator-shop-filters .field:first-of-type{flex:2 1 320px}
+.shop-management-links{display:flex;flex-direction:column;gap:8px;min-width:170px}
+.operator-shop-form{max-width:780px}
+.operator-shop-form #id_members{max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:var(--r-sm);padding:12px}
+.operator-shop-form #id_members label{display:flex;align-items:center;gap:10px;font-weight:400;margin:0;padding:7px 0}
+.operator-shop-form #id_members input{width:20px;height:20px;accent-color:var(--forest)}
 .filter-links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
 .filter-links a{padding:8px 16px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:14px}
 .filter-links a:hover{background:var(--sage);border-color:var(--sage-strong)}

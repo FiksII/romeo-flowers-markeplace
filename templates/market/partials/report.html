@@ -1,7 +1,7 @@
 {% load market_tags %}
 <div class="report-toolbar">
   <div><h2>Обзор за период</h2><p class="muted">{{ period_start|date:'d.m.Y' }} — {{ period_end|date:'d.m.Y' }}</p></div>
-  <form method="get"><label for="report-days">Период</label><select id="report-days" name="days">{% for value in period_options %}<option value="{{ value }}" {% if days == value %}selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>
+  <form method="get">{% if request.resolver_match.url_name == "operator" %}<input type="hidden" name="q" value="{{ shop_query }}"><input type="hidden" name="status" value="{{ shop_status }}">{% if request.GET.shop_page %}<input type="hidden" name="shop_page" value="{{ request.GET.shop_page }}">{% endif %}{% endif %}<label for="report-days">Период</label><select id="report-days" name="days">{% for value in period_options %}<option value="{{ value }}" {% if days == value %}selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>
 </div>
 {% if demo_mode %}<p class="notice">Демо-история: оплата, возвраты и выплаты имитированы для просмотра кабинетов. Все суммы и реквизиты вымышлены.</p>{% endif %}
 <div class="stats-grid report-stats">
