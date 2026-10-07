@@ -1,1 +1,12 @@
-{% load market_tags %}<article class="market-product"><a class="product-visual" href="{% url 'market:product' listing.pk %}"><img src="{{ listing.image_url }}" alt="{{ listing.product.title }}" loading="lazy" width="400" height="440"><span class="city-chip">{{ listing.shop.settlement.name }}</span></a><div class="product-copy"><a class="shop-label" href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a><h3><a href="{% url 'market:product' listing.pk %}">{{ listing.product.title }}</a></h3><p class="slot-caption">Получение {{ listing.nearest_slot.label }}</p><div class="product-bottom"><strong class="money">{{ listing.display_price|rub }}</strong><form method="post" action="{% url 'market:basket-add' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="add-button" aria-label="Добавить {{ listing.product.title }} в корзину">+</button></form></div></div></article>
+{% load market_tags %}<article class="product-card">
+  <div class="product-media">
+    <a class="product-image" href="{% url 'market:product' listing.pk %}"><img src="{{ listing.image_url }}" alt="{{ listing.product.title }}" loading="lazy" width="400" height="500"></a>
+    <span class="city-chip">{{ listing.shop.settlement.name }}</span>
+  </div>
+  <div class="product-copy">
+    <h3><a href="{% url 'market:product' listing.pk %}">{{ listing.product.title }}</a></h3>
+    <p class="product-price"><b>{{ listing.display_price|rub }}</b></p>
+    <form class="basket-add-form" method="post" action="{% url 'market:basket-add' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button button-pill" type="submit" aria-label="Добавить {{ listing.product.title }} в корзину">{% include "storefront/partials/icon.html" with name="plus" class="icon-sm" %}<span>В корзину</span></button></form>
+    <p class="product-meta"><a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · получение {{ listing.nearest_slot.label }}</p>
+  </div>
+</article>

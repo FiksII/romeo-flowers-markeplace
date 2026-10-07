@@ -140,3 +140,20 @@ if (checkout) {
     update();
   });
 }
+
+// The header place chip links to #receiving: open the collapsed panel and bring it into view.
+const openReceivingPanel = () => {
+  if (location.hash !== "#receiving") return;
+  const panel = document.getElementById("receiving");
+  if (!panel) return;
+  panel.open = true;
+  panel.scrollIntoView({ block: "start" });
+};
+window.addEventListener("hashchange", openReceivingPanel);
+openReceivingPanel();
+
+// On phones the catalogue filters start collapsed (unless some are applied) so the bouquets come first.
+document.querySelectorAll("[data-filter-details]").forEach((details) => {
+  const applied = [...new URLSearchParams(location.search).keys()].some((key) => key !== "page");
+  if (window.matchMedia("(max-width: 759px)").matches && !applied) details.open = false;
+});

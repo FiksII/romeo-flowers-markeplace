@@ -1,8 +1,76 @@
-{% load static %}
-<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}Цветы от Ромео — Москва и область{% endblock %}</title><link rel="stylesheet" href="{% static 'storefront/css/fonts.css' %}"><link rel="stylesheet" href="{% static 'storefront/css/theme.css' %}">{% block report_assets %}{% endblock %}<link rel="stylesheet" href="{% static 'market/market.css' %}?v=flower-tags-2"><link rel="stylesheet" href="{% static 'market/flower-tags.css' %}?v=2"><script src="{% static 'market/market.js' %}?v=flower-tags-1" defer></script></head>
-<body><a class="skip-link" href="#main">К содержимому</a>
-{% if demo_mode %}<div class="demo-band">Демонстрационная версия · Магазины и товары — примеры · Оплата пока не подключена</div>{% endif %}
-<header class="site-header"><div class="shell market-header"><a class="brand" href="{% url 'market:home' %}"><img class="brand-logo" src="{% static 'storefront/images/design/logo.webp' %}" width="190" height="72" alt="Цветы от Ромео"></a><span class="region-caption">Москва и<br>Московская область</span><nav class="market-nav" aria-label="Главное меню"><a href="{% url 'market:catalogue' %}">Каталог</a><a href="{% url 'market:basket' %}">Корзина{% if request.basket.num_items %} <span class="count-badge">{{ request.basket.num_items }}</span>{% endif %}</a>{% if request.user.is_authenticated %}<a href="{% url 'market:account' %}">Мои заказы</a>{% if request.user.is_superuser %}<a href="{% url 'market:operator' %}">Управление</a>{% endif %}{% else %}<a href="{% url 'market:login' %}">Войти</a>{% endif %}{% if has_shops %}<a class="button button-secondary button-sm" href="{% url 'market:partner' %}">Кабинет магазина</a>{% endif %}</nav></div></header>
-<main id="main">{% if messages %}<div class="shell message-stack" role="status">{% for message in messages %}<p class="message {{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
-<footer class="market-footer"><div class="shell footer-grid"><div><a class="brand" href="{% url 'market:home' %}">Цветы от Ромео</a><p>Красивые поводы быть ближе.</p></div><div><p>Букеты от магазинов Москвы и области.</p><p>Доставку организует Ромео.<br>Время получения выбираете вы.</p></div><div>{% if request.user.is_authenticated %}<form method="post" action="{% url 'market:logout' %}">{% csrf_token %}<button class="muted-link">Выйти · {{ request.user.username }}</button></form>{% else %}<p><a href="{% url 'market:signup' %}">Создать аккаунт</a></p>{% endif %}</div></div></footer></body></html>
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Цветы от Ромео — Москва и область{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'storefront/css/fonts.css' %}">
+  <link rel="stylesheet" href="{% static 'storefront/css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'storefront/css/romeo.css' %}?v=2">
+  {% block report_assets %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'market/flower-tags.css' %}?v=3">
+  <script src="{% static 'market/market.js' %}?v=2" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">К содержимому</a>
+<div class="service-bar">
+  <div class="shell">
+    <p class="service-hours">{% include "storefront/partials/icon.html" with name="truck" %}<span>{% if demo_mode %}Демонстрационная версия · магазины и товары — примеры · оплата пока не подключена{% else %}Доставку организует Ромео · время получения выбираете вы{% endif %}</span></p>
+    <div class="service-contacts"><span>Москва и Московская область</span></div>
+  </div>
+</div>
+<header class="site-header">
+  <div class="shell header-row">
+    <a class="brand" href="{% url 'market:home' %}" aria-label="Цветы от Ромео — главная"><img class="brand-logo" src="{% static 'storefront/images/design/logo.webp' %}" width="190" height="72" alt="Цветы от Ромео"></a>
+    <a class="city" href="{% url 'market:catalogue' %}#receiving" aria-label="Место и время получения: {{ receiving_label }}">{% include "storefront/partials/icon.html" with name="pin" %}<span>{{ receiving_label }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="icon-sm" %}</a>
+    <form class="site-search" action="{% url 'market:catalogue' %}" method="get" role="search">
+      <label class="visually-hidden" for="site-search">Поиск букетов</label>
+      <input id="site-search" type="search" name="q" placeholder="Поиск букетов" autocomplete="off" value="{% if request.resolver_match.url_name == 'catalogue' %}{{ request.GET.q }}{% endif %}">
+      <button type="submit" aria-label="Найти букет">{% include "storefront/partials/icon.html" with name="search" %}</button>
+    </form>
+    <nav class="header-actions" aria-label="Главное меню">
+      <a class="icon-link basket-link" href="{% url 'market:basket' %}" aria-label="Корзина{% if request.basket.num_items %}, товаров: {{ request.basket.num_items }}{% endif %}">{% include "storefront/partials/icon.html" with name="bag" %}{% if request.basket.num_items %}<b class="basket-count">{{ request.basket.num_items }}</b>{% endif %}</a>
+      {% if request.user.is_authenticated %}
+        <a class="icon-link" href="{% url 'market:account' %}" aria-label="Мои заказы">{% include "storefront/partials/icon.html" with name="user" %}</a>
+        {% if request.user.is_superuser %}<a class="button button-secondary button-sm header-cta" href="{% url 'market:operator' %}">Управление</a>{% endif %}
+        {% if has_shops %}<a class="button button-secondary button-sm header-cta" href="{% url 'market:partner' %}">Кабинет магазина</a>{% endif %}
+      {% else %}
+        <a class="icon-link" href="{% url 'market:login' %}" aria-label="Войти">{% include "storefront/partials/icon.html" with name="user" %}</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main id="main">
+  {% if messages %}<div class="shell message-stack" role="status">{% for message in messages %}<p class="message {{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <section class="footer-brand" aria-label="О маркетплейсе">
+      <a class="brand" href="{% url 'market:home' %}"><img class="brand-logo" src="{% static 'storefront/images/design/logo.webp' %}" width="190" height="72" alt="Цветы от Ромео"></a>
+      <p>Букеты от магазинов Москвы и области. Доставку организует Ромео, время получения выбираете вы.</p>
+    </section>
+    <nav class="footer-col footer-catalogue" aria-label="Каталог">
+      <h2>Каталог</h2>
+      {% for item in rail_categories %}<a href="{% url 'market:catalogue' %}?category={{ item.value }}">{{ item.label }}</a>{% endfor %}
+      <a href="{% url 'market:catalogue' %}">Все букеты</a>
+    </nav>
+    <nav class="footer-col footer-info" aria-label="Покупателям">
+      <h2>Покупателям</h2>
+      <a href="{% url 'market:basket' %}">Корзина</a>
+      {% if request.user.is_authenticated %}<a href="{% url 'market:account' %}">Мои заказы</a>{% else %}<a href="{% url 'market:login' %}">Войти</a><a href="{% url 'market:signup' %}">Создать аккаунт</a>{% endif %}
+      {% if has_shops %}<a href="{% url 'market:partner' %}">Кабинет магазина</a>{% endif %}
+      {% if request.user.is_authenticated %}<form method="post" action="{% url 'market:logout' %}">{% csrf_token %}<button class="muted-link">Выйти · {{ request.user.username }}</button></form>{% endif %}
+    </nav>
+  </div>
+  <div class="shell footer-bottom"><small>© {% now "Y" %} Цветы от Ромео. Москва и Московская область.</small></div>
+</footer>
+<nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+  <a href="{% url 'market:home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="home" %}<span>Главная</span></a>
+  <a href="{% url 'market:catalogue' %}"{% if request.resolver_match.url_name == 'catalogue' or request.resolver_match.url_name == 'product' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="bouquet" %}<span>Букеты</span></a>
+  <a class="basket-link" href="{% url 'market:basket' %}"{% if request.resolver_match.url_name == 'basket' or request.resolver_match.url_name == 'checkout' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="bag" %}{% if request.basket.num_items %}<b class="basket-count">{{ request.basket.num_items }}</b>{% endif %}<span>Корзина</span></a>
+  {% if request.user.is_authenticated %}<a href="{% if has_shops %}{% url 'market:partner' %}{% else %}{% url 'market:account' %}{% endif %}"{% if request.resolver_match.url_name == 'account' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="user" %}<span>{% if has_shops %}Кабинет{% else %}Заказы{% endif %}</span></a>{% else %}<a href="{% url 'market:login' %}"{% if request.resolver_match.url_name == 'login' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="user" %}<span>Войти</span></a>{% endif %}
+</nav>
+</body>
+</html>

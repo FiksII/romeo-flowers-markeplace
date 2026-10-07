@@ -1,0 +1,245 @@
+/*
+  Цветы от Ромео — design v2.
+  Общий слой оформления для магазина (shop) и маркетплейса (marketplace).
+  Подключается ПОСЛЕ theme.css и перекрывает его: токены, шрифты, шапку, карточки, рейки, подвал.
+  Файл одинаковый в обоих проектах — правьте оба экземпляра вместе.
+*/
+
+/* ---------- Tokens ---------- */
+:root{
+  --forest:#263f1f;--forest-hover:#1a2f15;--forest-soft:#3a5a31;
+  --page:#fbfaf7;--white:#fff;
+  --text:#1c231a;--text-soft:#4d554a;--muted:#7b8377;--old:#9aa095;--placeholder:#9aa095;
+  --line:#eeebe4;--border:#e9e5dd;--border-soft:#e7e3db;--border-strong:#d6d1c6;--border-input:#d9d4c9;
+  --cream:#f5f2eb;--band:#f1eee6;--field:#fff;--panel:#f8f6f0;--panel-alt:#f8f6f0;--warm:#f8f4ec;--blush:#fbf1ee;
+  --sage:#e8eee3;--sage-strong:#dce5d6;--sage-note:#edf2e8;--sage-status:#e9f2e4;
+  --ok:#dfeed5;--bad:#f8e3de;--badge:#e3f0dc;
+  --pink:#fbf0ed;--pink-faded:#fcf7f5;--pink-circle:#fbe4df;--pink-chip:#f7ebe6;--pink-note:#fbeff0;
+  --red:#c4402f;--red-dark:#a2301f;
+  --sans:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ui:var(--sans);--num:var(--sans);--serif:var(--sans);
+  --display:"Cormorant Garamond","Lora",Georgia,"Times New Roman",serif;
+  --r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:28px;
+  --shadow-sm:0 1px 2px rgb(32 44 28/.05),0 2px 8px rgb(32 44 28/.04);
+  --shadow-md:0 2px 6px rgb(32 44 28/.05),0 16px 36px rgb(32 44 28/.09);
+  --gutter:clamp(20px,5.5vw,88px);
+}
+
+body{font:400 16px/1.55 var(--sans);color:var(--text);background:var(--page);font-feature-settings:"tnum" 0}
+:focus-visible{outline:2px solid var(--forest);outline-offset:3px;border-radius:6px}
+::selection{background:var(--sage-strong)}
+.shell{width:min(1280px,100% - 2*var(--gutter))}
+
+/* Display headings: only the large ones use the serif face */
+h1,h2,h3{color:var(--forest);font-weight:600}
+h1,.page-title,.section-title,.listing-head h1,.listing-head h2,.hero-copy h1,.hero-copy h2,.page-head h1,.page-head h2,.error-page .empty-state h1{
+  font-family:var(--display);font-weight:600;letter-spacing:-.012em;line-height:1.05
+}
+.listing-head h1,.listing-head h2,.section-title{font-size:clamp(32px,3.6vw,46px);line-height:1.1}
+.page-head h1,.page-head h2{font-size:clamp(32px,3.2vw,42px);line-height:1.1}
+.page-head-lg h1{font-size:clamp(34px,3.6vw,48px);line-height:1.08}
+.page-title{font-size:clamp(36px,4.2vw,56px);line-height:1.05}
+
+/* ---------- Buttons ---------- */
+.button{min-height:46px;padding:0 22px;border-radius:999px;font:500 15px/1.2 var(--sans);letter-spacing:.005em;transition:background-color .18s,color .18s,border-color .18s,box-shadow .18s,transform .18s}
+.button:active{transform:translateY(1px)}
+.button-primary{background:var(--forest);color:#fff;box-shadow:0 1px 2px rgb(38 63 31/.2)}
+.button-primary:hover{background:var(--forest-hover);box-shadow:0 6px 16px rgb(38 63 31/.22)}
+.button-secondary,.button-outline{background:#fff;border-color:var(--border-strong);color:var(--forest)}
+.button-secondary:hover,.button-outline:hover{background:var(--sage);border-color:var(--sage-strong)}
+.button-outline-dark{border-color:var(--border-strong);color:var(--text);font-weight:500}
+.button-light{color:var(--forest)}
+.button-tall{min-height:54px}
+.button-sm{min-height:40px;padding:0 18px;font-size:14px}
+.button-pill{min-height:42px;border-radius:999px;font-size:14px}
+.text-link{font-weight:500;color:var(--forest);text-decoration-thickness:1px}
+
+/* ---------- Forms ---------- */
+.field>label,.field>legend,.value-label{font:500 14px/1.4 var(--sans);color:var(--text-soft)}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=search],input[type=number],input[type=date],input[type=url],select,textarea{
+  min-height:46px;padding:11px 14px;border:1px solid var(--border-input);border-radius:var(--r-md);background:#fff;font:400 15px/1.4 var(--sans)
+}
+input:focus,select:focus,textarea:focus{border-color:var(--forest);box-shadow:0 0 0 3px rgb(38 63 31/.12)}
+.message{border-radius:var(--r-md)}
+/* custom inputs from theme.css that the generic input rule above would otherwise flatten */
+.phone-flag{border-radius:var(--r-md) 0 0 var(--r-md);background:#fff}
+.phone-field input{border-radius:0 var(--r-md) var(--r-md) 0;padding-left:16px}
+.code-inputs input{min-height:0;padding:0;border-radius:var(--r-md)}
+.referral-link input{min-height:0;padding:0;border:0;border-radius:0;background:none}
+
+/* ---------- Service bar (slim, light) ---------- */
+.service-bar{background:var(--cream);color:var(--text-soft);font:400 13px/1.2 var(--sans);border-bottom:1px solid var(--line)}
+.service-bar .shell{min-height:40px}
+.service-hours{gap:8px}
+.service-hours strong{font-weight:500;color:var(--text)}
+.service-hours .icon,.service-contacts .icon,.service-phone .icon{width:18px;height:18px;color:var(--forest)}
+.service-contacts{gap:20px;--icon-cut:var(--cream)}
+.service-contacts a{gap:8px;transition:color .15s}
+.service-contacts a:hover{opacity:1;color:var(--forest)}
+.service-phone{font-weight:500;color:var(--text)}
+
+/* ---------- Header ---------- */
+.site-header{position:sticky;top:0;z-index:40;background:rgb(251 250 247/.9);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.header-row{min-height:80px;gap:20px}
+.brand-logo{width:156px;margin-left:0}
+.city{margin-left:8px;gap:6px;padding:9px 14px;border-radius:999px;background:var(--cream);font:500 14px/1 var(--sans);color:var(--text)}
+.city .icon{width:18px;height:18px;color:var(--forest)}
+.city .icon-sm{width:14px;height:14px;margin-left:2px;color:var(--muted)}
+.site-search{margin-left:12px;max-width:none}
+.site-search input{min-height:46px;padding:0 48px 0 20px;border-color:transparent;border-radius:999px;background:var(--cream);font-size:15px}
+.site-search input:hover{border-color:var(--border-input)}
+.site-search input:focus{background:#fff;border-color:var(--forest)}
+.site-search button{right:5px;width:38px;height:38px;border-radius:50%;color:var(--forest)}
+.site-search button .icon{width:20px;height:20px}
+@media (min-width:760px){.js .site-search{display:block}}
+.header-actions{gap:2px}
+.icon-link{width:46px;height:46px;transition:background-color .15s}
+.icon-link:hover{background:var(--cream)}
+.icon-link .icon{width:24px;height:24px;stroke-width:1.6}
+.basket-count{top:3px;right:2px;box-sizing:border-box;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border:2px solid var(--page);border-radius:10px;font:600 11px/1 var(--sans)}
+.partner-link{width:auto;margin-left:10px;min-height:42px;padding:0 20px;background:transparent;color:var(--forest);border-color:var(--border-strong);box-shadow:none}
+.partner-link:hover{background:var(--forest);color:#fff;border-color:var(--forest);box-shadow:none}
+
+/* ---------- Category and flower rails ---------- */
+.category-rail{gap:12px;padding-top:28px}
+.category-circle{width:auto;min-width:104px;gap:10px;font:500 14px/1.25 var(--sans);color:var(--text-soft);transition:color .15s}
+.category-image{width:92px;height:92px;padding:8px;border:0;background:var(--cream);box-shadow:0 0 0 0 var(--forest);transition:box-shadow .2s,background-color .2s,transform .2s}
+.category-circle:hover{color:var(--forest)}
+.category-circle:hover .category-image{border-color:transparent;background:var(--sage);transform:translateY(-2px)}
+.category-circle.is-active{color:var(--forest);font-weight:600}
+.category-circle.is-active .category-image{border-color:transparent;background:var(--sage);box-shadow:0 0 0 2px var(--forest)}
+.flower-rail{flex-wrap:nowrap;justify-content:flex-start;gap:10px;margin-top:20px;overflow-x:auto;scrollbar-width:none}
+.flower-rail::-webkit-scrollbar{display:none}
+.flower{width:auto;flex:none;flex-direction:row;gap:10px;padding:5px 18px 5px 5px;border:1px solid var(--border);border-radius:999px;background:#fff;font:500 14px/1.2 var(--sans);color:var(--text-soft);transition:border-color .15s,background-color .15s,color .15s}
+.flower-image,.flower:hover .flower-image,.flower.is-active .flower-image{width:40px;height:40px;padding:5px;border:0;background:var(--cream)}
+.flower:hover{border-color:var(--forest);color:var(--forest)}
+.flower.is-active{border-color:var(--forest);background:var(--forest);color:#fff}
+.flower.is-active .flower-image{background:#fff}
+
+/* ---------- Hero ---------- */
+.hero-wrap{margin-top:28px}
+.hero{height:clamp(300px,31vw,420px);border-radius:var(--r-xl);background:#efe9dd}
+.hero-slide:not(.hero-slide-photo)::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgb(244 239 229/.72) 0%,rgb(244 239 229/.3) 34%,rgb(244 239 229/0) 54%)}
+.hero-slide-photo::after{background:linear-gradient(90deg,rgb(244 239 229/.96) 0%,rgb(244 239 229/.82) 34%,rgb(244 239 229/0) 62%)}
+.hero-copy{padding-left:clamp(28px,4.2vw,64px);max-width:640px}
+.hero-copy h1,.hero-copy h2{font-size:clamp(42px,5vw,72px);line-height:1}
+.hero-lead{max-width:420px;margin-top:16px;font-size:17px;line-height:1.5;color:var(--text-soft)}
+.hero-copy .button{margin-top:28px;min-width:0;gap:12px;justify-content:center;padding:0 24px}
+.hero-dots{height:34px;gap:8px}
+.hero-dots button{width:8px;height:8px;border-radius:4px}
+.hero-dots button.is-active{width:32px}
+
+/* ---------- Price chips ---------- */
+.price-tiles{gap:12px;margin-top:4px}
+.price-tile{min-height:60px;border-radius:999px;background:#fff;border:1px solid var(--border);font:500 16px/1.2 var(--sans);color:var(--text);transition:border-color .15s,background-color .15s}
+.price-tile .icon{width:24px;height:24px;color:var(--forest);stroke-width:1.5}
+.price-tile:hover{border-color:var(--forest)}
+.price-tiles.has-active .price-tile:not(.is-active){background:#fff;color:var(--muted)}
+.price-tile.is-active{background:var(--forest);border-color:var(--forest);color:#fff;font-weight:600}
+.price-tile.is-active .icon{color:#fff}
+
+/* ---------- Builder promo ---------- */
+.builder-promo{border-radius:var(--r-lg);background:var(--sage-note)}
+.builder-promo h2{font:600 28px/1.15 var(--display)}
+
+/* ---------- Listing ---------- */
+.listing{margin-top:56px}
+.listing-head{align-items:center}
+.listing-all{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 18px;border:1px solid var(--border-strong);border-radius:999px;font:500 14px/1 var(--sans);text-decoration:none;color:var(--forest);transition:background-color .15s,border-color .15s}
+.listing-all:hover{background:var(--sage);border-color:var(--sage-strong)}
+.listing-all::after{content:"→";font-size:15px}
+.product-grid{gap:36px 24px;margin-top:28px}
+.listing-search input,.listing-sort select{border-radius:999px}
+.listing-search input{padding-left:42px}
+
+/* ---------- Product card ---------- */
+.product-card{container-type:inline-size;border:0;border-radius:0;background:transparent;overflow:visible}
+.product-image{aspect-ratio:4/5;border-radius:var(--r-lg);overflow:hidden;background:var(--cream)}
+.product-image img{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.product-card:hover .product-image img{transform:scale(1.04)}
+.wish-link{top:12px;right:12px;width:40px;height:40px;background:rgb(255 255 255/.92);box-shadow:var(--shadow-sm);transition:transform .15s,color .15s}
+.wish-link:hover{transform:scale(1.06)}
+.wish-link button{width:40px;height:40px}
+.wish-link .icon{width:22px;height:22px}
+.card-dimensions{left:12px;right:auto;bottom:12px;display:flex;gap:12px;padding:6px 12px;border-radius:999px;background:rgb(255 255 255/.88);font:500 12px/1 var(--sans);backdrop-filter:blur(6px)}
+.card-dimensions .icon{width:14px;height:14px}
+.card-dimensions>span{gap:5px}
+.product-copy{display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:start;column-gap:12px;padding:14px 2px 0}
+.product-copy>*{grid-column:1/-1}
+.product-copy h3{font:500 16px/1.35 var(--sans);color:var(--text);letter-spacing:0}
+.product-price{grid-column:1;grid-row:2;align-self:center;margin-top:6px;font:600 19px/1.2 var(--sans);letter-spacing:-.005em}
+.product-price b{font-weight:600}
+.basket-add-form{grid-column:2;grid-row:2;align-self:center;margin:6px 0 0;padding:0}
+.product-pay,.product-meta{grid-row:3;margin-top:4px;padding:0;border:0;min-height:0;font:400 12px/1.4 var(--sans);color:var(--muted)}
+.product-pay b{font:500 12px/1.4 var(--sans);color:var(--text-soft)}
+.product-meta a:hover{color:var(--forest)}
+.pay-badge{width:16px;height:16px;font-size:10px}
+.product-copy .button-pill{width:auto;margin-top:0;background:var(--sage);color:var(--forest);border-color:transparent;padding:0 16px;box-shadow:none}
+.product-copy .button-pill:hover{background:var(--forest);color:#fff;box-shadow:none}
+.product-copy>.button-pill{grid-row:auto;width:100%;margin-top:10px}
+@container (max-width:240px){
+  .basket-add-form{grid-column:1/-1;grid-row:auto;margin-top:10px}
+  .basket-add-form .button-pill{width:100%}
+  .product-price{grid-column:1/-1}
+}
+
+/* ---------- Basket ---------- */
+.qty-stepper{width:112px;height:42px;border:1px solid var(--border);border-radius:999px;background:#fff}
+.qty-stepper input[type=number]{width:30px;min-height:0;height:24px;padding:0;border:0;border-radius:0;background:none;font:500 16px/1 var(--sans);box-shadow:none}
+.round-button{border:1px solid var(--border)}
+
+/* ---------- Sections ---------- */
+.section{margin-top:72px}
+.review{border-radius:var(--r-lg);background:#fff;border:1px solid var(--border)}
+.review figcaption{font:600 16px/1.3 var(--sans)}
+.faq-item{border-radius:var(--r-md)}
+.faq-item summary{font:500 17px/1.4 var(--sans)}
+.empty-state{border-radius:var(--r-lg);border-color:var(--border)}
+.benefit h2{font:600 16px/1.3 var(--sans)}
+.benefit p{font:400 14px/1.4 var(--sans)}
+
+/* ---------- Footer ---------- */
+.site-footer{margin-top:80px;background:var(--cream);font-family:var(--sans);font-size:15px;color:var(--text-soft)}
+.footer-grid{padding-block:64px 24px;column-gap:72px}
+.footer-brand p{max-width:280px;margin-top:18px;line-height:1.55}
+.social-links a{background:#fff;box-shadow:var(--shadow-sm);transition:color .15s,transform .15s}
+.social-links a:hover{transform:translateY(-2px)}
+.footer-col h2{margin-bottom:18px;font:600 12px/1.2 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.footer-col a,.footer-col p{min-height:22px;line-height:1.4}
+.footer-catalogue a,.footer-info a{margin-bottom:12px}
+.footer-contacts a,.footer-contacts p{margin-bottom:14px}
+.footer-bottom{border-top:1px solid var(--border-strong);padding-block:20px 24px}
+.footer-bottom small{font-size:13px;color:var(--muted)}
+.footer-bottom a{font-size:13px;color:var(--muted)}
+
+/* ---------- Tablet / phone ---------- */
+@media (max-width:1180px){
+  .category-rail{gap:16px}
+  .hero-copy h1,.hero-copy h2{font-size:clamp(38px,5.4vw,52px);line-height:1}
+}
+@media (max-width:759px){
+  :root{--gutter:16px}
+  .service-bar .shell{min-height:36px}
+  .service-bar{font-size:12px}
+  .header-row{min-height:60px;gap:8px}
+  .brand-logo{width:120px;margin-left:0}
+  .city{margin-left:auto;padding:8px 12px}
+  .category-image{width:76px;height:76px}
+  .category-circle{min-width:84px;font-size:13px}
+  .hero{height:auto;min-height:230px;border-radius:var(--r-lg)}
+  .hero-slide:first-child::after{background:linear-gradient(90deg,rgb(241 235 224/.95) 0%,rgb(241 235 224/.88) 56%,rgb(241 235 224/0) 92%)}
+  .hero-slide{min-height:230px}
+  .hero-copy{max-width:236px;padding:20px 0 20px 20px;z-index:2}
+  .hero-copy h1,.hero-copy h2{font-size:30px;line-height:1}
+  .hero-lead{font-size:14px;line-height:1.4}
+  .hero-copy .button{min-height:40px;margin-top:14px;padding:0 16px;font-size:14px}
+  .price-tile{min-height:40px;padding:0 16px;border-radius:999px;font-size:13px}
+  .product-grid{gap:28px 14px}
+  .product-copy h3{font-size:15px}
+  .product-price{font-size:17px}
+  .listing{margin-top:40px}
+  .section{margin-top:48px}
+  .mobile-bottom-nav{background:rgb(251 250 247/.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .mobile-bottom-nav a{font:500 12px/1.2 var(--sans)}
+  .footer-grid{padding-block:40px 16px}
+}

@@ -27,6 +27,43 @@ from market.models import Flower, Listing, Shop
 from market.orders import basket_groups, cancel_shop_order, place_market_order
 from market.pricing import quote_product
 
+# Flower circles under the headings: directory name, plural label, illustration.
+FLOWER_RAIL = (
+    ("Роза", "Розы", "rose"),
+    ("Пион", "Пионы", "peony"),
+    ("Ромашка", "Ромашки", "daisy"),
+    ("Тюльпан", "Тюльпаны", "tulip"),
+    ("Гортензия", "Гортензии", "hydrangea"),
+    ("Лилия", "Лилии", "lily"),
+    ("Калла", "Каллы", "calla"),
+    ("Орхидея", "Орхидеи", "orchid"),
+    ("Гвоздика", "Гвоздики", "carnation"),
+)
+
+# Quick budget filters: label, icon, query string for the catalogue.
+BUDGET_OPTIONS = (
+    ("До 4 000 ₽", "bouquet", "max_price=4000"),
+    ("4 000 – 6 000 ₽", "rosebud", "min_price=4000&max_price=6000"),
+    ("От 6 000 ₽", "premium", "min_price=6000"),
+)
+
+
+def flower_rail():
+    pks = dict(
+        Flower.objects.filter(
+            name__in=[name for name, _, _ in FLOWER_RAIL]
+        ).values_list("name", "pk")
+    )
+    return [
+        {
+            "pk": pks[name],
+            "label": label,
+            "image": f"storefront/images/design/{image}.webp",
+        }
+        for name, label, image in FLOWER_RAIL
+        if name in pks
+    ]
+
 
 def safe_next(request, fallback="market:catalogue"):
     target = request.POST.get("next", "")
@@ -65,6 +102,8 @@ def home(request):
         "market/home.html",
         {
             "listings": items[:8],
+            "flower_rail": flower_rail(),
+            "budget_options": BUDGET_OPTIONS,
             "shop_count": Shop.objects.filter(
                 status="active", settlement__region__in=["77", "50"]
             ).count(),
@@ -84,6 +123,8 @@ def catalogue(request):
             "total_count": len(items),
             "filters": request.GET,
             "categories": Listing._meta.get_field("category").choices,
+            "flower_rail": flower_rail(),
+            "budget_options": BUDGET_OPTIONS,
             "query_string": query.urlencode(),
             "shops": Shop.objects.filter(
                 status="active", settlement__region__in=["77", "50"]
