@@ -14,7 +14,12 @@ const startMap = (element) => {
   const known = Number.isFinite(lat) && Number.isFinite(lon);
   const center = known ? [lat, lon] : MOSCOW;
   const map = L.map(element, { scrollWheelZoom: false }).setView(center, known ? 14 : 10);
-  L.tileLayer(TILES, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
+  // OSM requires a site Referer; send only the origin for these tile images.
+  L.tileLayer(TILES, {
+    maxZoom: 19,
+    attribution: ATTRIBUTION,
+    referrerPolicy: "strict-origin-when-cross-origin",
+  }).addTo(map);
   const marker = known ? L.marker(center, { keyboard: false, title: "Магазин" }).addTo(map) : null;
   // Leaflet sizes itself at creation; fix it when the layout settles or the tab opens.
   setTimeout(() => map.invalidateSize(), 0);
