@@ -3,4 +3,5 @@
 {% if geoman %}<link rel="stylesheet" href="{% static 'vendor/leaflet-geoman-2.20.2/leaflet-geoman.css' %}">{% endif %}
 <script src="{% static 'vendor/leaflet-1.9.4/leaflet.js' %}" defer></script>
 {% if geoman %}<script src="{% static 'vendor/leaflet-geoman-2.20.2/leaflet-geoman.min.js' %}" defer></script>{% endif %}
-<script src="{% static 'market/shop-map.js' %}?v=3" defer></script>
+{{ shop_map_config|json_script:"shop-map-config" }}
+<script src="{% static 'market/shop-map.js' %}?v=4" defer></script>

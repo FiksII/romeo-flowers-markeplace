@@ -48,16 +48,51 @@ document.querySelectorAll("[data-address-form]").forEach((form) => {
   const status = form.querySelector(".address-status");
   const city = form.querySelector('[name="city"]');
   if (!input || !token || !results) return;
-  let timer, controller, sequence = 0;
+  let timer, controller, sequence = 0, resolving = false;
   input.setAttribute("aria-expanded", "false");
   input.setAttribute("aria-autocomplete", "list");
   const close = () => { results.hidden = true; input.setAttribute("aria-expanded", "false"); };
+  const cancel = () => {
+    clearTimeout(timer);
+    controller?.abort();
+    resolving = false;
+    return ++sequence;
+  };
+  const select = async (row) => {
+    const current = cancel();
+    token.value = "";
+    input.value = row.value;
+    if (city) city.value = "";
+    close();
+    input.focus();
+    if (row.selection_token) {
+      resolving = true;
+      controller = new AbortController();
+      status.textContent = "Получаем координаты выбранного дома…";
+      try {
+        const response = await fetch(`/addresses/resolve/?token=${encodeURIComponent(row.selection_token)}`, { signal: controller.signal, headers: { Accept: "application/json" } });
+        const data = await response.json();
+        if (current !== sequence) return;
+        if (!response.ok || !data.result?.token) throw new Error(data.message || "Не удалось определить координаты. Выберите другой дом.");
+        row = data.result;
+      } catch (error) {
+        if (current === sequence && error.name !== "AbortError") status.textContent = error.message || "Подсказки сейчас недоступны. Попробуйте ещё раз.";
+        return;
+      } finally {
+        if (current === sequence) resolving = false;
+      }
+    }
+    if (current !== sequence) return;
+    input.value = row.value;
+    token.value = row.token;
+    status.textContent = form.classList.contains("receiving-form") ? "Адрес выбран. Примените условия получения." : "Адрес выбран. Сохраните изменения.";
+    form.dispatchEvent(new CustomEvent("address:selected", { detail: row }));
+  };
   input.addEventListener("input", () => {
     token.value = "";
     close();
-    clearTimeout(timer);
-    if (controller) controller.abort();
-    const current = ++sequence;
+    const current = cancel();
+    status.textContent = "Уточните адрес до дома.";
     if (input.value.trim().length < 2) return;
     timer = setTimeout(async () => {
       controller = new AbortController();
@@ -72,22 +107,14 @@ document.querySelectorAll("[data-address-form]").forEach((form) => {
           button.type = "button";
           button.textContent = row.value;
           button.setAttribute("role", "option");
-          button.addEventListener("click", () => {
-            input.value = row.value;
-            token.value = row.token;
-            if (city) city.value = "";
-            status.textContent = "Адрес выбран. Примените условия получения.";
-            form.dispatchEvent(new CustomEvent("address:selected", { detail: row }));
-            close();
-            input.focus();
-          });
+          button.addEventListener("click", () => select(row));
           results.append(button);
         });
         results.hidden = !results.children.length;
         input.setAttribute("aria-expanded", String(!results.hidden));
         status.textContent = results.hidden ? (data.message || "Уточните адрес до дома.") : "Выберите адрес из списка.";
       } catch (error) {
-        if (error.name !== "AbortError") status.textContent = "Подсказки сейчас недоступны. Можно выбрать город и продолжить просмотр.";
+        if (current === sequence && error.name !== "AbortError") status.textContent = "Подсказки сейчас недоступны. Можно выбрать город и продолжить просмотр.";
       }
     }, 280);
   });
@@ -101,7 +128,10 @@ document.querySelectorAll("[data-address-form]").forEach((form) => {
     if (event.key === "Escape") { close(); input.focus(); }
   });
   document.addEventListener("click", (event) => { if (!form.contains(event.target)) close(); });
-  city?.addEventListener("change", () => { if (city.value) { token.value = ""; input.value = ""; close(); } });
+  city?.addEventListener("change", () => { if (city.value) { cancel(); token.value = ""; input.value = ""; close(); status.textContent = "Город выбран."; } });
+  form.addEventListener("submit", (event) => {
+    if (resolving) { event.preventDefault(); status.textContent = "Дождитесь координат выбранного дома."; }
+  });
 });
 
 document.querySelectorAll(".receiving-form").forEach((form) => {

@@ -119,6 +119,9 @@ LOGOUT_REDIRECT_URL = "/"
 MARKET_DEMO = False
 MARKET_RESERVATION_MINUTES = 30
 DADATA_TOKEN = env("DADATA_TOKEN", default="")
+# A configured DaData key enables live addresses independently of demo orders.
+ADDRESS_DEMO = env.bool("ADDRESS_DEMO", default=not bool(DADATA_TOKEN))
+YANDEX_TILES_API_KEY = env("YANDEX_TILES_API_KEY", default="")
 # Without a DaData token, addresses are searched on OpenStreetMap (no key needed).
 OSM_ADDRESS_SEARCH = env.bool("OSM_ADDRESS_SEARCH", default=True)
 OSM_USER_AGENT = env("OSM_USER_AGENT", default="romeo-marketplace/1.0")

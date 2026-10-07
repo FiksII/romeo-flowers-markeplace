@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.templatetags.static import static
 
 from market.access import shops_for_user
+from market.addresses import demo_address_search
 from market.context import ContextForm, context_initial, get_context
 from market.models import Listing, Settlement
 
@@ -42,6 +44,13 @@ def market_context(request):
         else (city.name if city else "Москва и область"),
         "rail_categories": rail_categories(),
         "demo_mode": settings.MARKET_DEMO,
+        "address_demo": demo_address_search(),
+        "dadata_addresses": bool(settings.DADATA_TOKEN) and not demo_address_search(),
+        "yandex_tiles_api_key": settings.YANDEX_TILES_API_KEY,
+        "shop_map_config": {
+            "yandexTilesKey": settings.YANDEX_TILES_API_KEY,
+            "yandexLogo": static("vendor/yandex-tiles/yandex-logo.svg"),
+        },
         "has_shops": request.user.is_authenticated
         and shops_for_user(request.user).exists(),
     }

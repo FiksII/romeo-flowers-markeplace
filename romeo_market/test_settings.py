@@ -10,3 +10,7 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 OSM_ADDRESS_SEARCH = False
+# Never call paid/external providers using local .env keys during tests.
+DADATA_TOKEN = ""
+ADDRESS_DEMO = True
+YANDEX_TILES_API_KEY = ""

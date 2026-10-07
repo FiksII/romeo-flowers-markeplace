@@ -13,6 +13,7 @@ urlpatterns = [
     path("shops/<slug:slug>/", views.shop_detail, name="shop"),
     path("receiving/", views.set_context, name="receiving"),
     path("addresses/", views.address_suggestions, name="addresses"),
+    path("addresses/resolve/", views.address_resolve, name="address-resolve"),
     path("basket/", views.basket_view, name="basket"),
     path("basket/add/<int:pk>/", views.basket_add, name="basket-add"),
     path("basket/update/<int:pk>/", views.basket_update, name="basket-update"),

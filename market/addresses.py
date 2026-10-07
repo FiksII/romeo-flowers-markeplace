@@ -11,6 +11,8 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 
 SALT = "market-receiving-address"
+SELECTION_SALT = "market-dadata-selection"
+DADATA_URL = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address"
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 # ISO 3166-2 codes of the two launch regions as OpenStreetMap reports them.
 NOMINATIM_REGIONS = {"RU-MOW": "77", "RU-MOS": "50"}
@@ -71,7 +73,11 @@ def address_from_suggestion(item):
     data = item.get("data", {})
     if not data.get("house"):
         raise ValidationError("Уточните адрес до дома.")
-    return validate_address(
+    if str(data.get("qc_geo")) != "0":
+        raise ValidationError(
+            "Для этого дома нет точных координат. Выберите другой адрес."
+        )
+    address = validate_address(
         {
             "value": item.get("value", "")[:300],
             "region": (data.get("region_kladr_id") or "")[:2],
@@ -80,6 +86,9 @@ def address_from_suggestion(item):
             "longitude": data.get("geo_lon"),
         }
     )
+    for field in ("latitude", "longitude"):
+        address[field] = str(Decimal(str(address[field])).quantize(Decimal("0.000001")))
+    return address
 
 
 def address_from_nominatim(item):
@@ -141,11 +150,15 @@ def decode_address(token):
         raise ValidationError("Адрес устарел. Выберите его из подсказок ещё раз.")
 
 
+def demo_address_search():
+    return settings.MARKET_DEMO and settings.ADDRESS_DEMO
+
+
 def suggest_addresses(query):
     query = query.strip()[:180]
     if len(query) < 2:
         return []
-    if settings.MARKET_DEMO:
+    if demo_address_search():
         return [
             {
                 "value": row["value"],
@@ -160,24 +173,61 @@ def suggest_addresses(query):
     if provider == "osm" and not settings.OSM_ADDRESS_SEARCH:
         return []
     digest = hashlib.sha256(query.casefold().encode()).hexdigest()
-    cache_key = f"address:{provider}:{digest}"
+    cache_key = f"address:v2:{provider}:{digest}"
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
     if provider == "osm":
         return _search_nominatim(query, cache_key)
+    try:
+        items = _request_dadata(query, count=5)
+    except ValidationError:
+        return []
+    results = []
+    for item in items:
+        data = item.get("data") or {}
+        region = (data.get("region_kladr_id") or "")[:2]
+        value = item.get("value")
+        full_value = item.get("unrestricted_value")
+        if (
+            region not in {"77", "50"}
+            or not data.get("house")
+            or not isinstance(value, str)
+            or not value
+            or not isinstance(full_value, str)
+            or not 1 <= len(full_value) <= 300
+        ):
+            continue
+        selection = {
+            "query": full_value,
+            "region": region,
+            "fias_id": data.get("fias_id"),
+        }
+        results.append(
+            {
+                "value": value[:300],
+                "selection_token": signing.dumps(
+                    selection, salt=SELECTION_SALT, compress=True
+                ),
+            }
+        )
+    cache.set(cache_key, results, 300)
+    return results
+
+
+def _request_dadata(query, *, count):
     body = json.dumps(
         {
             "query": query,
-            "count": 5,
+            "count": count,
             "locations": [
-                {"region_kladr_id": "7700000000000"},
-                {"region_kladr_id": "5000000000000"},
+                {"kladr_id": "77"},
+                {"kladr_id": "50"},
             ],
         }
     ).encode()
     request = Request(
-        "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
+        DADATA_URL,
         data=body,
         headers={
             "Content-Type": "application/json",
@@ -187,10 +237,61 @@ def suggest_addresses(query):
     )
     try:
         with urlopen(request, timeout=4) as response:
-            items = json.load(response).get("suggestions", [])
-    except (URLError, TimeoutError, ValueError):
-        return []
-    return _suggestions(items, address_from_suggestion, cache_key)
+            payload = json.load(response)
+        if not isinstance(payload, dict) or not isinstance(
+            payload.get("suggestions"), list
+        ):
+            raise TypeError
+        items = payload["suggestions"]
+        if any(
+            not isinstance(item, dict) or not isinstance(item.get("data"), dict)
+            for item in items
+        ):
+            raise TypeError
+    except (URLError, TimeoutError, ValueError, TypeError, OSError):
+        raise ValidationError("Подсказки сейчас недоступны. Попробуйте ещё раз.")
+    return items
+
+
+def resolve_address(token):
+    try:
+        if not isinstance(token, str) or len(token) > 2000:
+            raise ValueError
+        selection = signing.loads(token, salt=SELECTION_SALT, max_age=15 * 60)
+        if (
+            not isinstance(selection, dict)
+            or not isinstance(selection.get("query"), str)
+            or not 1 <= len(selection["query"]) <= 300
+            or selection.get("region") not in {"77", "50"}
+        ):
+            raise ValueError
+    except (signing.BadSignature, ValueError, TypeError):
+        raise ValidationError("Подсказка устарела. Найдите адрес ещё раз.")
+    if demo_address_search() or not settings.DADATA_TOKEN:
+        raise ValidationError("Подсказки сейчас недоступны. Найдите адрес ещё раз.")
+    digest = hashlib.sha256(json.dumps(selection, sort_keys=True).encode()).hexdigest()
+    key = f"address:resolved:{digest}"
+    address = cache.get(key)
+    if address is None:
+        items = _request_dadata(selection["query"], count=1)
+        if not items:
+            raise ValidationError("Адрес не найден. Выберите другой дом из подсказок.")
+        item = items[0]
+        if item.get("unrestricted_value") != selection["query"] or (
+            selection.get("fias_id")
+            and item["data"].get("fias_id") != selection["fias_id"]
+        ):
+            raise ValidationError("Адрес изменился. Выберите дом из подсказок ещё раз.")
+        address = address_from_suggestion(item)
+        if address["region"] != selection["region"]:
+            raise ValidationError("Выберите адрес в Москве или Московской области.")
+        cache.set(key, address, 300)
+    return {
+        "value": address["value"],
+        "token": encode_address(address),
+        "latitude": str(address["latitude"]),
+        "longitude": str(address["longitude"]),
+    }
 
 
 def _search_nominatim(query, cache_key):

@@ -274,6 +274,15 @@ def set_context(request):
 
 @require_GET
 def address_suggestions(request):
+    return _address_response(request)
+
+
+@require_GET
+def address_resolve(request):
+    return _address_response(request, resolve=True)
+
+
+def _address_response(request, *, resolve=False):
     import hashlib
 
     from django.core.cache import cache
@@ -284,11 +293,24 @@ def address_suggestions(request):
     )
     count = cache.get(key, 0)
     if count >= 120:
-        return JsonResponse(
+        response = JsonResponse(
             {"results": [], "message": "Подождите немного перед следующим поиском."},
             status=429,
         )
+        response["Cache-Control"] = "no-store"
+        return response
     cache.set(key, count + 1, 60)
+    if resolve:
+        from market.addresses import resolve_address
+
+        try:
+            response = JsonResponse(
+                {"result": resolve_address(request.GET.get("token", ""))}
+            )
+        except ValidationError as error:
+            response = JsonResponse({"message": error.messages[0]}, status=400)
+        response["Cache-Control"] = "no-store"
+        return response
     results = suggest_addresses(request.GET.get("q", ""))
     response = JsonResponse(
         {
