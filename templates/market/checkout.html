@@ -43,5 +43,5 @@
       <p class="field-help">Доставка оплачивается отдельно для каждого магазина. Скидка за самовывоз включена в стоимость товаров. Неоплаченный резерв действует 30 минут.</p>
     </aside>
   </form>
-  {% else %}<div class="empty-state"><h2>Корзина пуста</h2><a class="button button-primary" href="{% url 'market:catalogue' %}">Выбрать цветы</a></div>{% endif %}
+  {% else %}<div class="empty-state"><h2>Корзина пуста</h2><a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать цветы</a></div>{% endif %}
 </section>{% endblock %}

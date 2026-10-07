@@ -7,18 +7,14 @@
       <div class="hero-copy">
         <h1 id="home-heading">Для важных слов.<br>И просто так.</h1>
         <p class="hero-lead">Особенные букеты от местных флористов. С доставкой или самовывозом — как вам удобно.</p>
-        <a class="button button-primary" href="{% url 'market:catalogue' %}">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
+        <a class="button button-primary" href="#catalogue">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
       </div>
     </article>
   </div>
 </section>
 <div class="shell">{% include 'market/partials/receiving.html' %}</div>
 <div class="shell">{% include 'market/partials/price_tiles.html' %}</div>
-<section class="shell listing" aria-labelledby="popular-heading">
-  <div class="listing-head"><h2 id="popular-heading">Популярные букеты</h2><a class="listing-all" href="{% url 'market:catalogue' %}">Весь каталог</a></div>
-  {% include 'market/partials/flower_rail.html' %}
-  <div class="product-grid">{% for listing in listings %}{% include 'market/partials/product_card.html' %}{% empty %}{% include 'market/partials/empty.html' %}{% endfor %}</div>
-</section>
+{% include 'market/partials/catalogue.html' %}
 <section class="benefits" aria-label="Преимущества">
   <div class="shell benefits-grid">
     <article class="benefit">{% include "storefront/partials/icon.html" with name="pin" %}<div><h2>Местные флористы</h2><p>Видите, кто соберёт и привезёт букет</p></div></article>

@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -20,8 +20,22 @@ from market.availability import (
     location_matches,
     receiving_options,
 )
-from market.catalogue import public_listings
+from market.catalogue import (
+    ListingFilter,
+    catalogue_candidates,
+    public_listings,
+    sort_listings,
+)
 from market.context import ContextForm, get_context
+from market.context_processors import rail_categories
+from market.filters import (
+    filter_chips,
+    flower_label,
+    price_label,
+    price_range_links,
+    toggle_flower_url,
+    without_url,
+)
 from market.forms import CheckoutContactForm, SignupForm
 from market.models import Flower, Listing, Shop
 from market.orders import basket_groups, cancel_shop_order, place_market_order
@@ -48,7 +62,9 @@ BUDGET_OPTIONS = (
 )
 
 
-def flower_rail():
+def flower_rail(params):
+    """Flower circles; each one adds its flower to the filter or removes it."""
+    chosen = set(params.getlist("flower"))
     pks = dict(
         Flower.objects.filter(
             name__in=[name for name, _, _ in FLOWER_RAIL]
@@ -59,13 +75,15 @@ def flower_rail():
             "pk": pks[name],
             "label": label,
             "image": f"storefront/images/design/{image}.webp",
+            "url": toggle_flower_url(params, pks[name]),
+            "active": str(pks[name]) in chosen,
         }
         for name, label, image in FLOWER_RAIL
         if name in pks
     ]
 
 
-def safe_next(request, fallback="market:catalogue"):
+def safe_next(request, fallback="market:home"):
     target = request.POST.get("next", "")
     return (
         target
@@ -96,41 +114,93 @@ class MarketLoginView(LoginView):
 
 
 def home(request):
-    items = public_listings(get_context(request))
+    """Main page: banner, entry points and the whole bouquet listing with its filters."""
+    params = request.GET
+    candidates = catalogue_candidates(get_context(request), params)
+    spec = ListingFilter.parse(params)
+    items = sort_listings(
+        [listing for listing in candidates if spec.matches(listing)],
+        params.get("sort", "newest"),
+    )
+    query = params.copy()
+    query.pop("page", None)
+    categories = Listing._meta.get_field("category").choices
+    shops = list(
+        Shop.objects.filter(status="active", settlement__region__in=["77", "50"])
+        .select_related("settlement")
+        .order_by("name")
+    )
+    flowers = list(Flower.objects.all())
+    chosen = set(spec.flowers)
+    category_options = [
+        {
+            **option,
+            "selected": spec.category == option["value"],
+            "count": sum(
+                1
+                for listing in candidates
+                if listing.category == option["value"]
+                and spec.matches(listing, skip={"category"})
+            ),
+        }
+        for option in rail_categories()
+    ]
+    flower_options = []
+    for flower in flowers:
+        count = sum(
+            1
+            for listing in candidates
+            if spec.matches(listing, extra_flower=str(flower.pk))
+        )
+        flower_options.append(
+            {
+                "pk": flower.pk,
+                "name": flower.name,
+                "palette": flower.tag_palette,
+                "count": count,
+                "selected": str(flower.pk) in chosen,
+                "zero": not count and str(flower.pk) not in chosen,
+            }
+        )
     return render(
         request,
         "market/home.html",
         {
-            "listings": items[:8],
-            "flower_rail": flower_rail(),
+            "page": Paginator(items, 12).get_page(params.get("page")),
+            "total_count": len(items),
+            "filters": params,
+            "categories": categories,
+            "category_label": dict(categories).get(spec.category, "Категория"),
+            "category_options": category_options,
+            "category_total": sum(
+                1 for listing in candidates if spec.matches(listing, skip={"category"})
+            ),
+            "flower_rail": flower_rail(params),
+            "flower_options": flower_options,
+            "flower_pill": flower_label(params, {str(f.pk): f.name for f in flowers}),
+            "flowers_selected": len(spec.flowers),
+            "flowers_reset_url": without_url(params, "flower"),
+            "price_pill": price_label(params) or "Цена",
+            "price_set": bool(price_label(params)),
+            "price_ranges": price_range_links(params),
+            "price_reset_url": without_url(params, "min_price", "max_price"),
+            "reset_url": without_url(
+                params, "q", "category", "flower", "min_price", "max_price", "shop"
+            ),
             "budget_options": BUDGET_OPTIONS,
-            "shop_count": Shop.objects.filter(
-                status="active", settlement__region__in=["77", "50"]
-            ).count(),
+            "query_string": query.urlencode(),
+            "filter_chips": filter_chips(params, categories, flowers, shops),
         },
     )
 
 
+@require_GET
 def catalogue(request):
-    items = public_listings(get_context(request), request.GET)
-    query = request.GET.copy()
-    query.pop("page", None)
-    return render(
-        request,
-        "market/catalogue.html",
-        {
-            "page": Paginator(items, 12).get_page(request.GET.get("page")),
-            "total_count": len(items),
-            "filters": request.GET,
-            "categories": Listing._meta.get_field("category").choices,
-            "flower_rail": flower_rail(),
-            "budget_options": BUDGET_OPTIONS,
-            "query_string": query.urlencode(),
-            "shops": Shop.objects.filter(
-                status="active", settlement__region__in=["77", "50"]
-            ),
-            "flowers": Flower.objects.all(),
-        },
+    """``/catalogue/`` moved to the home page; old links and filters keep working."""
+    query = request.META.get("QUERY_STRING", "")
+    target = reverse("market:home")
+    return HttpResponsePermanentRedirect(
+        f"{target}?{query}#catalogue" if query else f"{target}#catalogue"
     )
 
 

@@ -28,3 +28,13 @@ def clock_minute(value):
 @register.filter
 def weekday(value):
     return ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"][int(value)]
+
+
+@register.filter
+def ru_plural(value, forms):
+    """Russian plural: ``{{ n|ru_plural:"букет,букета,букетов" }}`` -> the right form."""
+    one, few, many = forms.split(",")
+    number = abs(int(value))
+    if 10 < number % 100 < 15:
+        return many
+    return {1: one, 2: few, 3: few, 4: few}.get(number % 10, many)

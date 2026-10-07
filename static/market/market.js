@@ -152,8 +152,109 @@ const openReceivingPanel = () => {
 window.addEventListener("hashchange", openReceivingPanel);
 openReceivingPanel();
 
-// On phones the catalogue filters start collapsed (unless some are applied) so the bouquets come first.
-document.querySelectorAll("[data-filter-details]").forEach((details) => {
-  const applied = [...new URLSearchParams(location.search).keys()].some((key) => key !== "page");
-  if (window.matchMedia("(max-width: 759px)").matches && !applied) details.open = false;
-});
+// Catalogue filters on the home page. Every change refreshes the results in place: the page is
+// fetched again and the regions marked data-live-region are swapped, so an open menu stays open
+// while several flowers are picked. Without JavaScript the form and links still work.
+const catalogue = document.querySelector("[data-catalogue-live]");
+if (catalogue) {
+  const form = catalogue.querySelector("[data-filter-form]");
+  const phone = window.matchMedia("(max-width: 900px)");
+  let controller, typingTimer;
+  const openPop = () => catalogue.querySelector("details.pop[open]");
+  const syncScrollLock = () => document.body.classList.toggle("has-dialog", phone.matches && Boolean(openPop()));
+  const closePops = (except) => {
+    catalogue.querySelectorAll("details.pop[open]").forEach((pop) => { if (pop !== except) pop.open = false; });
+    syncScrollLock();
+  };
+  const formUrl = () => {
+    const params = new URLSearchParams();
+    for (const [name, value] of new FormData(form)) if (value !== "") params.append(name, value);
+    const query = params.toString();
+    return query ? `${location.pathname}?${query}` : location.pathname;
+  };
+  const filterTags = (input) => {
+    const term = input.value.trim().toLocaleLowerCase("ru"), menu = input.closest(".menu");
+    let shown = 0;
+    menu.querySelectorAll(".filter-tag").forEach((tag) => {
+      const match = tag.dataset.flowerName.toLocaleLowerCase("ru").includes(term);
+      tag.hidden = !match;
+      if (match) shown += 1;
+    });
+    menu.querySelector("[data-flower-empty]").hidden = shown > 0;
+  };
+  const refresh = async (url, { keepOpen = false, scroll = false } = {}) => {
+    controller?.abort();
+    controller = new AbortController();
+    const reopen = keepOpen ? openPop()?.dataset.pop : null;
+    const tagScroll = catalogue.querySelector(".tags")?.scrollTop ?? 0;
+    const search = catalogue.querySelector("[data-flower-search]");
+    const searchText = search?.value ?? "", searchHadFocus = Boolean(search) && document.activeElement === search;
+    catalogue.classList.add("is-loading");
+    try {
+      const response = await fetch(url, { signal: controller.signal, headers: { "X-Requested-With": "fetch" } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const next = new DOMParser().parseFromString(await response.text(), "text/html").querySelector("[data-catalogue-live]");
+      if (!next) throw new Error("catalogue not found");
+      catalogue.querySelectorAll("[data-live-region]").forEach((region) => {
+        const fresh = next.querySelector(`[data-live-region="${region.dataset.liveRegion}"]`);
+        if (fresh) region.innerHTML = fresh.innerHTML;
+      });
+      if (reopen) {
+        const pop = catalogue.querySelector(`details.pop[data-pop="${reopen}"]`);
+        if (pop) {
+          pop.open = true;
+          const tags = pop.querySelector(".tags"), freshSearch = pop.querySelector("[data-flower-search]");
+          if (tags) tags.scrollTop = tagScroll;
+          if (freshSearch && searchText) { freshSearch.value = searchText; filterTags(freshSearch); }
+          if (freshSearch && searchHadFocus) freshSearch.focus({ preventScroll: true });
+        }
+      }
+      syncScrollLock();
+      history.replaceState(null, "", url);
+      if (scroll) catalogue.scrollIntoView({ block: "start", behavior: "smooth" });
+    } catch (error) {
+      if (error.name !== "AbortError") location.assign(url);
+    } finally {
+      catalogue.classList.remove("is-loading");
+    }
+  };
+
+  catalogue.addEventListener("change", (event) => {
+    if (event.target.matches('input[name="category"]')) { closePops(); refresh(formUrl()); }
+    else if (event.target.matches('input[name="flower"]')) refresh(formUrl(), { keepOpen: true });
+  });
+  form.addEventListener("input", (event) => {
+    if (!event.target.matches("#filter-q")) return;
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => refresh(formUrl()), 350);
+  });
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    clearTimeout(typingTimer);
+    closePops();
+    refresh(formUrl());
+  });
+  catalogue.addEventListener("input", (event) => { if (event.target.matches("[data-flower-search]")) filterTags(event.target); });
+  catalogue.addEventListener("click", (event) => {
+    const link = event.target.closest("a[data-live-link]");
+    if (link && event.button === 0 && !(event.metaKey || event.ctrlKey || event.shiftKey)) {
+      event.preventDefault();
+      const keepOpen = link.hasAttribute("data-keep-open");
+      if (!keepOpen) closePops();
+      refresh(link.href, { keepOpen, scroll: link.hasAttribute("data-scroll") });
+    } else if (event.target.closest("[data-close-pop]")) {
+      closePops();
+    }
+  });
+  // one menu at a time (also where <details name> is not supported), a click outside or Escape closes it
+  catalogue.addEventListener("toggle", (event) => { if (event.target.open) closePops(event.target); syncScrollLock(); }, true);
+  document.addEventListener("click", (event) => {
+    const pop = openPop();
+    if (pop && !pop.contains(event.target)) closePops();
+  });
+  document.addEventListener("keydown", (event) => {
+    const pop = openPop();
+    if (event.key === "Escape" && pop) { pop.open = false; pop.querySelector("summary")?.focus(); syncScrollLock(); }
+  });
+  phone.addEventListener("change", () => closePops());
+}

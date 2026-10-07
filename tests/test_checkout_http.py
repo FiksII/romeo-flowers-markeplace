@@ -14,11 +14,11 @@ pytestmark = pytest.mark.django_db
 def test_context_optional_and_signed_address(client, city, shop, listing):
     assert (
         client.post(
-            "/receiving/", {"method": "any", "when": "any", "next": "/catalogue/"}
+            "/receiving/", {"method": "any", "when": "any", "next": "/"}
         ).status_code
         == 302
     )
-    assert client.get("/catalogue/").context["total_count"] == 1
+    assert client.get("/").context["total_count"] == 1
     assert (
         client.post(
             "/receiving/",
@@ -30,17 +30,11 @@ def test_context_optional_and_signed_address(client, city, shop, listing):
         ).status_code
         == 302
     )
-    assert (
-        client.get("/catalogue/").context["receiving"].address["value"]
-        == ADDRESS["value"]
-    )
+    assert client.get("/").context["receiving"].address["value"] == ADDRESS["value"]
     client.post(
         "/receiving/", {"method": "delivery", "when": "any", "address_token": "forged"}
     )
-    assert (
-        client.get("/catalogue/").context["receiving"].address["value"]
-        == ADDRESS["value"]
-    )
+    assert client.get("/").context["receiving"].address["value"] == ADDRESS["value"]
     client.post("/receiving/", {"clear": "1", "next": "https://evil.invalid/"})
     assert not client.session.get("receiving")
 
@@ -67,10 +61,9 @@ def test_buyer_checkout_http_and_duplicate_post(client, owner, shop, listing):
     assert get_model("order", "Order").objects.count() == 1
 
 
-def test_catalogue_and_all_portal_forms_render(client, owner, shop, listing):
+def test_home_listing_and_all_portal_forms_render(client, owner, shop, listing):
     for url in [
         "/",
-        "/catalogue/",
         f"/products/{listing.pk}/",
         f"/shops/{shop.slug}/",
         "/basket/",

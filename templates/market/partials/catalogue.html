@@ -1,0 +1,39 @@
+{% load market_tags %}
+<section class="shell listing" id="catalogue" aria-labelledby="listing-heading" data-testid="catalogue-browse" data-catalogue-live>
+  <div class="listing-head">
+    <h2 id="listing-heading">Каталог букетов</h2>
+    <p class="count" data-live-region="count" aria-live="polite"><b>{{ total_count }}</b> {{ total_count|ru_plural:"букет,букета,букетов" }} · {{ receiving_label }}</p>
+  </div>
+
+  <div data-live-region="rail">{% include 'market/partials/flower_rail.html' %}</div>
+
+  <form class="filter-bar" id="filter-form" method="get" action="{% url 'market:home' %}#catalogue" role="search" aria-label="Фильтры каталога" data-filter-form>
+    <label class="filter-search">
+      {% include "storefront/partials/icon.html" with name="search" %}
+      <span class="visually-hidden">Название или магазин</span>
+      <input id="filter-q" type="search" name="q" placeholder="Название или магазин" autocomplete="off" value="{{ filters.q }}">
+    </label>
+    {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
+    {% if filters.shop %}<input type="hidden" name="shop" value="{{ filters.shop }}">{% endif %}
+    <div class="filter-pills" data-live-region="pills">{% include 'market/partials/filter_pills.html' %}</div>
+  </form>
+
+  <div class="chips" data-live-region="chips" aria-label="Выбранные фильтры">
+    {% for chip in filter_chips %}<span class="chip">{{ chip.label }}<a href="{{ chip.url }}" data-live-link aria-label="Убрать фильтр: {{ chip.label }}">{% include "storefront/partials/icon.html" with name="close" %}</a></span>{% endfor %}
+    {% if filter_chips|length > 1 %}<a class="reset" href="{{ reset_url }}" data-live-link>Сбросить всё</a>{% endif %}
+  </div>
+
+  <div data-live-region="results">
+    {% if total_count %}
+      <div class="product-grid">{% for listing in page %}{% include 'market/partials/product_card.html' %}{% endfor %}</div>
+      {% if page.has_other_pages %}<nav class="pagination" aria-label="Страницы каталога">{% if page.has_previous %}<a class="button button-secondary button-sm" href="?{{ query_string }}&page={{ page.previous_page_number }}#catalogue" data-live-link data-scroll>← Назад</a>{% endif %}<span>{{ page.number }} / {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a class="button button-secondary button-sm" href="?{{ query_string }}&page={{ page.next_page_number }}#catalogue" data-live-link data-scroll>Далее →</a>{% endif %}</nav>{% endif %}
+    {% else %}
+      <div class="empty-state">
+        {% include "storefront/partials/icon.html" with name="tulip" %}
+        <h3>По этим условиям букетов не нашлось</h3>
+        <p>{% if flowers_selected > 1 %}Ни в одном букете нет сразу всех выбранных цветов. Уберите один из них — и букеты появятся.{% else %}Смягчите фильтры или посмотрите весь каталог — флористы добавляют новые композиции.{% endif %}</p>
+        <a class="button button-primary" href="{{ reset_url }}" data-live-link>Сбросить фильтры</a>
+      </div>
+    {% endif %}
+  </div>
+</section>

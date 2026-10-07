@@ -1,1 +1,1 @@
-<nav class="price-tiles" aria-label="Выбрать букет по цене">{% for label, icon, query in budget_options %}<a class="price-tile" href="{% url 'market:catalogue' %}?{{ query }}">{% include "storefront/partials/icon.html" with name=icon %}<span>{{ label }}</span></a>{% endfor %}</nav>
+<nav class="price-tiles" aria-label="Выбрать букет по цене">{% for label, icon, query in budget_options %}<a class="price-tile" href="{% url 'market:home' %}?{{ query }}#catalogue">{% include "storefront/partials/icon.html" with name=icon %}<span>{{ label }}</span></a>{% endfor %}</nav>

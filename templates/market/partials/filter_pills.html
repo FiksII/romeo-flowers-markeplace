@@ -1,0 +1,50 @@
+{% load static market_tags %}
+<details class="pop" data-pop="category" name="filter-pop">
+  <summary class="pill{% if filters.category %} is-set{% endif %}"><span>{{ category_label }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="chev" %}</summary>
+  <div class="menu">
+    <div class="menu-title"><span>Категория</span><button type="button" data-close-pop aria-label="Закрыть">{% include "storefront/partials/icon.html" with name="close" %}</button></div>
+    <fieldset class="options">
+      <legend class="visually-hidden">Категория</legend>
+      <label class="option"><input type="radio" name="category" value=""{% if not filters.category %} checked{% endif %}><span class="label">Все категории</span><span class="num">{{ category_total }}</span>{% include "storefront/partials/icon.html" with name="check" class="tick" %}</label>
+      {% for option in category_options %}
+        <label class="option{% if not option.count and not option.selected %} is-disabled{% endif %}"><input type="radio" name="category" value="{{ option.value }}"{% if option.selected %} checked{% endif %}{% if not option.count and not option.selected %} disabled{% endif %}><img class="thumb" src="{% static option.image %}" alt="" width="32" height="32"><span class="label">{{ option.label }}</span><span class="num">{{ option.count }}</span>{% include "storefront/partials/icon.html" with name="check" class="tick" %}</label>
+      {% endfor %}
+    </fieldset>
+    <div class="menu-actions no-live-only"><button class="button button-primary" type="submit">Показать</button></div>
+  </div>
+</details>
+
+<details class="pop" data-pop="flower" name="filter-pop">
+  <summary class="pill{% if flowers_selected %} is-set{% endif %}"><span>{{ flower_pill }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="chev" %}</summary>
+  <div class="menu flowers">
+    <div class="menu-title"><span>Цветы</span><button type="button" data-close-pop aria-label="Закрыть">{% include "storefront/partials/icon.html" with name="close" %}</button></div>
+    <p class="menu-hint">Выберите один или несколько — в букете будут все выбранные.</p>
+    <label class="mini-search live-only">{% include "storefront/partials/icon.html" with name="search" %}<span class="visually-hidden">Найти цветок</span><input type="search" placeholder="Найти цветок" autocomplete="off" data-flower-search></label>
+    <div class="tags" role="group" aria-label="Цветы в составе">
+      {% for flower in flower_options %}
+        <label class="filter-tag flower-palette-{{ flower.palette }}{% if flower.zero %} is-zero{% endif %}" data-flower-name="{{ flower.name }}"><input type="checkbox" name="flower" value="{{ flower.pk }}"{% if flower.selected %} checked{% endif %}><span class="tag-mark" aria-hidden="true"></span><span>{{ flower.name }}</span><small>{{ flower.count }}</small></label>
+      {% endfor %}
+    </div>
+    <p class="empty-tags" data-flower-empty hidden>Такого цветка нет в справочнике.</p>
+    <div class="menu-actions">
+      {% if flowers_selected %}<a class="link" href="{{ flowers_reset_url }}" data-live-link data-keep-open>Сбросить</a>{% else %}<span></span>{% endif %}
+      <button class="button button-primary" type="submit">{% if not flowers_selected %}Показать{% elif total_count %}Показать {{ total_count }} {{ total_count|ru_plural:"букет,букета,букетов" }}{% else %}Ничего не найдено{% endif %}</button>
+    </div>
+  </div>
+</details>
+
+<details class="pop" data-pop="price" name="filter-pop">
+  <summary class="pill{% if price_set %} is-set{% endif %}"><span>{{ price_pill }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="chev" %}</summary>
+  <div class="menu price">
+    <div class="menu-title"><span>Цена</span><button type="button" data-close-pop aria-label="Закрыть">{% include "storefront/partials/icon.html" with name="close" %}</button></div>
+    <div class="price-fields">
+      <label class="price-field"><span>От</span><input type="number" name="min_price" min="0" step="100" inputmode="numeric" placeholder="2 000" value="{{ filters.min_price }}"><i>₽</i></label>
+      <label class="price-field"><span>До</span><input type="number" name="max_price" min="0" step="100" inputmode="numeric" placeholder="6 000" value="{{ filters.max_price }}"><i>₽</i></label>
+    </div>
+    <div class="price-quick">{% for range in price_ranges %}<a class="price-quick-link{% if range.active %} is-on{% endif %}" href="{{ range.url }}" data-live-link>{{ range.label }}</a>{% endfor %}</div>
+    <div class="menu-actions">
+      {% if price_set %}<a class="link" href="{{ price_reset_url }}" data-live-link>Сбросить</a>{% else %}<span></span>{% endif %}
+      <button class="button button-primary" type="submit">Применить</button>
+    </div>
+  </div>
+</details>

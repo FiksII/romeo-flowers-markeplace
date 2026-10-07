@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path", ["/", "/catalogue/"])
+@pytest.mark.parametrize("path", ["/"])
 def test_public_pages_need_no_address(client, path):
     response = client.get(path)
     assert response.status_code == 200
