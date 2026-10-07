@@ -14,6 +14,7 @@ const startMap = (element) => {
   const known = Number.isFinite(lat) && Number.isFinite(lon);
   const center = known ? [lat, lon] : MOSCOW;
   const map = L.map(element, { scrollWheelZoom: false }).setView(center, known ? 14 : 10);
+  map.attributionControl.setPrefix(false);
   // OSM requires a site Referer; send only the origin for these tile images.
   L.tileLayer(TILES, {
     maxZoom: 19,
