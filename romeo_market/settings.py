@@ -2,6 +2,7 @@ from pathlib import Path
 
 import dj_database_url
 import environ
+from django.core.exceptions import ImproperlyConfigured
 from oscar import INSTALLED_APPS as OSCAR_APPS
 from oscar.defaults import *
 
@@ -68,6 +69,34 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+S3_ENABLED = env.bool("S3_ENABLED", default=False)
+if S3_ENABLED:
+    s3_required = {
+        name: env(name, default="")
+        for name in ("S3_BUCKET_NAME", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY")
+    }
+    for name, value in s3_required.items():
+        if not value.strip():
+            raise ImproperlyConfigured(f"При S3_ENABLED=True заполните {name}.")
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": s3_required["S3_BUCKET_NAME"],
+            "access_key": s3_required["S3_ACCESS_KEY_ID"],
+            "secret_key": s3_required["S3_SECRET_ACCESS_KEY"],
+            "endpoint_url": env(
+                "S3_ENDPOINT_URL", default="https://s3.ru1.storage.beget.cloud"
+            ),
+            "region_name": env("S3_REGION_NAME", default="ru1"),
+            "addressing_style": "path",
+            "signature_version": "s3v4",
+            "location": env("S3_LOCATION", default="media"),
+            "default_acl": None,
+            "file_overwrite": False,
+            "querystring_auth": env.bool("S3_QUERYSTRING_AUTH", default=True),
+            "querystring_expire": 3600,
+        },
+    }
 SITE_ID = 1
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 OSCAR_DEFAULT_CURRENCY = "RUB"

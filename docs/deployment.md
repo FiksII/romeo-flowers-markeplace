@@ -80,6 +80,11 @@ curl -fsS -o /dev/null -w '%{http_code}\n' https://flowers.aestory.space/
 
 ## Управление
 
+Настройки Beget S3, перенос фото и порядок возврата к локальному хранилищу описаны
+в [инструкции S3](s3-storage.md). Добавление поддержки в исходники само по себе не
+переключает опубликованный сайт: нужен релиз с этим кодом, заполненное серверное
+окружение и перезапуск приложения после переноса.
+
 ```sh
 systemctl status romeo-marketplace.service romeo-reservations.timer
 journalctl -u romeo-marketplace.service -n 100 --no-pager
