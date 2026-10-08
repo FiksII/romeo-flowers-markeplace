@@ -5,6 +5,7 @@
     <p class="count" data-live-region="count" aria-live="polite"><b>{{ total_count }}</b> {{ total_count|ru_plural:"букет,букета,букетов" }} · {{ receiving_label }}</p>
   </div>
 
+  <div data-live-region="categories">{% include 'market/partials/category_rail.html' %}</div>
   <div data-live-region="rail">{% include 'market/partials/flower_rail.html' %}</div>
 
   <form class="filter-bar" id="filter-form" method="get" action="{% url 'market:home' %}#catalogue" role="search" aria-label="Фильтры каталога" data-filter-form>

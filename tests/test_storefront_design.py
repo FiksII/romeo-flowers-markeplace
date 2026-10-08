@@ -16,6 +16,9 @@ pytestmark = pytest.mark.django_db
         "storefront/fonts/cormorant-garamond-cyrillic.woff2",
         "storefront/images/design/logo.webp",
         "storefront/images/design/hero.webp",
+        "market/images/occasion-birthday.webp",
+        "market/images/occasion-love.webp",
+        "market/images/occasion-any-day.webp",
         "storefront/images/design/category-monobukety.webp",
         "storefront/images/design/category-kompozitsii.webp",
         "storefront/images/design/category-korziny.webp",
@@ -45,7 +48,7 @@ def test_header_has_place_search_basket_and_account(client):
     assert 'class="mobile-bottom-nav"' in html
 
 
-def test_home_shows_the_four_category_circles_and_the_hero(client, listing):
+def test_home_shows_the_four_category_tiles_and_the_hero(client, listing):
     html = client.get("/").content.decode()
     for value, label in (
         ("bouquet", "Монобукеты"),
@@ -56,16 +59,71 @@ def test_home_shows_the_four_category_circles_and_the_hero(client, listing):
         assert f'href="/?category={value}#catalogue"' in html
         assert f'<span class="category-name">{label}</span>' in html
     assert 'class="hero-slide is-active"' in html
-    assert html.count('class="price-tile"') == 3
+    assert 'class="price-tile"' not in html
 
 
-def test_category_circle_is_active_and_clears_the_filter_on_the_home_page(
+def test_home_carousel_starts_with_one_visible_slide_and_catalogue_links(client):
+    import re
+
+    html = client.get("/").content.decode()
+    slides = re.findall(
+        r"<article\b([^>]*data-carousel-slide[^>]*)>(.*?)</article>",
+        html,
+        re.DOTALL,
+    )
+    assert len(slides) == 4
+    assert "hidden" not in slides[0][0]
+    for attributes, body in slides[1:]:
+        assert " hidden" in attributes and " inert" in attributes
+        assert 'aria-hidden="true"' in attributes
+        assert "#catalogue" in body
+    assert [re.search(r"<h2>(.*?)</h2>", body)[1] for _, body in slides[1:]] == [
+        "День рождения",
+        "Для любимых",
+        "Без повода",
+    ]
+    assert html.count("data-carousel-dot=") == 4
+    assert 'aria-label="Слайд 1" aria-pressed="true"' in html
+    assert html.count("<h1") == 1
+
+
+def test_category_tile_is_active_and_clears_the_filter_on_the_home_page(
     client, listing
 ):
     response = client.get("/", {"category": "basket"})
     html = response.content.decode()
-    assert 'class="category-circle is-active" href="/#catalogue"' in html
+    assert 'class="category-tile is-active" href="/#catalogue"' in html
     assert response.context["total_count"] == 0
+
+
+def test_category_tiles_keep_the_other_catalogue_filters(client, listing):
+    from html import unescape
+    from urllib.parse import parse_qs, urlsplit
+
+    from market.models import Flower
+
+    rose = str(Flower.objects.get(name="Роза").pk)
+    peony = str(Flower.objects.get(name="Пион").pk)
+    params = {
+        "category": "bouquet",
+        "flower": [rose, peony],
+        "min_price": "2000",
+        "q": "Нежность",
+        "sort": "price-desc",
+        "page": "3",
+    }
+    options = client.get("/", params).context["category_options"]
+    for tile, category in zip(options, (None, "composition", "basket", "box")):
+        query = parse_qs(urlsplit(unescape(tile["url"])).query)
+        expected = {
+            "flower": [rose, peony],
+            "min_price": ["2000"],
+            "q": ["Нежность"],
+            "sort": ["price-desc"],
+        }
+        if category:
+            expected["category"] = [category]
+        assert query == expected
 
 
 def test_product_card_uses_the_shared_card_markup(client, listing):

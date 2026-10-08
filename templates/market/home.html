@@ -1,19 +1,6 @@
 {% extends 'market/base.html' %}{% load static %}{% block content %}
-<div class="shell">{% include 'market/partials/category_rail.html' %}</div>
-<section class="shell hero-wrap" aria-labelledby="home-heading">
-  <div class="hero">
-    <article class="hero-slide is-active">
-      <img class="hero-media" src="{% static 'storefront/images/design/hero.webp' %}" alt="Нежный букет кремовых и розовых роз" width="1672" height="940" fetchpriority="high">
-      <div class="hero-copy">
-        <h1 id="home-heading">Для важных слов.<br>И просто так.</h1>
-        <p class="hero-lead">Особенные букеты от местных флористов. С доставкой или самовывозом — как вам удобно.</p>
-        <a class="button button-primary" href="#catalogue">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
-      </div>
-    </article>
-  </div>
-</section>
+{% include 'market/partials/hero_carousel.html' %}
 <div class="shell">{% include 'market/partials/receiving.html' %}</div>
-<div class="shell">{% include 'market/partials/price_tiles.html' %}</div>
 {% include 'market/partials/catalogue.html' %}
 <section class="benefits" aria-label="Преимущества">
   <div class="shell benefits-grid">

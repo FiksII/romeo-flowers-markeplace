@@ -51,6 +51,13 @@ def without_url(params, *names) -> str:
     return _url(_pairs(params, drop=set(names)))
 
 
+def toggle_category_url(params, value) -> str:
+    """Select a category or clear the selected one, keeping the other filters."""
+    kept = _pairs(params, drop={"category"})
+    extra = [] if params.get("category") == value else [("category", value)]
+    return _url(kept + extra)
+
+
 def price_range_links(params):
     """Quick price ranges as plain links that keep every other filter."""
     kept = _pairs(params, drop={"min_price", "max_price"})

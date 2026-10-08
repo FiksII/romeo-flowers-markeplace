@@ -33,6 +33,7 @@ from market.filters import (
     flower_label,
     price_label,
     price_range_links,
+    toggle_category_url,
     toggle_flower_url,
     without_url,
 )
@@ -52,14 +53,6 @@ FLOWER_RAIL = (
     ("Орхидея", "Орхидеи", "orchid"),
     ("Гвоздика", "Гвоздики", "carnation"),
 )
-
-# Quick budget filters: label, icon, query string for the catalogue.
-BUDGET_OPTIONS = (
-    ("До 4 000 ₽", "bouquet", "max_price=4000"),
-    ("4 000 – 6 000 ₽", "rosebud", "min_price=4000&max_price=6000"),
-    ("От 6 000 ₽", "premium", "min_price=6000"),
-)
-
 
 def flower_rail(params):
     """Flower circles; each one adds its flower to the filter or removes it."""
@@ -135,6 +128,7 @@ def home(request):
         {
             **option,
             "selected": spec.category == option["value"],
+            "url": toggle_category_url(params, option["value"]),
             "count": sum(
                 1
                 for listing in candidates
@@ -186,7 +180,6 @@ def home(request):
             "reset_url": without_url(
                 params, "q", "category", "flower", "min_price", "max_price", "shop"
             ),
-            "budget_options": BUDGET_OPTIONS,
             "query_string": query.urlencode(),
             "filter_chips": filter_chips(params, categories, flowers, shops),
         },

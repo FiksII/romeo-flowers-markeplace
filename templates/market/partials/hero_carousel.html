@@ -1,0 +1,46 @@
+{% load static %}
+<section class="shell hero-wrap" aria-labelledby="home-heading" aria-roledescription="карусель" data-carousel>
+  <div class="hero" data-carousel-track>
+    <article class="hero-slide is-active" data-carousel-slide role="group" aria-roledescription="слайд" aria-label="1 из 4">
+      <img class="hero-media" src="{% static 'storefront/images/design/hero.webp' %}" alt="Нежный букет кремовых и розовых роз" width="1672" height="940" fetchpriority="high">
+      <div class="hero-copy">
+        <h1 id="home-heading">Для важных слов.<br>И просто так.</h1>
+        <p class="hero-lead">Особенные букеты от местных флористов. С доставкой или самовывозом — как вам удобно.</p>
+        <a class="button button-primary" href="#catalogue">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
+      </div>
+    </article>
+    <article class="hero-slide hero-slide-photo" data-carousel-slide role="group" aria-roledescription="слайд" aria-label="2 из 4" aria-hidden="true" inert hidden>
+      <img class="hero-media" src="{% static 'market/images/occasion-birthday.webp' %}" alt="Розовый букет и подарки ко дню рождения" width="1672" height="941" loading="lazy">
+      <div class="hero-copy">
+        <h2>День рождения</h2>
+        <p class="hero-lead">Подарите радость в особенный день. Нежные композиции от местных флористов.</p>
+        <a class="button button-primary" href="{% url 'market:home' %}?category=composition#catalogue">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
+      </div>
+    </article>
+    <article class="hero-slide hero-slide-photo" data-carousel-slide role="group" aria-roledescription="слайд" aria-label="3 из 4" aria-hidden="true" inert hidden>
+      <img class="hero-media" src="{% static 'market/images/occasion-love.webp' %}" alt="Нежный букет пионов и роз для любимых" width="1672" height="941" loading="lazy">
+      <div class="hero-copy">
+        <h2>Для любимых</h2>
+        <p class="hero-lead">Выразите чувства цветами. Найдите букет, который скажет всё за вас.</p>
+        <a class="button button-primary" href="{% url 'market:home' %}?category=bouquet#catalogue">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
+      </div>
+    </article>
+    <article class="hero-slide hero-slide-photo" data-carousel-slide role="group" aria-roledescription="слайд" aria-label="4 из 4" aria-hidden="true" inert hidden>
+      <img class="hero-media" src="{% static 'market/images/occasion-any-day.webp' %}" alt="Светлый букет роз и ромашек без повода" width="1672" height="941" loading="lazy">
+      <div class="hero-copy">
+        <h2>Без повода</h2>
+        <p class="hero-lead">Цветы, чтобы сделать день лучше. Маленький знак внимания с большим смыслом.</p>
+        <a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать букет{% include "storefront/partials/icon.html" with name="arrow-right" %}</a>
+      </div>
+    </article>
+  </div>
+  <div class="hero-controls live-only">
+    <div class="hero-dots" role="group" aria-label="Слайды">
+      <button type="button" class="is-active" aria-label="Слайд 1" aria-pressed="true" data-carousel-dot="0"></button>
+      <button type="button" aria-label="Слайд 2" aria-pressed="false" data-carousel-dot="1"></button>
+      <button type="button" aria-label="Слайд 3" aria-pressed="false" data-carousel-dot="2"></button>
+      <button type="button" aria-label="Слайд 4" aria-pressed="false" data-carousel-dot="3"></button>
+    </div>
+    <button class="carousel-pause" type="button" data-carousel-pause aria-label="Приостановить смену слайдов">Пауза</button>
+  </div>
+</section>

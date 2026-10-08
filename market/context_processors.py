@@ -7,7 +7,7 @@ from market.context import ContextForm, context_initial, get_context
 from market.models import Listing, Settlement
 
 DESIGN_IMAGES = "storefront/images/design/"
-# Category circles in the header rail: value, illustration. Labels come from the model choices.
+# Catalogue categories: value, illustration. Labels come from the model choices.
 RAIL_CATEGORY_IMAGES = {
     "bouquet": "category-monobukety",
     "composition": "category-kompozitsii",

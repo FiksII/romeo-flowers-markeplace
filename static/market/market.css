@@ -29,7 +29,31 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 @media(max-width:760px){.report-toolbar{align-items:start;flex-direction:column;gap:16px}.report-toolbar form{flex-wrap:wrap}.stats-grid.report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.report-stats .money{white-space:normal}.sales-chart{padding:18px}.sales-chart .section-heading{flex-wrap:wrap}.sales-chart-plot{height:240px}div.dt-container .dt-layout-row:not(.dt-layout-table){align-items:start;justify-content:start;gap:14px}div.dt-container .dt-search .dt-input{min-width:180px;max-width:65vw}div.dt-container .dt-paging{overflow-wrap:anywhere}}
 
 /* ---------- Marketplace layout (design v2): header, panels, catalogue, product, basket, footer ---------- */
-.category-rail{justify-content:flex-start;gap:clamp(20px,3.4vw,52px)}
+[data-carousel] .hero{height:clamp(250px,22vw,300px)}
+[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:clamp(36px,4.2vw,56px)}
+[data-carousel] .hero-lead{margin-top:12px}
+[data-carousel] .hero-copy .button{min-height:44px;margin-top:18px}
+.hero-controls{display:flex;align-items:center;justify-content:center;gap:12px}
+.hero-controls .hero-dots{height:44px;gap:4px}
+.hero-controls .hero-dots button{display:grid;place-items:center;width:32px;height:32px;background:transparent}
+.hero-controls .hero-dots button::before{content:"";width:8px;height:8px;border-radius:4px;background:var(--border-strong);transition:width .2s,background-color .2s}
+.hero-controls .hero-dots button.is-active{width:44px}
+.hero-controls .hero-dots button.is-active::before{width:32px;background:var(--forest)}
+.carousel-pause{min-height:32px;padding:4px 8px;border-radius:var(--r-sm);font-size:12px;color:var(--muted)}
+.carousel-pause:hover{background:var(--cream);color:var(--forest)}
+[data-carousel-track]{touch-action:pan-y}
+@media(max-width:540px){[data-carousel] .hero{height:auto;min-height:250px}[data-carousel] .hero-slide{min-height:250px}[data-carousel] .hero-copy{max-width:min(78%,280px);padding:16px 0 16px 16px}[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:28px}[data-carousel] .hero-lead{margin-top:10px;line-height:1.35}[data-carousel] .hero-copy .button{min-height:40px;margin-top:12px}}
+@media(prefers-reduced-motion:reduce){[data-carousel] .hero-slide,[data-carousel] .hero-dots button,[data-carousel] .hero-dots button::before{transition:none}}
+.catalogue-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
+.category-tile{display:flex;align-items:center;gap:14px;min-width:0;min-height:88px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--cream);color:var(--text-soft);font:500 15px/1.3 var(--sans);transition:border-color .15s,background-color .15s,color .15s}
+.category-tile-image{flex:none;width:64px;height:64px;object-fit:contain;mix-blend-mode:multiply}
+.category-tile .category-name{flex:1;min-width:0}
+.category-tile>.icon{flex:none;width:18px;height:18px;color:var(--muted)}
+.category-tile:hover{border-color:var(--forest);background:var(--sage-note);color:var(--forest)}
+.category-tile.is-active{border-color:var(--forest);background:var(--sage);color:var(--forest);font-weight:600}
+.category-tile.is-active>.icon{color:var(--forest)}
+@media(max-width:1000px){.catalogue-categories{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.catalogue-categories{gap:8px;margin-top:18px}.category-tile{gap:8px;min-height:72px;padding:10px;font-size:13px}.category-tile-image{width:40px;height:40px}.category-tile>.icon{display:none}}
 .mobile-bottom-nav{grid-template-columns:repeat(3,1fr)}
 .city{max-width:280px;text-decoration:none}
 .city span{min-width:0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

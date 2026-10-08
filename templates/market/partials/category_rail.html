@@ -1,1 +1,10 @@
-{% load static %}<nav class="category-rail" aria-label="Категории букетов">{% for item in rail_categories %}<a class="category-circle{% if request.GET.category == item.value %} is-active{% endif %}" href="{% if request.GET.category == item.value %}{% url 'market:home' %}#catalogue{% else %}{% url 'market:home' %}?category={{ item.value }}#catalogue{% endif %}"{% if request.GET.category == item.value %} aria-current="true"{% endif %}><span class="category-image"><img src="{% static item.image %}" alt="" width="100" height="100"></span><span class="category-name">{{ item.label }}</span></a>{% endfor %}</nav>
+{% load static %}
+<nav class="catalogue-categories" aria-label="Категории букетов">
+  {% for item in category_options %}
+    <a class="category-tile{% if item.selected %} is-active{% endif %}" href="{{ item.url }}" data-live-link{% if item.selected %} aria-current="true" aria-label="{{ item.label }} — убрать фильтр"{% endif %}>
+      <img class="category-tile-image" src="{% static item.image %}" alt="" width="64" height="64" loading="lazy">
+      <span class="category-name">{{ item.label }}</span>
+      {% if item.selected %}{% include "storefront/partials/icon.html" with name="check" %}{% else %}{% include "storefront/partials/icon.html" with name="arrow-right" %}{% endif %}
+    </a>
+  {% endfor %}
+</nav>
