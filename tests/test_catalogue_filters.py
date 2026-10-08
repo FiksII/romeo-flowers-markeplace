@@ -129,17 +129,44 @@ def test_home_counts_what_each_choice_would_show(client, bouquets):
     assert response.context["category_total"] == 2
 
 
-def test_home_with_two_flowers_shows_chips_and_the_count_button(client, bouquets):
+def test_home_with_two_rail_flowers_avoids_duplicate_chips(client, bouquets):
     response = client.get("/", {"flower": [pk("Роза"), pk("Пион")]})
     html = response.content.decode()
 
     assert response.context["total_count"] == 1
-    assert [c["label"] for c in response.context["filter_chips"]] == ["Роза", "Пион"]
+    assert response.context["filter_chips"] == []
     assert response.context["flower_pill"] == "Роза, Пион"
     assert "Показать 1 букет<" in html
     assert 'class="reset"' in html
     for name in ("Роза", "Пион"):
-        assert f'aria-label="Убрать фильтр: {name}"' in html
+        assert f'aria-label="Убрать фильтр: {name}"' not in html
+
+
+def test_category_has_one_control_and_is_preserved_by_the_filter_form(client, bouquets):
+    response = client.get("/", {"category": "composition"})
+    html = response.content.decode()
+    form = html.split('id="filter-form"', 1)[1].split("</form>", 1)[0]
+    pills = form.split('data-live-region="pills"', 1)[1]
+
+    assert 'data-pop="category"' not in html
+    assert response.context["filter_chips"] == []
+    assert '<input type="hidden" name="category" value="composition">' in pills
+    submitted = {"category": "composition", "min_price": "5000"}
+    filtered = client.get("/", submitted)
+    assert titles(filtered.context["page"]) == {"Пионы"}
+    selected = next(o for o in filtered.context["category_options"] if o["selected"])
+    assert selected["url"] == "/?min_price=5000#catalogue"
+    cleared = client.get(selected["url"])
+    assert 'name="category"' not in cleared.content.decode()
+
+
+def test_flower_outside_the_rail_keeps_its_removable_chip(client, bouquets):
+    response = client.get("/", {"flower": [pk("Роза"), pk("Василёк")]})
+
+    assert [c["label"] for c in response.context["filter_chips"]] == ["Василёк"]
+    assert response.context["filter_chips"][0]["url"] == (
+        f"/?flower={pk('Роза')}#catalogue"
+    )
 
 
 def test_home_explains_an_empty_result_for_several_flowers(client, bouquets):
@@ -167,7 +194,7 @@ def test_flower_checkboxes_are_a_plain_form_field(client, bouquets):
 def test_filter_bar_has_no_shop_or_sort_controls(client, bouquets):
     html = client.get("/").content.decode()
 
-    assert 'data-pop="category"' in html and 'data-pop="flower"' in html
+    assert 'data-pop="category"' not in html and 'data-pop="flower"' in html
     assert 'data-pop="price"' in html
     assert 'data-pop="shop"' not in html and 'data-pop="sort"' not in html
     assert "Сначала новые" not in html
@@ -176,9 +203,7 @@ def test_filter_bar_has_no_shop_or_sort_controls(client, bouquets):
 def test_filters_work_without_javascript(client, bouquets):
     html = client.get("/").content.decode()
 
-    assert (
-        html.count("no-live-only") == 1
-    )  # the category menu has its own submit button
+    assert "no-live-only" not in html
     assert (
         html.count('type="submit"') >= 3
     )  # one per menu, so every menu applies by itself

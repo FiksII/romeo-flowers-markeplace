@@ -21,7 +21,7 @@
 
   <div class="chips" data-live-region="chips" aria-label="Выбранные фильтры">
     {% for chip in filter_chips %}<span class="chip">{{ chip.label }}<a href="{{ chip.url }}" data-live-link aria-label="Убрать фильтр: {{ chip.label }}">{% include "storefront/partials/icon.html" with name="close" %}</a></span>{% endfor %}
-    {% if filter_chips|length > 1 %}<a class="reset" href="{{ reset_url }}" data-live-link>Сбросить всё</a>{% endif %}
+    {% if can_reset_filters %}<a class="reset" href="{{ reset_url }}" data-live-link>Сбросить всё</a>{% endif %}
   </div>
 
   <div data-live-region="results">

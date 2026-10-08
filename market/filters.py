@@ -101,23 +101,27 @@ def flower_label(params, names) -> str:
     return ", ".join(chosen) if len(chosen) <= 2 else f"{chosen[0]} +{len(chosen) - 1}"
 
 
-def filter_chips(params, categories, flowers, shops):
+def filter_chips(
+    params, categories, flowers, shops, *, hide_category=False, hide_flowers=()
+):
     """Applied filters as removable chips: [{"label", "url"}]; each link drops one filter.
 
     ``params`` is the request's GET, ``categories`` the (value, label) choices,
     ``flowers`` and ``shops`` the directory lists. Unknown values are skipped; the sort
-    order is a preference, not a chip.
+    order is a preference, not a chip. Filters represented by toggle tiles can be hidden.
     """
     chips = []
     term = params.get("q", "").strip()
     if term:
         chips.append({"label": f"«{term[:40]}»", "url": without_url(params, "q")})
     category = dict(categories).get(params.get("category", ""))
-    if category:
+    if category and not hide_category:
         chips.append({"label": category, "url": without_url(params, "category")})
     names = {str(item.pk): item.name for item in flowers}
     chosen = flower_values(params)
     for value in chosen:
+        if value in hide_flowers:
+            continue
         rest = [v for v in chosen if v != value]
         chips.append(
             {

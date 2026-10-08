@@ -54,6 +54,7 @@ FLOWER_RAIL = (
     ("Гвоздика", "Гвоздики", "carnation"),
 )
 
+
 def flower_rail(params):
     """Flower circles; each one adds its flower to the filter or removes it."""
     chosen = set(params.getlist("flower"))
@@ -155,6 +156,8 @@ def home(request):
                 "zero": not count and str(flower.pk) not in chosen,
             }
         )
+    rail = flower_rail(params)
+    active_chips = filter_chips(params, categories, flowers, shops)
     return render(
         request,
         "market/home.html",
@@ -168,7 +171,7 @@ def home(request):
             "category_total": sum(
                 1 for listing in candidates if spec.matches(listing, skip={"category"})
             ),
-            "flower_rail": flower_rail(params),
+            "flower_rail": rail,
             "flower_options": flower_options,
             "flower_pill": flower_label(params, {str(f.pk): f.name for f in flowers}),
             "flowers_selected": len(spec.flowers),
@@ -181,7 +184,15 @@ def home(request):
                 params, "q", "category", "flower", "min_price", "max_price", "shop"
             ),
             "query_string": query.urlencode(),
-            "filter_chips": filter_chips(params, categories, flowers, shops),
+            "filter_chips": filter_chips(
+                params,
+                categories,
+                flowers,
+                shops,
+                hide_category=True,
+                hide_flowers={str(item["pk"]) for item in rail},
+            ),
+            "can_reset_filters": len(active_chips) > 1,
         },
     )
 

@@ -1,18 +1,5 @@
-{% load static market_tags %}
-<details class="pop" data-pop="category" name="filter-pop">
-  <summary class="pill{% if filters.category %} is-set{% endif %}"><span>{{ category_label }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="chev" %}</summary>
-  <div class="menu">
-    <div class="menu-title"><span>Категория</span><button type="button" data-close-pop aria-label="Закрыть">{% include "storefront/partials/icon.html" with name="close" %}</button></div>
-    <fieldset class="options">
-      <legend class="visually-hidden">Категория</legend>
-      <label class="option"><input type="radio" name="category" value=""{% if not filters.category %} checked{% endif %}><span class="label">Все категории</span><span class="num">{{ category_total }}</span>{% include "storefront/partials/icon.html" with name="check" class="tick" %}</label>
-      {% for option in category_options %}
-        <label class="option{% if not option.count and not option.selected %} is-disabled{% endif %}"><input type="radio" name="category" value="{{ option.value }}"{% if option.selected %} checked{% endif %}{% if not option.count and not option.selected %} disabled{% endif %}><img class="thumb" src="{% static option.image %}" alt="" width="32" height="32"><span class="label">{{ option.label }}</span><span class="num">{{ option.count }}</span>{% include "storefront/partials/icon.html" with name="check" class="tick" %}</label>
-      {% endfor %}
-    </fieldset>
-    <div class="menu-actions no-live-only"><button class="button button-primary" type="submit">Показать</button></div>
-  </div>
-</details>
+{% load market_tags %}
+{% if filters.category %}<input type="hidden" name="category" value="{{ filters.category }}">{% endif %}
 
 <details class="pop" data-pop="flower" name="filter-pop">
   <summary class="pill{% if flowers_selected %} is-set{% endif %}"><span>{{ flower_pill }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="chev" %}</summary>
