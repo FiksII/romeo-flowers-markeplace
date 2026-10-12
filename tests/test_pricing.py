@@ -75,7 +75,7 @@ def test_commission_is_rounded_per_unit(shop):
     )
 
 
-def test_platform_delivery_is_charged_on_top_and_commission_comes_from_goods(
+def test_platform_delivery_is_included_and_commission_comes_from_goods(
     owner, shop, listing
 ):
     shop.commission_percent = Decimal(10)
@@ -89,11 +89,11 @@ def test_platform_delivery_is_charged_on_top_and_commission_comes_from_goods(
         NOW,
     )
     part = order.shop_orders.get()
-    assert order.total_incl_tax == 2500 + 350
+    assert order.total_incl_tax == 2500
     assert part.goods_total == Decimal(2500)
     assert part.commission_total == Decimal(250)
     assert part.partner_total == part.base_goods_total == Decimal(2250)
-    assert part.delivery_total == Decimal(350)
+    assert part.delivery_total == Decimal(0)
     assert part.delivery_owner == "platform"
     assert part.pickup_discount_total == 0
     # Later changes of prices, commission or fees never touch a placed order.

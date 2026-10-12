@@ -53,7 +53,7 @@ def test_mixed_order_and_idempotent_submission(owner, shop, other_shop, listing)
     basket = basket_for(owner, listing, second)
     choices = {shop.pk: choice(shop, "delivery"), other_shop.pk: choice(other_shop)}
     order = place_market_order(owner, basket, choices, ADDRESS, CONTACT, NOW)
-    assert order.total_incl_tax == Decimal(4650)
+    assert order.total_incl_tax == Decimal(4300)
     assert order.shop_orders.count() == 2
     first = order.shop_orders.get(shop=shop)
     assert first.commission_total == Decimal(250)

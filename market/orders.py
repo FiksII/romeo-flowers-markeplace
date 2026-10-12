@@ -62,6 +62,9 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         raise ValidationError("Добавьте товары в корзину.")
     if not contact.get("name", "").strip() or not contact.get("phone", "").strip():
         raise ValidationError("Укажите имя и телефон получателя.")
+    delivery_contact = contact.get("delivery_contact") or "no_call"
+    if delivery_contact not in {"call", "no_call"}:
+        raise ValidationError("Выберите, нужно ли звонить получателю.")
     stock_ids = sorted({line.stockrecord_id for line in lines})
     stocks = {
         row.pk: row
@@ -126,16 +129,24 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             shop, f"{method}_enabled"
         ):
             raise ValidationError("Этот способ получения недоступен.")
+        clarify = method == "delivery" and delivery_contact == "call"
+        slot = None
         try:
-            selected = datetime.fromisoformat(choice.get("slot", ""))
-            if selected.tzinfo is None:
-                raise ValueError
+            if clarify:
+                # Address and time will be agreed with the recipient after ordering.
+                selected = None
+            else:
+                selected = datetime.fromisoformat(choice.get("slot", ""))
+                if selected.tzinfo is None:
+                    raise ValueError
         except (ValueError, TypeError):
             raise ValidationError("Выберите доступный интервал получения.")
         # No display limit: every slot in the selected day is checked on the server.
         from zoneinfo import ZoneInfo
 
-        target_day = selected.astimezone(ZoneInfo(shop.timezone)).date()
+        target_day = (
+            selected.astimezone(ZoneInfo(shop.timezone)).date() if selected else None
+        )
         slot = next(
             (
                 item
@@ -144,11 +155,11 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             ),
             None,
         )
-        if not slot:
+        if not clarify and not slot:
             raise ValidationError(
                 f"Интервал магазина «{shop.name}» изменился. Выберите другой."
             )
-        if method == "delivery":
+        if method == "delivery" and not clarify:
             if address is None:
                 raise ValidationError("Выберите точный адрес доставки из подсказок.")
             validate_address(address)
@@ -172,7 +183,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             )
         # A shop with its own delivery brings the bouquet itself and has it in the price.
         own = method == "delivery" and shop.own_delivery
-        fee = shop.delivery_fee if method == "delivery" and not own else Decimal(0)
+        fee = Decimal(0)
         prepared.append(
             (
                 shop,
@@ -228,13 +239,17 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             order=order,
             shop=shop,
             method=method,
-            slot_start=slot.start,
-            slot_end=slot.end,
-            address=address["value"]
+            slot_start=slot.start if slot else None,
+            slot_end=slot.end if slot else None,
+            address=(address["value"] if address else "")
             if method == "delivery"
             else f"{shop.settlement.name}, {shop.address}",
             contact_name=contact["name"][:100],
             contact_phone=contact["phone"][:25],
+            delivery_contact=delivery_contact if method == "delivery" else "no_call",
+            address_details=contact.get("address_details", "")[:300]
+            if method == "delivery" and delivery_contact == "no_call"
+            else "",
             instructions=contact.get("instructions", "")[:1000],
             goods_total=goods,
             base_goods_total=payout,

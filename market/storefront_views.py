@@ -26,7 +26,7 @@ from market.catalogue import (
     public_listings,
     sort_listings,
 )
-from market.context import ContextForm, get_context
+from market.context import ContextForm, FulfillmentContext, get_context
 from market.context_processors import rail_categories
 from market.filters import (
     filter_chips,
@@ -405,8 +405,9 @@ def editable_basket(request):
     return basket
 
 
-def _basket_display(request):
-    context, now = get_context(request), timezone.now()
+def _basket_display(request, *, checkout=False):
+    context = FulfillmentContext() if checkout else get_context(request)
+    now = timezone.now()
     groups = basket_groups(request.basket)
     for group in groups:
         shop = group["shop"]
@@ -429,7 +430,7 @@ def _basket_display(request):
             group["delivery_goods_total"] - group["pickup_goods_total"]
         )
         group["own_delivery"] = shop.own_delivery
-        group["delivery_fee"] = 0 if shop.own_delivery else shop.delivery_fee
+        group["delivery_fee"] = 0
         group["selected_method"] = request.POST.get(f"method_{shop.pk}", "")
         group["selected_slot"] = request.POST.get(f"slot_{shop.pk}", "")
         group["slot_options"] = {}
@@ -463,10 +464,21 @@ def basket_view(request):
 
 @login_required
 def checkout(request):
-    groups = _basket_display(request)
+    groups = _basket_display(request, checkout=True)
+    from market.addresses import encode_address
+
+    address = get_context(request).address
     form = CheckoutContactForm(
         request.POST or None,
-        initial={"name": request.user.first_name or request.user.username},
+        has_delivery=any(
+            request.POST.get(f"method_{group['shop'].pk}") == "delivery"
+            for group in groups
+        ),
+        initial={
+            "name": request.user.first_name or request.user.username,
+            "address": address["value"] if address else "",
+            "address_token": encode_address(address) if address else "",
+        },
     )
     if request.method == "POST" and form.is_valid():
         choices = {
@@ -491,7 +503,7 @@ def checkout(request):
                 if previous:
                     return redirect("market:order", number=previous.number)
                 raise ValidationError("Корзина изменилась. Откройте её ещё раз.")
-            address = get_context(request).address
+            address = form.cleaned_data["verified_address"]
             order = place_market_order(
                 request.user, basket, choices, address, form.cleaned_data
             )

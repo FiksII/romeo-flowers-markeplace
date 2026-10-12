@@ -358,9 +358,18 @@ class ShopOrder(models.Model):
     method = models.CharField(
         max_length=8, choices=[("delivery", "Доставка"), ("pickup", "Самовывоз")]
     )
-    slot_start = models.DateTimeField()
-    slot_end = models.DateTimeField()
-    address = models.CharField(max_length=300)
+    slot_start = models.DateTimeField(null=True, blank=True)
+    slot_end = models.DateTimeField(null=True, blank=True)
+    address = models.CharField(max_length=300, blank=True)
+    delivery_contact = models.CharField(
+        max_length=8,
+        default="no_call",
+        choices=[
+            ("call", "Уточнить у получателя"),
+            ("no_call", "Не звонить получателю"),
+        ],
+    )
+    address_details = models.CharField(max_length=300, blank=True)
     contact_name = models.CharField(max_length=100)
     contact_phone = models.CharField(max_length=25)
     instructions = models.TextField(blank=True)

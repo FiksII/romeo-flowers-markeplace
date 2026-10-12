@@ -149,7 +149,9 @@ def _order_response(request, parts, *, operator=False):
             else format_html(
                 "{}<br>{}",
                 part.get_method_display(),
-                timezone.localtime(part.slot_start).strftime("%d.%m %H:%M"),
+                timezone.localtime(part.slot_start).strftime("%d.%m %H:%M")
+                if part.slot_start
+                else "Уточним у получателя",
             )
         )
         rows.append(

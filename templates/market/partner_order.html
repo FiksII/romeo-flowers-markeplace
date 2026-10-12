@@ -5,13 +5,13 @@
   <div class="page-heading"><h1>Заказ № {{ part.order.number }}</h1><p>Ваша часть № {{ part.pk }} · {{ part.get_status_display }} · {{ part.get_payment_status_display }}</p></div>
   <div class="group-card">
     <h2>{{ part.get_method_display }}</h2>
-    <p>{{ part.slot_start|date:'d.m.Y H:i' }}–{{ part.slot_end|date:'H:i' }}<br>{{ part.address }}</p>
+    {% include 'market/partials/order_receiving.html' %}
     <p>{{ part.contact_name }} · {{ part.contact_phone }}</p>
     {% if part.instructions %}<p class="notice">{{ part.instructions }}</p>{% endif %}
     {% for line in part.lines %}<div class="summary-row"><span>{{ line.title }} × {{ line.quantity }}</span><strong>{{ line.line_price_incl_tax|rub }}</strong></div>{% endfor %}
     <div class="summary-row"><span>Товары · цена покупателя</span><span>{{ part.goods_total|rub }}</span></div>
     {% if part.pickup_discount_total %}<p class="field-help">В цене товаров учтена скидка за самовывоз {{ part.pickup_discount_total|rub }}.</p>{% endif %}
-    {% if part.method == 'delivery' and part.delivery_owner == 'partner' and not part.delivery_total %}<div class="summary-row"><span>Доставка магазина</span><span>включена в цену</span></div>{% else %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
+    {% if part.method == 'delivery' and not part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>включена в цену</span></div>{% elif part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
     <div class="summary-row total-row"><strong>Всего с покупателя</strong><strong>{{ part.total|rub }}</strong></div>
     <div class="summary-row"><span>Магазину за товары, после комиссии</span><span>{{ part.base_goods_total|rub }}</span></div>
     <div class="summary-row"><span>Комиссия платформы · {{ part.commission_percent }}%</span><span>{{ part.commission_total|rub }}</span></div>

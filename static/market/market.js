@@ -85,7 +85,7 @@ document.querySelectorAll("[data-address-form]").forEach((form) => {
     if (current !== sequence) return;
     input.value = row.value;
     token.value = row.token;
-    status.textContent = form.classList.contains("receiving-form") ? "Адрес выбран. Примените условия получения." : "Адрес выбран. Сохраните изменения.";
+    status.textContent = form.hasAttribute("data-checkout") ? "Точный адрес выбран." : form.classList.contains("receiving-form") ? "Адрес выбран. Примените условия получения." : "Адрес выбран. Сохраните изменения.";
     form.dispatchEvent(new CustomEvent("address:selected", { detail: row }));
   };
   input.addEventListener("input", () => {
@@ -146,17 +146,31 @@ if (checkout) {
   const groups = [...checkout.querySelectorAll("[data-checkout-group]")];
   const money = (value) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 2 }).format(value);
   const totals = () => {
-    let goods = 0, shipping = 0;
+    let goods = 0;
     groups.forEach((group) => {
       const selected = group.querySelector("[data-method]").selectedOptions[0];
       const amount = Math.round(Number(selected?.dataset.goods ?? group.dataset.goods) * 100);
       goods += amount;
-      shipping += Math.round(Number(selected?.dataset.fee || 0) * 100);
       group.querySelector("[data-group-goods]").textContent = money(amount / 100);
     });
     checkout.querySelector("[data-goods-total]").textContent = money(goods / 100);
-    checkout.querySelector("[data-shipping-total]").textContent = money(shipping / 100);
-    checkout.querySelector("[data-order-total]").textContent = money((goods + shipping) / 100);
+    checkout.querySelector("[data-order-total]").textContent = money(goods / 100);
+  };
+  const deliveryFields = () => {
+    const hasDelivery = groups.some((group) => group.querySelector("[data-method]").value === "delivery");
+    const call = checkout.querySelector('[name="delivery_contact"]:checked')?.value === "call";
+    checkout.querySelector("[data-delivery-fields]").hidden = !hasDelivery;
+    checkout.querySelector("[data-delivery-summary]").hidden = !hasDelivery;
+    checkout.querySelector("[data-call-help]").hidden = !call;
+    checkout.querySelector("[data-exact-address]").hidden = call;
+    checkout.querySelector('[name="address"]').required = hasDelivery && !call;
+    groups.forEach((group) => {
+      const deferred = group.querySelector("[data-method]").value === "delivery" && call;
+      const slot = group.querySelector("[data-slot]");
+      group.querySelector("[data-slot-field]").hidden = deferred;
+      slot.disabled = deferred;
+      slot.required = !deferred;
+    });
   };
   groups.forEach((group) => {
     const method = group.querySelector("[data-method]"), slot = group.querySelector("[data-slot]");
@@ -166,10 +180,12 @@ if (checkout) {
       group.querySelector("[data-pickup-note]").hidden = method.value !== "pickup";
       group.querySelector("[data-delivery-note]").hidden = method.value !== "delivery";
       totals();
+      deliveryFields();
     };
     method.addEventListener("change", () => update(true));
     update();
   });
+  checkout.querySelectorAll('[name="delivery_contact"]').forEach((radio) => radio.addEventListener("change", deliveryFields));
 }
 
 // The header place chip links to #receiving: open the collapsed panel and bring it into view.

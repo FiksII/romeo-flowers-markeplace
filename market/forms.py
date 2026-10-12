@@ -588,9 +588,60 @@ class CheckoutContactForm(forms.Form):
         max_length=25,
         error_messages={"invalid": "Проверьте номер телефона."},
     )
+    delivery_contact = forms.ChoiceField(
+        label="Доставка",
+        choices=[
+            ("call", "Уточнить у получателя"),
+            ("no_call", "Не звонить получателю"),
+        ],
+        initial="call",
+        required=False,
+        widget=forms.RadioSelect,
+    )
+    address = forms.CharField(
+        label="Точный адрес доставки",
+        max_length=300,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "data-address-input": "",
+                "autocomplete": "off",
+                "placeholder": "Улица и номер дома",
+            }
+        ),
+    )
+    address_token = forms.CharField(required=False, widget=forms.HiddenInput)
+    address_details = forms.CharField(
+        label="Квартира, подъезд, этаж и домофон",
+        max_length=300,
+        required=False,
+    )
     instructions = forms.CharField(
-        label="Квартира, подъезд и комментарий",
+        label="Комментарий",
         max_length=1000,
         required=False,
         widget=forms.Textarea(attrs={"rows": 3}),
     )
+
+    def __init__(self, *args, has_delivery=False, **kwargs):
+        self.has_delivery = has_delivery
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        data = super().clean()
+        data["delivery_contact"] = data.get("delivery_contact") or "no_call"
+        data["verified_address"] = None
+        if self.has_delivery and data["delivery_contact"] == "no_call":
+            if not data.get("address_token"):
+                self.add_error("address", "Выберите точный адрес из подсказок.")
+            else:
+                try:
+                    address = decode_address(data["address_token"])
+                    if data.get("address") != address["value"]:
+                        raise ValidationError(
+                            "Выберите точный адрес из подсказок заново."
+                        )
+                    data["verified_address"] = address
+                except ValidationError as error:
+                    self.add_error("address", error)
+        return data

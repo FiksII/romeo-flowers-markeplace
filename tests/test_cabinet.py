@@ -626,7 +626,7 @@ def test_buyer_pages_show_the_right_price_and_delivery_terms(client, owner, shop
     shop.own_delivery = False
     shop.save()
     checkout = client.get("/checkout/").content.decode()
-    assert "Доставка Ромео · 350" in checkout
+    assert "Доставка Ромео · включена в цену" in checkout
 
 
 def test_demo_seed_shows_both_delivery_models_and_an_unlimited_bouquet(settings):
