@@ -9,11 +9,11 @@ document.querySelectorAll("[data-recipient-phone]").forEach((input) => {
   };
   const format = (number) => {
     if (!number) return "";
-    let value = "+7 (" + number.slice(0, 3);
+    let value = "+7(" + number.slice(0, 3);
     if (number.length >= 3) value += ")";
-    if (number.length > 3) value += " " + number.slice(3, 6);
-    if (number.length > 6) value += " - " + number.slice(6, 8);
-    if (number.length > 8) value += " - " + number.slice(8, 10);
+    if (number.length > 3) value += number.slice(3, 6);
+    if (number.length > 6) value += "-" + number.slice(6, 8);
+    if (number.length > 8) value += "-" + number.slice(8, 10);
     return value;
   };
   const caret = (count) => {
@@ -22,7 +22,7 @@ document.querySelectorAll("[data-recipient-phone]").forEach((input) => {
       if (/\d/.test(input.value[position])) seen += 1;
       if (seen === count && count > 0) return position + 1;
     }
-    return count === 0 ? Math.min(4, input.value.length) : input.value.length;
+    return count === 0 ? Math.min(3, input.value.length) : input.value.length;
   };
   const update = () => {
     const raw = input.value;

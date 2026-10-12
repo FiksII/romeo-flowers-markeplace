@@ -23,7 +23,7 @@ test('formats pasted Russian numbers with either country or trunk prefix', () =>
     input.value = value;
     input.selectionStart = value.length;
     handlers.input();
-    assert.equal(input.value, '+7 (999) 123 - 45 - 67');
+    assert.equal(input.value, '+7(999)123-45-67');
   }
 });
 
@@ -32,7 +32,7 @@ test('keeps an incomplete number visible and can clear the field', () => {
   input.value = '99912';
   input.selectionStart = 5;
   handlers.input();
-  assert.equal(input.value, '+7 (999) 12');
+  assert.equal(input.value, '+7(999)12');
   input.value = '';
   input.selectionStart = 0;
   handlers.input();
@@ -41,12 +41,12 @@ test('keeps an incomplete number visible and can clear the field', () => {
 
 test('backspace at a separator removes the previous digit', () => {
   const { input, handlers } = field();
-  input.value = '+7 (999) 123 - 45 - 67';
-  input.selectionStart = input.selectionEnd = 9;
+  input.value = '+7(999)123-45-67';
+  input.selectionStart = input.selectionEnd = 7;
   let prevented = false;
   handlers.keydown({ key: 'Backspace', preventDefault: () => { prevented = true; } });
   assert.equal(prevented, true);
-  assert.equal(input.value, '+7 (991) 234 - 56 - 7');
+  assert.equal(input.value, '+7(991)234-56-7');
 });
 
 test('formats a number typed digit by digit without moving digits around separators', () => {
@@ -58,6 +58,6 @@ test('formats a number typed digit by digit without moving digits around separat
       input.selectionStart = position + 1;
       handlers.input();
     }
-    assert.equal(input.value, '+7 (999) 123 - 45 - 67');
+    assert.equal(input.value, '+7(999)123-45-67');
   }
 });

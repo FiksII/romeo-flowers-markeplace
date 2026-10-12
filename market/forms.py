@@ -592,7 +592,7 @@ class CheckoutContactForm(forms.Form):
                 "type": "tel",
                 "inputmode": "tel",
                 "autocomplete": "tel",
-                "placeholder": "+7 (***) *** - ** - **",
+                "placeholder": "+7(***)***-**-**",
                 "data-recipient-phone": "",
             }
         ),
@@ -645,7 +645,7 @@ class CheckoutContactForm(forms.Form):
         elif len(number) == 11 and number.startswith("8"):
             number = "7" + number[1:]
         if len(number) != 11 or not number.startswith("7"):
-            raise ValidationError("Введите телефон полностью: +7 (***) *** - ** - **.")
+            raise ValidationError("Введите телефон полностью: +7(***)***-**-**.")
         return "+" + number
 
     def clean(self):

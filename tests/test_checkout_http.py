@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
-    "phone", ["+7 (999) 123 - 45 - 67", "8 (999) 123-45-67", "9991234567"]
+    "phone", ["+7(999)123-45-67", "8 (999) 123-45-67", "9991234567"]
 )
 def test_recipient_phone_is_normalized(phone):
     from market.forms import CheckoutContactForm
