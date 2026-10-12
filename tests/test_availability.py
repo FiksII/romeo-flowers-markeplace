@@ -43,6 +43,43 @@ MOSCOW = ZoneInfo("Europe/Moscow")
 NOW = datetime(2026, 10, 6, 10, 0, tzinfo=MOSCOW)
 
 
+@pytest.mark.parametrize(
+    "own, method, end_hour",
+    [(False, "delivery", 13), (True, "delivery", 12), (False, "pickup", 12)],
+)
+def test_romeo_delivery_uses_two_hour_intervals(shop, own, method, end_hour):
+    shop.own_delivery = own
+    slot = next_slot(shop, method, NOW)
+    assert slot.start == datetime(2026, 10, 6, 11, tzinfo=MOSCOW)
+    assert slot.end == datetime(2026, 10, 6, end_hour, tzinfo=MOSCOW)
+
+
+def test_romeo_delivery_interval_must_fit_delivery_hours(shop):
+    shop.hours.filter(method="delivery").update(
+        start_minute=12 * 60, end_minute=15 * 60
+    )
+    slots = available_slots(shop, "delivery", NOW, day=NOW.date())
+    assert [(slot.start.hour, slot.end.hour) for slot in slots] == [(12, 14), (13, 15)]
+
+
+@pytest.mark.parametrize("next_day_closed", [False, True])
+def test_romeo_delivery_can_cross_midnight_only_if_next_day_open(shop, next_day_closed):
+    shop.prep_minutes = 0
+    shop.hours.filter(method="delivery").update(start_minute=22 * 60, end_minute=2 * 60)
+    evening = datetime(2026, 10, 6, 23, tzinfo=MOSCOW)
+    if next_day_closed:
+        DateException.objects.create(
+            shop=shop, day=date(2026, 10, 7), method="delivery", closed=True
+        )
+    slots = available_slots(shop, "delivery", evening, day=evening.date())
+    if next_day_closed:
+        assert slots == []
+    else:
+        assert len(slots) == 1
+        assert slots[0].start == evening
+        assert slots[0].end == datetime(2026, 10, 7, 1, tzinfo=MOSCOW)
+
+
 def test_any_context_keeps_open_shop(shop):
     assert shop_can_receive(shop, FulfillmentContext(), NOW)
 

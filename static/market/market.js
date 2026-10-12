@@ -164,7 +164,9 @@ if (checkout) {
     checkout.querySelector("[data-exact-address]").hidden = call;
     checkout.querySelector('[name="address"]').required = hasDelivery && !call;
     groups.forEach((group) => {
-      const deferred = group.querySelector("[data-method]").value === "delivery" && call;
+      const deferred = group.querySelector("[data-method]").value === "delivery" && call && group.dataset.ownDelivery === "1";
+      const romeo = group.querySelector("[data-method]").value === "delivery" && group.dataset.ownDelivery !== "1";
+      group.querySelector("[data-slot-label]").textContent = romeo ? "Интервал доставки · 2 часа" : "Интервал получения";
       const slot = group.querySelector("[data-slot]");
       group.querySelector("[data-slot-field]").hidden = deferred;
       slot.disabled = deferred;

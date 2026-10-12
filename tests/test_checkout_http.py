@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
@@ -54,6 +55,7 @@ def test_checkout_can_clarify_delivery_with_recipient(client, owner, shop, listi
             "delivery_contact": "call",
             "instructions": "Поздравить с днём рождения",
             f"method_{shop.pk}": "delivery",
+            f"slot_{shop.pk}": next_slot(shop, "delivery", timezone.now()).value,
         },
     )
     assert response.status_code == 302
@@ -62,9 +64,34 @@ def test_checkout_can_clarify_delivery_with_recipient(client, owner, shop, listi
     assert order.total_incl_tax == Decimal(2500)
     assert order.shipping_incl_tax == 0
     assert part.delivery_contact == "call"
-    assert part.slot_start is None
+    assert part.slot_end - part.slot_start == timedelta(hours=2)
     assert part.address == ""
     assert part.instructions == "Поздравить с днём рождения"
+
+
+@pytest.mark.parametrize("own_delivery, expected_status", [(False, 200), (True, 302)])
+def test_delivery_call_requires_interval_for_romeo(
+    client, owner, shop, listing, own_delivery, expected_status
+):
+    shop.own_delivery = own_delivery
+    shop.save()
+    client.force_login(owner)
+    client.post(f"/basket/add/{listing.pk}/")
+    basket = client.get("/checkout/").wsgi_request.basket
+    response = client.post(
+        "/checkout/",
+        {
+            "basket_id": basket.pk,
+            "name": "Иван",
+            "phone": "+79991234567",
+            "delivery_contact": "call",
+            f"method_{shop.pk}": "delivery",
+        },
+    )
+    assert response.status_code == expected_status
+    assert (
+        get_model("order", "Order").objects.filter(user=owner).exists() == own_delivery
+    )
 
 
 def test_checkout_no_call_accepts_address_in_checkout(client, owner, shop, listing):

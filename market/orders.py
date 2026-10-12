@@ -130,10 +130,11 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         ):
             raise ValidationError("Этот способ получения недоступен.")
         clarify = method == "delivery" and delivery_contact == "call"
+        defer_slot = clarify and shop.own_delivery
         slot = None
         try:
-            if clarify:
-                # Address and time will be agreed with the recipient after ordering.
+            if defer_slot:
+                # Only a shop's own delivery can agree its interval after ordering.
                 selected = None
             else:
                 selected = datetime.fromisoformat(choice.get("slot", ""))
@@ -155,7 +156,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             ),
             None,
         )
-        if not clarify and not slot:
+        if not defer_slot and not slot:
             raise ValidationError(
                 f"Интервал магазина «{shop.name}» изменился. Выберите другой."
             )

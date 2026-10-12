@@ -90,15 +90,29 @@ def available_slots(shop, method, now=None, day=None, hour=None, limit=96):
         return []
     days = [day] if day else [now.date() + timedelta(days=i) for i in range(31)]
     slots = []
+    duration = timedelta(
+        hours=2 if method == "delivery" and not shop.own_delivery else 1
+    )
     for target in days:
-        for start, end in _daily_windows(shop, target, method, rules):
+        tomorrow = datetime.combine(
+            target + timedelta(days=1), time.min, ZoneInfo(shop.timezone)
+        )
+        windows = _daily_windows(shop, target, method, rules)
+        if duration > timedelta(hours=1):
+            following = _daily_windows(shop, target + timedelta(days=1), method, rules)
+            if following and following[0][0] == tomorrow:
+                windows = [
+                    (start, following[0][1] if end == tomorrow else end)
+                    for start, end in windows
+                ]
+        for start, end in windows:
             start = max(start, ready)
             rounded = start.replace(minute=0, second=0, microsecond=0)
             if rounded < start:
                 rounded += timedelta(hours=1)
-            while rounded + timedelta(hours=1) <= end:
+            while rounded < tomorrow and rounded + duration <= end:
                 if hour is None or rounded.hour == hour:
-                    slots.append(Slot(rounded, rounded + timedelta(hours=1)))
+                    slots.append(Slot(rounded, rounded + duration))
                     if len(slots) >= limit:
                         return slots
                 rounded += timedelta(hours=1)

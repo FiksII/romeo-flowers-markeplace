@@ -8,7 +8,7 @@
     <input type="hidden" name="basket_id" value="{{ request.basket.pk }}">
     <div>{{ form.non_field_errors }}
     {% for group in groups %}
-    <section class="group-card" data-checkout-group data-goods="{{ group.total|unlocalize_money }}">
+    <section class="group-card" data-checkout-group data-own-delivery="{% if group.own_delivery %}1{% else %}0{% endif %}" data-goods="{{ group.total|unlocalize_money }}">
       <div class="section-heading"><div><h2>{{ group.shop.name }}</h2><p class="muted">{{ group.shop.settlement.name }}</p></div><strong class="money" data-group-goods>{{ group.total|rub }}</strong></div>
       {% for item in group.lines %}<p class="checkout-item">{{ item.listing.product.title }} <span>× {{ item.line.quantity }}</span></p>{% endfor %}
       <div class="two-fields">
@@ -19,7 +19,7 @@
             {% if group.slot_options.pickup %}<option value="pickup" data-goods="{{ group.pickup_goods_total|unlocalize_money }}" data-fee="0" {% if group.selected_method == 'pickup' %}selected{% endif %}>Самовывоз{% if group.pickup_savings > 0 %} · экономия {{ group.pickup_savings|rub }}{% endif %}</option>{% endif %}
           </select>
         </div>
-        <div class="field" data-slot-field><label for="slot-{{ group.shop.pk }}">Интервал получения</label>
+        <div class="field" data-slot-field><label for="slot-{{ group.shop.pk }}" data-slot-label>Интервал получения</label>
           <select id="slot-{{ group.shop.pk }}" name="slot_{{ group.shop.pk }}" data-slot>
             <option value="">Выберите интервал</option>
             {% for method, slots in group.slot_options.items %}<optgroup label="{% if method == 'delivery' %}Доставка{% else %}Самовывоз{% endif %}" data-slot-method="{{ method }}">{% for slot in slots %}<option value="{{ slot.value }}" {% if group.selected_slot == slot.value %}selected{% endif %}>{{ slot.label }}</option>{% endfor %}</optgroup>{% endfor %}
@@ -40,7 +40,7 @@
       <fieldset class="delivery-contact-choice"><legend>Нужно ли звонить получателю?</legend>
         {{ form.delivery_contact }}{{ form.delivery_contact.errors }}
       </fieldset>
-      <p class="field-help" data-call-help>Позвоним получателю и уточним адрес и время доставки.</p>
+      <p class="field-help" data-call-help>Позвоним получателю и уточним адрес и детали доставки. Для доставки Ромео выберите двухчасовой интервал получения.</p>
       <div data-exact-address>
         <p class="field-help">Доставим без звонка получателю. Укажите точный адрес и выберите интервал получения для каждого магазина.</p>
         {{ form.address_token }}
