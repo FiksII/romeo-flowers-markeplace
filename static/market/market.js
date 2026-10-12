@@ -160,7 +160,6 @@ if (checkout) {
     const hasDelivery = groups.some((group) => group.querySelector("[data-method]").value === "delivery");
     const call = checkout.querySelector('[name="delivery_contact"]:checked')?.value === "call";
     checkout.querySelector("[data-delivery-fields]").hidden = !hasDelivery;
-    checkout.querySelector("[data-delivery-summary]").hidden = !hasDelivery;
     checkout.querySelector("[data-call-help]").hidden = !call;
     checkout.querySelector("[data-exact-address]").hidden = call;
     checkout.querySelector('[name="address"]').required = hasDelivery && !call;
@@ -178,7 +177,6 @@ if (checkout) {
       if (resetSlot) slot.value = "";
       slot.querySelectorAll("optgroup").forEach((options) => { options.disabled = options.dataset.slotMethod !== method.value; options.hidden = options.disabled; });
       group.querySelector("[data-pickup-note]").hidden = method.value !== "pickup";
-      group.querySelector("[data-delivery-note]").hidden = method.value !== "delivery";
       totals();
       deliveryFields();
     };

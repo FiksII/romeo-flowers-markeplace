@@ -612,21 +612,21 @@ def test_buyer_pages_show_the_right_price_and_delivery_terms(client, owner, shop
     listing = make_listing(shop, delivery_price=2400)
     product = client.get(f"/products/{listing.pk}/").content.decode()
     assert "Самовывоз — 2" in product and "с доставкой магазина — 2" in product
-    assert "Доставка магазина · включена в цену" in product
+    assert "Доставка магазина" in product
     assert "Доставку Ромео добавим" not in product
     assert (
-        "Доставка магазина · включена в цену"
+        "Доставка магазина"
         in client.get(f"/shops/{shop.slug}/").content.decode()
     )
     client.force_login(owner)
     client.post(f"/basket/add/{listing.pk}/", {"quantity": "1"})
     checkout = client.get("/checkout/").content.decode()
-    assert "Доставка магазина · включена в цену" in checkout
+    assert "Доставка магазина" in checkout
     assert "Доставка Ромео" not in checkout
     shop.own_delivery = False
     shop.save()
     checkout = client.get("/checkout/").content.decode()
-    assert "Доставка Ромео · включена в цену" in checkout
+    assert "Доставка Ромео" in checkout
 
 
 def test_demo_seed_shows_both_delivery_models_and_an_unlimited_bouquet(settings):

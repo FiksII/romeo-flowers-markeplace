@@ -2,7 +2,7 @@
 {% block title %}Оформить заказ — Ромео{% endblock %}
 {% block content %}<section class="shell section-space">
   <a class="back-link" href="{% url 'market:basket' %}">← Корзина</a>
-  <div class="page-heading"><h1>Всё готово к красивому моменту</h1><p>Доставка уже включена в цену цветов. Укажите получателя и выберите, нужно ли уточнить у него адрес и время.</p></div>
+  <div class="page-heading"><h1>Всё готово к красивому моменту</h1><p>Укажите получателя и выберите, нужно ли уточнить у него адрес и время.</p></div>
   {% if groups %}
   <form method="post" class="checkout-layout" data-checkout data-address-form>{% csrf_token %}
     <input type="hidden" name="basket_id" value="{{ request.basket.pk }}">
@@ -15,7 +15,7 @@
         <div class="field"><label for="method-{{ group.shop.pk }}">Получение</label>
           <select id="method-{{ group.shop.pk }}" name="method_{{ group.shop.pk }}" data-method required>
             <option value="">Выберите способ</option>
-            {% if group.slot_options.delivery %}<option value="delivery" data-goods="{{ group.delivery_goods_total|unlocalize_money }}" {% if group.selected_method == 'delivery' %}selected{% endif %}>{% if group.own_delivery %}Доставка магазина{% else %}Доставка Ромео{% endif %} · включена в цену</option>{% endif %}
+            {% if group.slot_options.delivery %}<option value="delivery" data-goods="{{ group.delivery_goods_total|unlocalize_money }}" {% if group.selected_method == 'delivery' %}selected{% endif %}>{% if group.own_delivery %}Доставка магазина{% else %}Доставка Ромео{% endif %}</option>{% endif %}
             {% if group.slot_options.pickup %}<option value="pickup" data-goods="{{ group.pickup_goods_total|unlocalize_money }}" data-fee="0" {% if group.selected_method == 'pickup' %}selected{% endif %}>Самовывоз{% if group.pickup_savings > 0 %} · экономия {{ group.pickup_savings|rub }}{% endif %}</option>{% endif %}
           </select>
         </div>
@@ -27,7 +27,6 @@
         </div>
       </div>
       <p class="notice" data-pickup-note hidden>{% if group.pickup_savings > 0 %}Экономия на товарах {{ group.pickup_savings|rub }}.<br>{% endif %}{{ group.shop.settlement.name }}, {{ group.shop.address }}<br>{{ group.shop.pickup_instructions }}</p>
-      <p class="field-help" data-delivery-note hidden>Доставка включена в цену цветов.</p>
       {% if not group.available %}<p class="notice error">Этот магазин или его товары недоступны. Вернитесь в корзину.</p>{% endif %}
       <p class="field-help">Минимальная сумма товаров {{ group.shop.minimum_order|rub }}. Время — московское.</p>
     </section>
@@ -59,11 +58,10 @@
     </div>
     <aside class="summary-card"><h2>Общий заказ</h2>
       <div class="summary-row"><span>Товары</span><strong data-goods-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
-      <div class="summary-row" data-delivery-summary><span>Доставка</span><strong>Включена в цену</strong></div>
       <div class="summary-row total-row"><span>Итого</span><strong data-order-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
       <p class="notice">Приём оплаты пока не подключён. Созданный заказ будет ожидать оплаты.</p>
       <button class="button button-primary button-block">Создать заказ</button>
-      <p class="field-help">Цена цветов уже включает доставку. При самовывозе учитывается цена магазина для самовывоза. Неоплаченный резерв действует 30 минут.</p>
+      <p class="field-help">При самовывозе учитывается цена магазина для самовывоза. Неоплаченный резерв действует 30 минут.</p>
     </aside>
   </form>
   {% else %}<div class="empty-state"><h2>Корзина пуста</h2><a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать цветы</a></div>{% endif %}

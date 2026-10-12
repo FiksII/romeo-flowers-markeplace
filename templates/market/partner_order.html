@@ -11,7 +11,7 @@
     {% for line in part.lines %}<div class="summary-row"><span>{{ line.title }} × {{ line.quantity }}</span><strong>{{ line.line_price_incl_tax|rub }}</strong></div>{% endfor %}
     <div class="summary-row"><span>Товары · цена покупателя</span><span>{{ part.goods_total|rub }}</span></div>
     {% if part.pickup_discount_total %}<p class="field-help">В цене товаров учтена скидка за самовывоз {{ part.pickup_discount_total|rub }}.</p>{% endif %}
-    {% if part.method == 'delivery' and not part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>включена в цену</span></div>{% elif part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
+    {% if part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
     <div class="summary-row total-row"><strong>Всего с покупателя</strong><strong>{{ part.total|rub }}</strong></div>
     <div class="summary-row"><span>Магазину за товары, после комиссии</span><span>{{ part.base_goods_total|rub }}</span></div>
     <div class="summary-row"><span>Комиссия платформы · {{ part.commission_percent }}%</span><span>{{ part.commission_total|rub }}</span></div>
