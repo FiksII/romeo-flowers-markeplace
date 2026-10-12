@@ -1,6 +1,7 @@
 "use strict";
 
 document.querySelectorAll("[data-recipient-phone]").forEach((input) => {
+  let awaitingCountryCode = false;
   const digits = (value) => value.replace(/\D/g, "");
   const national = (value) => {
     let number = digits(value);
@@ -29,9 +30,11 @@ document.querySelectorAll("[data-recipient-phone]").forEach((input) => {
     const position = input.selectionStart ?? raw.length;
     let count = digits(raw.slice(0, position)).length;
     if (raw.startsWith("+") || (digits(raw).length === 11 && /^[78]/.test(raw))) count = Math.max(0, count - 1);
-    if (/^[78]$/.test(raw)) {
+    if (raw === "+" || raw === "+7" || /^[78]$/.test(raw) || (awaitingCountryCode && raw === "+77")) {
       input.value = "+7";
+      awaitingCountryCode = raw === "+";
     } else {
+      awaitingCountryCode = false;
       input.value = format(national(raw));
     }
     input.setSelectionRange(caret(count), caret(count));
@@ -39,6 +42,13 @@ document.querySelectorAll("[data-recipient-phone]").forEach((input) => {
   input.addEventListener("input", update);
   input.addEventListener("keydown", (event) => {
     if (!["Backspace", "Delete"].includes(event.key) || input.selectionStart !== input.selectionEnd) return;
+    if (input.value === "+7" && event.key === "Backspace" && input.selectionStart === 2) {
+      event.preventDefault();
+      input.value = "";
+      awaitingCountryCode = false;
+      input.setSelectionRange(0, 0);
+      return;
+    }
     const position = input.selectionStart;
     const adjacent = event.key === "Backspace" ? position - 1 : position;
     if (adjacent < 0 || adjacent >= input.value.length || /\d/.test(input.value[adjacent])) return;

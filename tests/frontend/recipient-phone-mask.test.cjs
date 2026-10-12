@@ -50,7 +50,7 @@ test('backspace at a separator removes the previous digit', () => {
 });
 
 test('formats a number typed digit by digit without moving digits around separators', () => {
-  for (const number of ['9991234567', '89991234567']) {
+  for (const number of ['9991234567', '79991234567', '89991234567', '+79991234567']) {
     const { input, handlers } = field();
     for (const digit of number) {
       const position = input.selectionStart;
@@ -60,4 +60,27 @@ test('formats a number typed digit by digit without moving digits around separat
     }
     assert.equal(input.value, '+7(999)123-45-67');
   }
+});
+
+test('plus, seven and eight activate the country prefix immediately', () => {
+  for (const value of ['+', '7', '8', '+7']) {
+    const { input, handlers } = field();
+    input.value = value;
+    input.selectionStart = value.length;
+    handlers.input();
+    assert.equal(input.value, '+7');
+    assert.equal(input.selectionStart, 2);
+  }
+});
+
+test('backspace can clear an activated prefix', () => {
+  const { input, handlers } = field();
+  input.value = '+';
+  input.selectionStart = 1;
+  handlers.input();
+  input.selectionEnd = input.selectionStart;
+  let prevented = false;
+  handlers.keydown({ key: 'Backspace', preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(input.value, '');
 });
