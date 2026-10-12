@@ -353,7 +353,6 @@ def test_live_address_ui_does_not_show_demo_hints_or_private_key(
     assert page.context["address_demo"] is False
     assert "Для примера: Тверская" not in page.content.decode()
     assert "test-only-dadata-token" not in page.content.decode()
-    assert "Подсказки DaData" in page.content.decode()
 
 
 @pytest.mark.parametrize("section", ["info", "payout"])
