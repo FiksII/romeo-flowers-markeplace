@@ -587,6 +587,15 @@ class CheckoutContactForm(forms.Form):
         regex=r"^\+?[0-9 ()-]{10,24}$",
         max_length=25,
         error_messages={"invalid": "Проверьте номер телефона."},
+        widget=forms.TextInput(
+            attrs={
+                "type": "tel",
+                "inputmode": "tel",
+                "autocomplete": "tel",
+                "placeholder": "+7 (***) *** - ** - **",
+                "data-recipient-phone": "",
+            }
+        ),
     )
     delivery_contact = forms.ChoiceField(
         label="Доставка",
@@ -626,6 +635,18 @@ class CheckoutContactForm(forms.Form):
     def __init__(self, *args, has_delivery=False, **kwargs):
         self.has_delivery = has_delivery
         super().__init__(*args, **kwargs)
+
+    def clean_phone(self):
+        number = "".join(
+            character for character in self.cleaned_data["phone"] if character.isdigit()
+        )
+        if len(number) == 10:
+            number = "7" + number
+        elif len(number) == 11 and number.startswith("8"):
+            number = "7" + number[1:]
+        if len(number) != 11 or not number.startswith("7"):
+            raise ValidationError("Введите телефон полностью: +7 (***) *** - ** - **.")
+        return "+" + number
 
     def clean(self):
         data = super().clean()

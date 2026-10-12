@@ -11,6 +11,25 @@ from tests.test_orders import ADDRESS
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.parametrize(
+    "phone", ["+7 (999) 123 - 45 - 67", "8 (999) 123-45-67", "9991234567"]
+)
+def test_recipient_phone_is_normalized(phone):
+    from market.forms import CheckoutContactForm
+
+    form = CheckoutContactForm({"name": "Иван", "phone": phone})
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["phone"] == "+79991234567"
+
+
+def test_incomplete_recipient_phone_is_rejected():
+    from market.forms import CheckoutContactForm
+
+    form = CheckoutContactForm({"name": "Иван", "phone": "+7 (999) 123 - 45"})
+    assert not form.is_valid()
+    assert "phone" in form.errors
+
+
 def test_checkout_options_ignore_stale_catalogue_time(client, owner, shop, listing):
     client.force_login(owner)
     client.post(f"/basket/add/{listing.pk}/")
