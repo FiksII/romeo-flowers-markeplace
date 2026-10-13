@@ -1,0 +1,11 @@
+{% extends 'market/base.html' %}
+{% block title %}Код из SMS — Ромео{% endblock %}
+{% block content %}<section class="shell section-space narrow-section">
+<div class="page-heading"><h1>Введите код из SMS</h1><p>Отправили код на {{ phone }}. Он действует 5 минут.</p></div>
+<form method="post" class="form-card">{% csrf_token %}
+{% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+{{ verify_form.non_field_errors }}{% for field in verify_form %}{% include 'market/partials/field.html' %}{% endfor %}
+<button name="action" value="verify" class="button button-primary button-block">Подтвердить телефон</button>
+{% if can_resend %}<button name="action" value="resend" class="button button-block" formnovalidate>Отправить новый код</button><p class="field-help">Повторная отправка доступна через минуту.</p>{% endif %}
+<p class="form-bottom"><button class="button" formaction="{% url 'market:restart-login' %}" formnovalidate>Указать другой телефон</button></p>
+</form></section>{% endblock %}

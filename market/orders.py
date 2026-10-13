@@ -4,7 +4,9 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import timezone
 from oscar.apps.order.utils import OrderCreator
@@ -52,6 +54,11 @@ def place_market_order(user, basket, choices, address, contact, now=None):
     previous = Order.objects.filter(basket=basket, user=user).first()
     if previous:
         return previous
+    customer = get_user_model().objects.select_for_update().get(pk=user.pk)
+    email = customer.email.strip() or contact.get("email", "").strip()
+    if not email:
+        raise ValidationError("Укажите ваш email для информации о заказе.")
+    validate_email(email)
     if basket.status != Basket.OPEN:
         raise ValidationError("Корзина уже оформлена или недоступна.")
     basket.strategy = MarketplaceStrategy()
@@ -217,6 +224,10 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             country=country,
             phone_number=contact["phone"],
         )
+    if not customer.email.strip():
+        customer.email = email
+        customer.save(update_fields=["email"])
+        user.email = email
     basket.freeze()
     charge = Price(currency="RUB", excl_tax=shipping_total, incl_tax=shipping_total)
     total = Price(
@@ -227,6 +238,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
     order = OrderCreator().place_order(
         basket=basket,
         user=user,
+        guest_email=email,
         total=total,
         shipping_method=SimpleNamespace(
             name="Доставка Ромео и самовывоз", code="market"

@@ -1,0 +1,7 @@
+{% with current=request.resolver_match.url_name %}
+<nav class="portal-nav" aria-label="Кабинет супер-администратора">
+  <a href="{% url 'market:operator' %}"{% if current == 'operator' %} aria-current="page"{% endif %}>Дашборд</a>
+  <a href="{% url 'market:operator-orders' %}"{% if current == 'operator-orders' or current == 'partner-order' %} aria-current="page"{% endif %}>Заказы</a>
+  <a href="{% url 'market:operator-settings' %}"{% if current == 'operator-settings' %} aria-current="page"{% endif %}>Настройки</a>
+</nav>
+{% endwith %}

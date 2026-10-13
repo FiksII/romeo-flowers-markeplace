@@ -83,11 +83,11 @@ def test_sections_are_scoped_to_the_sellers_own_shop(
     )
 
 
-def test_partner_settings_url_leads_to_the_info_page(client, owner, shop):
+def test_partner_settings_opens_notification_channels(client, owner, shop):
     client.force_login(owner)
     response = client.get(f"/partner/{shop.slug}/settings/")
-    assert response.status_code == 302
-    assert response.url == f"/partner/{shop.slug}/info/"
+    assert response.status_code == 200
+    assert all(field.disabled for field in response.context["form"].fields.values())
 
 
 # --- bouquets -------------------------------------------------------------------------

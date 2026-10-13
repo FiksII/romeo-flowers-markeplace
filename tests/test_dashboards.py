@@ -73,14 +73,17 @@ def test_demo_seed_idempotent():
     }
 
 
-def test_customer_signup_and_login(client):
+def test_existing_customer_password_login(client):
+    from django.contrib.auth import get_user_model
+
+    get_user_model().objects.create_user(
+        "buyer", "buyer@example.com", "Some-Long-Secret-732"
+    )
     response = client.post(
-        "/signup/",
+        "/login/password/",
         {
-            "username": "buyer",
-            "email": "buyer@example.com",
-            "password1": "Some-Long-Secret-732",
-            "password2": "Some-Long-Secret-732",
+            "username": "buyer@example.com",
+            "password": "Some-Long-Secret-732",
         },
     )
     assert response.status_code == 302

@@ -203,7 +203,9 @@ def test_json_search_matches_displayed_money_receiving_method_and_date(
     assert date_result["recordsFiltered"] == 1
 
 
-def test_dashboard_supplies_scoped_data_url_and_safe_chart_data(client, owner, shop):
+def test_orders_tab_supplies_scoped_data_url_and_dashboard_chart_data(
+    client, owner, shop
+):
     import json
     from html.parser import HTMLParser
 
@@ -234,6 +236,9 @@ def test_dashboard_supplies_scoped_data_url_and_safe_chart_data(client, owner, s
     response = client.get(f"/partner/{shop.slug}/", {"days": "7"})
     parser = ReportParser()
     parser.feed(response.content.decode())
+    parser.feed(
+        client.get(f"/partner/{shop.slug}/orders/", {"days": "7"}).content.decode()
+    )
     assert parser.url == f"/partner/{shop.slug}/orders/data/"
     assert client.get(parser.url, {"days": "7"}).json()["recordsTotal"] == 1
     points = json.loads(parser.script_data)

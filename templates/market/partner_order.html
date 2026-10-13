@@ -1,8 +1,9 @@
 {% extends 'market/base.html' %}{% load market_tags %}
 {% block content %}
 <section class="shell section-space narrow-section">
-  <a class="back-link" href="{% url 'market:partner-shop' shop.slug %}">← {{ shop.name }}</a>
+  <a class="back-link" href="{% if request.user.is_superuser %}{% url 'market:operator-orders' %}{% else %}{% url 'market:partner-orders' shop.slug %}{% endif %}">← Заказы</a>
   <div class="page-heading"><h1>Заказ № {{ part.order.number }}</h1><p>Ваша часть № {{ part.pk }} · {{ part.get_status_display }} · {{ part.get_payment_status_display }}</p></div>
+  {% if request.user.is_superuser %}{% include 'market/partials/operator_nav.html' %}{% else %}{% include 'market/partials/partner_nav.html' %}{% endif %}
   <div class="group-card">
     <h2>{{ part.get_method_display }}</h2>
     {% include 'market/partials/order_receiving.html' %}

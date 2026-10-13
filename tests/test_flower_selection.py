@@ -11,21 +11,22 @@ def test_partner_login_opens_shop_and_customer_keeps_orders(
     client, owner, shop, stranger
 ):
     response = client.post(
-        "/login/", {"username": owner.username, "password": "long-secret-pass"}
+        "/login/password/", {"username": owner.email, "password": "long-secret-pass"}
     )
     assert response.url == f"/partner/{shop.slug}/"
     client.logout()
     response = client.post(
-        "/login/", {"username": stranger.username, "password": "long-secret-pass"}
+        "/login/password/",
+        {"username": stranger.email, "password": "long-secret-pass"},
     )
     assert response.url == "/account/orders/"
 
 
 def test_explicit_login_destination_is_preserved(client, owner, shop):
     response = client.post(
-        "/login/",
+        "/login/password/",
         {
-            "username": owner.username,
+            "username": owner.email,
             "password": "long-secret-pass",
             "next": "/checkout/",
         },

@@ -1,0 +1,6 @@
+{% load market_tags %}
+<div data-order-section><div class="table-wrap"><table class="market-table" data-orders-url="{% if operator_orders %}{% url 'market:operator-orders-data' %}{% else %}{% url 'market:partner-orders-data' shop.slug %}{% endif %}" data-days="{{ days }}"><thead><tr><th>Заказ</th><th>Создан</th><th>{% if operator_orders %}Магазин{% else %}Получение{% endif %}</th><th>Сумма</th><th>Оплата</th><th>Статус</th></tr></thead><tbody>
+{% for part in parts %}<tr><td><a class="text-link" href="{% url 'market:partner-order' part.shop.slug part.pk %}">№ {{ part.order.number }} / {{ part.pk }}</a></td><td>{{ part.created_at|date:'d.m.Y' }}</td><td>{% if operator_orders %}{{ part.shop.name }}{% else %}{{ part.get_method_display }}<br>{{ part.slot_start|date:'d.m H:i' }}{% endif %}</td><td>{{ part.total|rub }}</td><td>{{ part.get_payment_status_display }}</td><td>{{ part.get_status_display }}</td></tr>{% empty %}<tr><td colspan="6">За этот период заказов пока нет.</td></tr>{% endfor %}
+</tbody></table></div>
+{% include 'market/partials/order_pagination.html' %}
+</div>

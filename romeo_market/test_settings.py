@@ -14,3 +14,5 @@ OSM_ADDRESS_SEARCH = False
 DADATA_TOKEN = ""
 ADDRESS_DEMO = True
 YANDEX_TILES_API_KEY = ""
+SMSPILOT_API_KEY = ""
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

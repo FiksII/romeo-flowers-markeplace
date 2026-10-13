@@ -1,0 +1,6 @@
+{% extends 'market/base.html' %}
+{% block title %}Слишком много запросов — Ромео{% endblock %}
+{% block content %}<section class="shell section-space narrow-section"><div class="form-card">
+<h1>Подождите немного</h1><p>Слишком много запросов. Попробуйте позже.</p>
+<a class="button button-primary" href="{% url 'market:login' %}">Вернуться ко входу</a>
+</div></section>{% endblock %}

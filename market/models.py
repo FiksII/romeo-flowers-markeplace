@@ -445,3 +445,13 @@ class DemoPayout(models.Model):
                 condition=models.Q(amount__gte=0), name="market_demo_payout_nonnegative"
             )
         ]
+
+
+class CustomerPhone(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="customer_phone",
+    )
+    phone = models.CharField(max_length=16, unique=True)
+    verified = models.BooleanField(default=False)

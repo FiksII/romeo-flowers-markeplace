@@ -7,12 +7,13 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from oscar.core.loading import get_model
 
 from market.access import get_shop_for_user, shops_for_user
 from market.forms import (
     ExceptionForm,
+    NotificationSettingsForm,
     OperatorShopForm,
     ProductForm,
     ShopForm,
@@ -75,6 +76,67 @@ def partner_dashboard(request, slug):
             **report,
         },
     )
+
+
+def _orders_page(request, parts, *, shop=None):
+    report = dashboard_report(parts, request.GET.get("days"))
+    return render(
+        request,
+        "market/portal_orders.html",
+        {
+            "shop": shop,
+            "operator_orders": shop is None,
+            "parts": Paginator(
+                report["period_parts"].select_related("order", "shop"), 20
+            ).get_page(request.GET.get("page")),
+            "days": report["days"],
+            "period_options": report["period_options"],
+            "period_start": report["period_start"],
+            "period_end": report["period_end"],
+        },
+    )
+
+
+@login_required
+@require_GET
+def partner_orders_page(request, slug):
+    shop = get_shop_for_user(request.user, slug)
+    return _orders_page(
+        request, shop.shop_orders.order_by("-created_at", "-pk"), shop=shop
+    )
+
+
+@login_required
+@require_GET
+def operator_orders_page(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    return _orders_page(request, ShopOrder.objects.order_by("-created_at", "-pk"))
+
+
+@require_GET
+def _notification_settings_page(request, *, shop=None):
+    return render(
+        request,
+        "market/notification_settings.html",
+        {
+            "shop": shop,
+            "form": NotificationSettingsForm(),
+        },
+    )
+
+
+@login_required
+def partner_settings(request, slug):
+    shop = get_shop_for_user(request.user, slug)
+    return _notification_settings_page(request, shop=shop)
+
+
+@login_required
+def operator_settings(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    return _notification_settings_page(request)
 
 
 @login_required

@@ -1,0 +1,13 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}Заказы{% if shop %} · {{ shop.name }}{% endif %} — Ромео{% endblock %}
+{% block report_assets %}{% include 'market/partials/report_assets.html' %}{% endblock %}
+{% block content %}<section class="shell section-space">
+  <div class="page-heading"><span class="eyebrow">{% if shop %}{{ shop.name }}{% else %}Супер-администратор{% endif %}</span><h1>Заказы</h1><p>{% if shop %}Заказы вашего магазина.{% else %}Заказы всех магазинов маркетплейса.{% endif %}</p></div>
+  {% if shop %}{% include 'market/partials/partner_nav.html' %}{% else %}{% include 'market/partials/operator_nav.html' %}{% endif %}
+  <div class="report-toolbar">
+    <div><p class="muted">{{ period_start|date:'d.m.Y' }} — {{ period_end|date:'d.m.Y' }}</p></div>
+    <form method="get"><label for="order-days">Период</label><select id="order-days" name="days">{% for value in period_options %}<option value="{{ value }}"{% if days == value %} selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>
+  </div>
+  {% if demo_mode %}<p class="notice">Демонстрационные заказы: оплата и статусы имитированы.</p>{% endif %}
+  {% include 'market/partials/portal_order_table.html' %}
+</section>{% endblock %}

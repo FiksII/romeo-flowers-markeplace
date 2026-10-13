@@ -4,6 +4,7 @@ from django.urls import path
 from market import portal_views as portal
 from market import storefront_views as views
 from market import table_views as tables
+from market.auth_views import SmsSignupView, restart_login
 
 app_name = "market"
 urlpatterns = [
@@ -21,22 +22,29 @@ urlpatterns = [
     path("account/orders/", views.account_orders, name="account"),
     path("account/orders/<str:number>/", views.order_detail, name="order"),
     path("account/cancel/<int:pk>/", views.customer_cancel, name="customer-cancel"),
-    path("signup/", views.signup, name="signup"),
+    path("signup/", SmsSignupView.as_view(), name="signup"),
+    path("login/", SmsSignupView.as_view(), name="login"),
+    path("login/restart/", restart_login, name="restart-login"),
     path(
-        "login/",
+        "login/password/",
         views.MarketLoginView.as_view(),
-        name="login",
+        name="password-login",
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("partner/", portal.partner_index, name="partner"),
     path("partner/new/", portal.shop_new, name="shop-new"),
     path("partner/<slug:slug>/", portal.partner_dashboard, name="partner-shop"),
     path(
+        "partner/<slug:slug>/orders/", portal.partner_orders_page, name="partner-orders"
+    ),
+    path(
         "partner/<slug:slug>/orders/data/",
         tables.partner_orders,
         name="partner-orders-data",
     ),
-    path("partner/<slug:slug>/settings/", portal.shop_settings, name="shop-settings"),
+    path(
+        "partner/<slug:slug>/settings/", portal.partner_settings, name="shop-settings"
+    ),
     path("partner/<slug:slug>/info/", portal.shop_info, name="shop-info"),
     path("partner/<slug:slug>/payout/", portal.shop_payout, name="shop-payout"),
     path("partner/<slug:slug>/products/", portal.product_list, name="products"),
@@ -57,6 +65,8 @@ urlpatterns = [
         name="partner-order",
     ),
     path("operator/", portal.operator_index, name="operator"),
+    path("operator/orders/", portal.operator_orders_page, name="operator-orders"),
+    path("operator/settings/", portal.operator_settings, name="operator-settings"),
     path(
         "operator/new/", portal.shop_new, {"operator": True}, name="operator-shop-new"
     ),

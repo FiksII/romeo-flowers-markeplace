@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
@@ -35,12 +35,65 @@ SHORT_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 UNLIMITED_CLASS = "market-flowers-unlimited"
 
 
-class SignupForm(UserCreationForm):
-    email = forms.EmailField(label="Email")
+class NotificationSettingsForm(forms.Form):
+    notify_telegram = forms.BooleanField(
+        label="Уведомлять в Telegram",
+        required=False,
+        disabled=True,
+        initial=False,
+        help_text="Канал ещё не подключён",
+    )
+    notify_vk = forms.BooleanField(
+        label="Уведомлять в ВК",
+        required=False,
+        disabled=True,
+        initial=False,
+        help_text="Канал ещё не подключён",
+    )
 
-    class Meta(UserCreationForm.Meta):
-        model = get_user_model()
-        fields = ["username", "email"]
+
+class ContactAuthenticationForm(AuthenticationForm):
+    username = forms.CharField(
+        label="Телефон или email",
+        max_length=254,
+        widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
+    )
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": "Проверьте телефон или email и пароль.",
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].max_length = 254
+        self.fields["username"].widget.attrs["maxlength"] = 254
+
+    def clean(self):
+        identifier = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
+        if identifier and password:
+            User = get_user_model()
+            candidates = User.objects.none()
+            if "@" in identifier:
+                candidates = User.objects.filter(email__iexact=identifier)
+            else:
+                from market.auth_adapter import RussianPhoneField
+
+                try:
+                    phone = RussianPhoneField().clean(identifier)
+                except ValidationError:
+                    pass
+                else:
+                    candidates = User.objects.filter(
+                        customer_phone__phone=phone, customer_phone__verified=True
+                    )
+            users = list(candidates[:2])
+            if len(users) != 1:
+                # Match Django's password-hashing work for unknown identifiers.
+                User().set_password(password)
+                raise self.get_invalid_login_error()
+            self.cleaned_data["username"] = users[0].get_username()
+        return super().clean()
 
 
 class ProductForm(forms.Form):
@@ -632,9 +685,16 @@ class CheckoutContactForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 3}),
     )
 
-    def __init__(self, *args, has_delivery=False, **kwargs):
+    def __init__(self, *args, has_delivery=False, user=None, **kwargs):
         self.has_delivery = has_delivery
         super().__init__(*args, **kwargs)
+        if user is not None and not user.email.strip():
+            self.fields["email"] = forms.EmailField(
+                label="Ваш email",
+                max_length=254,
+                help_text="Сохраним в аккаунте для информации о ваших заказах. В следующий раз спрашивать не будем.",
+                widget=forms.EmailInput(attrs={"autocomplete": "email"}),
+            )
 
     def clean_phone(self):
         number = "".join(

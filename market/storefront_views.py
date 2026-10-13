@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -37,7 +36,7 @@ from market.filters import (
     toggle_flower_url,
     without_url,
 )
-from market.forms import CheckoutContactForm, SignupForm
+from market.forms import CheckoutContactForm, ContactAuthenticationForm
 from market.models import Flower, Listing, Shop
 from market.orders import basket_groups, cancel_shop_order, place_market_order
 
@@ -91,6 +90,7 @@ def safe_next(request, fallback="market:home"):
 
 class MarketLoginView(LoginView):
     template_name = "market/login.html"
+    authentication_form = ContactAuthenticationForm
 
     def get_default_redirect_url(self):
         from market.access import shops_for_user
@@ -470,6 +470,7 @@ def checkout(request):
     address = get_context(request).address
     form = CheckoutContactForm(
         request.POST or None,
+        user=request.user,
         has_delivery=any(
             request.POST.get(f"method_{group['shop'].pk}") == "delivery"
             for group in groups
@@ -555,18 +556,3 @@ def customer_cancel(request, pk):
     except ValidationError as error:
         messages.error(request, "; ".join(error.messages))
     return redirect("market:order", number=part.order.number)
-
-
-def signup(request):
-    if request.user.is_authenticated:
-        return redirect("market:account")
-    form = SignupForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        user = form.save()
-        login(request, user)
-        return redirect("market:account")
-    return render(
-        request,
-        "market/form.html",
-        {"form": form, "heading": "Создать аккаунт", "button": "Зарегистрироваться"},
-    )

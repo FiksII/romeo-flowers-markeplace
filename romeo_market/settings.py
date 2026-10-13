@@ -12,7 +12,12 @@ environ.Env.read_env(BASE_DIR / ".env")
 DEBUG = env("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY", default="local-only-marketplace-change-in-production")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
-INSTALLED_APPS = ["sorl.thumbnail", "market.apps.MarketConfig"] + OSCAR_APPS
+INSTALLED_APPS = [
+    "sorl.thumbnail",
+    "market.apps.MarketConfig",
+    "allauth",
+    "allauth.account",
+] + OSCAR_APPS
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -20,6 +25,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
+    "market.middleware.SmsErrorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "market.middleware.ReservationExpiryMiddleware",
@@ -126,5 +133,35 @@ YANDEX_TILES_API_KEY = env("YANDEX_TILES_API_KEY", default="")
 OSM_ADDRESS_SEARCH = env.bool("OSM_ADDRESS_SEARCH", default=True)
 OSM_USER_AGENT = env("OSM_USER_AGENT", default="romeo-marketplace/1.0")
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+
+# Passwordless phone accounts; email is collected at the first checkout.
+ACCOUNT_ADAPTER = "market.auth_adapter.MarketAccountAdapter"
+ACCOUNT_SIGNUP_FIELDS = ["phone*"]
+ACCOUNT_LOGIN_METHODS = {"phone"}
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+ACCOUNT_PHONE_VERIFICATION_ENABLED = True
+ACCOUNT_PHONE_VERIFICATION_TIMEOUT = 300
+ACCOUNT_LOGIN_BY_CODE_TIMEOUT = 300
+ACCOUNT_PHONE_VERIFICATION_MAX_ATTEMPTS = 3
+ACCOUNT_LOGIN_BY_CODE_MAX_ATTEMPTS = 3
+ACCOUNT_PHONE_VERIFICATION_SUPPORTS_RESEND = 3
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = 3
+ACCOUNT_PHONE_VERIFICATION_CODE_FORMAT = {"length": 6, "numeric": True, "dashed": False}
+ACCOUNT_RATE_LIMITS = {
+    "verify_phone": "1/m/key,20/h/ip",
+    "request_login_code": "1/m/key,20/h/ip",
+    "sms_send": "1/m/key,20/h/ip",
+    "sms_send_hourly": "5/h/key",
+}
+SMSPILOT_API_KEY = env("SMSPILOT_API_KEY", default="")
+SMSPILOT_SENDER = env("SMSPILOT_SENDER", default="")
+# Shared between Gunicorn workers; must be writable by the application user.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "market_cache",
+    }
+}
 WSGI_APPLICATION = "romeo_market.wsgi.application"
 ASGI_APPLICATION = "romeo_market.asgi.application"
