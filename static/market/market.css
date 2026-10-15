@@ -44,6 +44,9 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 [data-carousel-track]{touch-action:pan-y}
 @media(max-width:540px){[data-carousel] .hero{height:auto;min-height:250px}[data-carousel] .hero-slide{min-height:250px}[data-carousel] .hero-copy{max-width:min(78%,280px);padding:16px 0 16px 16px}[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:28px}[data-carousel] .hero-lead{margin-top:10px;line-height:1.35}[data-carousel] .hero-copy .button{min-height:40px;margin-top:12px}}
 @media(prefers-reduced-motion:reduce){[data-carousel] .hero-slide,[data-carousel] .hero-dots button,[data-carousel] .hero-dots button::before{transition:none}}
+/* The page h1 is a small line above the slogan of the first slide. */
+[data-carousel] .hero-copy .hero-kicker{margin:0 0 12px;font:500 12px/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--forest-soft)}
+@media(max-width:540px){[data-carousel] .hero-copy .hero-kicker{margin-bottom:8px;font-size:11px;letter-spacing:.04em}}
 .catalogue-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
 .category-tile{display:flex;align-items:center;gap:14px;min-width:0;min-height:88px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--cream);color:var(--text-soft);font:500 15px/1.3 var(--sans);transition:border-color .15s,background-color .15s,color .15s}
 .category-tile-image{flex:none;width:64px;height:64px;object-fit:contain;mix-blend-mode:multiply}
@@ -54,10 +57,14 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 .category-tile.is-active>.icon{color:var(--forest)}
 @media(max-width:1000px){.catalogue-categories{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:540px){.catalogue-categories{gap:8px;margin-top:18px}.category-tile{gap:8px;min-height:72px;padding:10px;font-size:13px}.category-tile-image{width:40px;height:40px}.category-tile>.icon{display:none}}
+/* A mouse cannot swipe the rail and its scrollbar is hidden, so the flowers wrap instead. */
+@media(hover:hover) and (pointer:fine){.flower-rail{flex-wrap:wrap;overflow:visible;margin-right:0;padding-right:0}}
 .mobile-bottom-nav{grid-template-columns:repeat(3,1fr)}
 .city{max-width:280px;text-decoration:none}
 .city span{min-width:0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .header-cta{margin-left:8px;white-space:nowrap}
+/* Tablets: the header search moves to its own row instead of shrinking to a few letters. */
+@media(min-width:760px) and (max-width:1023px){.header-row{flex-wrap:wrap;row-gap:0}.site-search{order:1;flex:1 0 100%;margin:0 0 14px}}
 .service-contacts span{white-space:nowrap}
 .footer-grid{grid-template-columns:1fr auto auto;column-gap:clamp(40px,7vw,120px)}
 .footer-col form{margin:0}
@@ -124,12 +131,15 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 /* Cards on product tiles */
 .city-chip{position:absolute;top:12px;left:12px;padding:6px 12px;border-radius:999px;background:rgb(255 255 255/.92);box-shadow:var(--shadow-sm);font:500 12px/1 var(--sans);color:var(--forest)}
 .product-meta{font-size:12px;line-height:1.5}
+.product-meta .slot-time{white-space:nowrap}
 .product-media{position:relative}
 .empty-state{grid-column:1/-1;padding:56px 24px;border:0;background:var(--cream);text-align:center}
 .empty-state h2,.empty-state h3{margin:14px 0 8px;font:600 24px/1.2 var(--sans)}
 .empty-state p{margin-bottom:22px;font-size:15px;color:var(--muted)}
 .benefits{margin-top:80px}
 .benefits-grid{padding-block:36px}
+/* The benefits band ends the home page: the footer follows it without a page-colour stripe. */
+@media(min-width:760px){main:has(>.benefits:last-child)+.site-footer{margin-top:0}}
 .benefit h2{font-size:16px}
 .partner-callout{display:flex;margin-top:32px;justify-content:space-between;align-items:center;gap:32px;padding:36px;border-radius:var(--r-lg);background:var(--blush)}
 .partner-callout h2{margin:8px 0 12px;font-size:28px}
@@ -327,6 +337,7 @@ html:not(.js) .live-only{display:none}
   .footer-grid{grid-template-columns:1fr}
   .header-actions{display:none}
   .header-row{padding-bottom:12px}
+  .js .header-row{padding-bottom:0}
   .site-search{margin:0}
   .city span{max-width:150px}
   .section-space{margin-block:28px 48px}
@@ -400,3 +411,5 @@ html:not(.js) .live-only{display:none}
 .hours-tools{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:16px}
 .hours-tools[hidden]{display:none}
 @media(max-width:760px){.hours-table .day-full{display:none}.hours-table .day-short{display:inline}.shop-map{height:280px}.shop-map-tall{height:380px}}
+/* Phones: iOS Safari zooms the page into any field under 16px. Keep this block last to win over field rules above. */
+@media(max-width:759px){input:not([type=checkbox],[type=radio],[type=range],[type=file],[type=hidden],[type=submit],[type=button]),select,textarea,div.dt-container .dt-input{font-size:16px}}

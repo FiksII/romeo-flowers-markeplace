@@ -85,6 +85,19 @@ def test_home_carousel_starts_with_one_visible_slide_and_catalogue_links(client)
     assert html.count("data-carousel-dot=") == 4
     assert 'aria-label="Слайд 1" aria-pressed="true"' in html
     assert html.count("<h1") == 1
+    # The only h1 names the service; the slogan stays the large slide title.
+    assert (
+        '<h1 class="hero-kicker" id="home-heading">'
+        "Доставка цветов по Москве и области</h1>"
+    ) in slides[0][1]
+    assert "<h2>Для важных слов.<br>И просто так.</h2>" in slides[0][1]
+
+
+def test_card_keeps_the_receiving_time_on_one_line(client, listing):
+    response = client.get("/")
+    label = response.context["page"][0].nearest_slot.label
+    html = response.content.decode()
+    assert f'получение <span class="slot-time">{label}</span>' in html
 
 
 def test_category_tile_is_active_and_clears_the_filter_on_the_home_page(

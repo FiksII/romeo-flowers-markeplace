@@ -59,6 +59,25 @@ def test_s3_photo_url_uses_beget_bucket_and_signed_private_access():
     assert urls["static"] == "/static/market/bouquets/bouquet-01.png"
 
 
+THUMBNAIL_STORAGE_SCRIPT = """
+import django
+django.setup()
+from sorl.thumbnail.conf import settings
+from sorl.thumbnail.images import get_or_create_storage
+# sorl recreates the storage of a cached thumbnail from its class path, without options.
+print(get_or_create_storage(settings.THUMBNAIL_STORAGE).url('cache/ab/cd/rose.webp'))
+"""
+
+
+def test_thumbnail_storage_recreated_by_sorl_keeps_the_bucket_options():
+    result = storage_process(THUMBNAIL_STORAGE_SCRIPT)
+    assert result.returncode == 0, result.stderr
+    url = urlsplit(result.stdout.strip())
+    assert url.netloc == "s3.ru1.storage.beget.cloud"
+    assert url.path == "/test-flowers/media/cache/ab/cd/rose.webp"
+    assert "X-Amz-Signature" in parse_qs(url.query)
+
+
 def test_s3_public_urls_are_opt_in():
     result = storage_process(URL_SCRIPT, S3_QUERYSTRING_AUTH="False")
     assert result.returncode == 0, result.stderr

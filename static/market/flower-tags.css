@@ -31,4 +31,6 @@
 .flower-palette-orange{--flower-bg:#ffbe79;--flower-fg:#713a0e;--flower-border:#e9a152}
 .flower-palette-coral{--flower-bg:#ffb3a4;--flower-fg:#763326;--flower-border:#ee9686}
 @media(max-width:760px){.flower-picker-body{padding:12px}.flower-picker .flower-chip,.flower-tags .flower-chip{font-size:12px;padding:8px 10px;min-height:36px}.flower-chip-list{gap:8px}}
+/* iOS Safari zooms the page into fields under 16px. */
+@media(max-width:759px){.flower-picker .flower-search input{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.flower-chip{transition:none}.flower-chip:hover{transform:none}}

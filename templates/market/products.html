@@ -14,7 +14,7 @@
   </nav>
   <div class="table-wrap"><table class="market-table"><thead><tr><th>Букет</th><th>Цена самовывозом</th>{% if shop.own_delivery %}<th>Цена с доставкой</th>{% endif %}<th>Количество</th><th>Публикация</th><th></th></tr></thead><tbody>
   {% for item in listings %}<tr>
-    <td><div class="table-product"><img src="{{ item.image_url }}" width="56" height="56" alt="">{{ item.product.title }}</div></td>
+    <td><div class="table-product">{% listing_photo item "line" as photo %}<img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="56px"{% endif %} width="56" height="56" alt="">{{ item.product.title }}</div></td>
     <td>{% for size in item.price_variants %}<div>{{ size.label }} · {{ size.pickup|rub }}</div>{% endfor %}</td>
     {% if shop.own_delivery %}<td>{% for size in item.price_variants %}<div>{{ size.label }} · {% if size.delivery_set %}{{ size.delivery|rub }}{% else %}<span class="status-chip chip-warn">Укажите цену</span>{% endif %}</div>{% endfor %}</td>{% endif %}
     <td>{% if item.always_in_stock %}<span class="status-chip">Всегда в наличии</span>{% elif item.sold_out %}<span class="status-chip chip-warn">Распродан · 0</span>{% else %}{{ item.stockrecord.num_in_stock }}{% if item.stockrecord.num_allocated %} <span class="muted">· в резерве {{ item.stockrecord.num_allocated }}</span>{% endif %}{% endif %}</td>

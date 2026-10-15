@@ -86,7 +86,8 @@ if S3_ENABLED:
         if not value.strip():
             raise ImproperlyConfigured(f"При S3_ENABLED=True заполните {name}.")
     STORAGES["default"] = {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        # django-storages S3 that sorl-thumbnail can recreate without arguments.
+        "BACKEND": "market.storage.MediaS3Storage",
         "OPTIONS": {
             "bucket_name": s3_required["S3_BUCKET_NAME"],
             "access_key": s3_required["S3_ACCESS_KEY_ID"],

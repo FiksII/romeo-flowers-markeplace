@@ -1,6 +1,6 @@
 {% load market_tags %}<article class="product-card">
   <div class="product-media">
-    <a class="product-image" href="{% url 'market:product' listing.pk %}"><img src="{{ listing.image_url }}" alt="{{ listing.product.title }}" loading="lazy" width="400" height="500"></a>
+    {% listing_photo listing "card" as photo %}<a class="product-image" href="{% url 'market:product' listing.pk %}"><img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 759px) 50vw, (max-width: 1180px) 31vw, 302px"{% endif %} alt="{{ listing.product.title }}" loading="lazy" width="400" height="500"></a>
     <span class="city-chip">{{ listing.shop.settlement.name }}</span>
   </div>
   <div class="product-copy">
@@ -18,6 +18,6 @@
     {% else %}
     <form class="basket-add-form" method="post" action="{% url 'market:basket-add' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button button-pill" type="submit" aria-label="Добавить {{ listing.product.title }} в корзину">{% include "storefront/partials/icon.html" with name="plus" class="icon-sm" %}<span>В корзину</span></button></form>
     {% endif %}
-    <p class="product-meta"><a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · получение {{ listing.nearest_slot.label }}</p>
+    <p class="product-meta"><a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · получение <span class="slot-time">{{ listing.nearest_slot.label }}</span></p>
   </div>
 </article>

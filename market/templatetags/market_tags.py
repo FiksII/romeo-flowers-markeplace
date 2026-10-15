@@ -2,7 +2,15 @@ from decimal import Decimal, InvalidOperation
 
 from django import template
 
+from market.thumbnails import listing_photo as resized_listing_photo
+
 register = template.Library()
+
+
+@register.simple_tag
+def listing_photo(listing, preset):
+    """``{% listing_photo listing "card" as photo %}`` -> ``photo.src``, ``photo.srcset``."""
+    return resized_listing_photo(listing, preset)
 
 
 @register.filter
