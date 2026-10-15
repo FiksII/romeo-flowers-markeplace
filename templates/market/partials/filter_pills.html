@@ -35,3 +35,11 @@
     </div>
   </div>
 </details>
+
+<details class="pop pop-sort" data-pop="sort" name="filter-pop">
+  <summary class="pill{% if sort_set %} is-set{% endif %}" aria-label="Сортировка: {{ sort_label }}"><span>{{ sort_label }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="chev" %}</summary>
+  <div class="menu sort">
+    <div class="menu-title"><span>Сортировка</span><button type="button" data-close-pop aria-label="Закрыть">{% include "storefront/partials/icon.html" with name="close" %}</button></div>
+    <div class="options">{% for option in sort_options %}<a class="option{% if option.active %} is-on{% endif %}" href="{{ option.url }}" data-live-link{% if option.active %} aria-current="true"{% endif %}><span class="label">{{ option.label }}</span>{% include "storefront/partials/icon.html" with name="check" class="tick" %}</a>{% endfor %}</div>
+  </div>
+</details>

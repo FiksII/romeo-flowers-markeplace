@@ -48,18 +48,59 @@ def test_header_has_place_search_basket_and_account(client):
     assert 'class="mobile-bottom-nav"' in html
 
 
-def test_home_shows_the_four_category_tiles_and_the_hero(client, listing):
+def test_home_shows_the_category_chips_and_the_hero(client, listing):
     html = client.get("/").content.decode()
+    chips = html.split('<nav class="category-chips"', 1)[1].split("</nav>", 1)[0]
+    assert (
+        '<a class="category-chip is-active" href="/#catalogue" data-live-link '
+        'aria-current="true"><span class="category-name">Все</span><small>1</small></a>'
+    ) in chips
+    # The only bouquet is a monobouquet: the empty categories are shown, not linked.
+    assert 'href="/?category=bouquet#catalogue"' in chips
     for value, label in (
         ("bouquet", "Монобукеты"),
         ("composition", "Композиции"),
         ("basket", "Корзины"),
         ("box", "В коробке"),
     ):
-        assert f'href="/?category={value}#catalogue"' in html
-        assert f'<span class="category-name">{label}</span>' in html
+        assert f'<span class="category-name">{label}</span>' in chips
+        if value != "bouquet":
+            assert f'href="/?category={value}#catalogue"' not in chips
+    assert chips.count('class="category-chip is-zero" aria-disabled="true"') == 3
     assert 'class="hero-slide is-active"' in html
     assert 'class="price-tile"' not in html
+
+
+def test_place_and_time_bar_summarises_the_choice(client, city):
+    html = client.get("/").content.decode()
+    assert (
+        "<strong>Куда доставить цветы?</strong>"
+        "<span>Москва и область · любое время</span>"
+    ) in html
+    session = client.session
+    session["receiving"] = {
+        "city": city.pk,
+        "method": "pickup",
+        "when": "today",
+        "hour": 14,
+    }
+    session.save()
+    html = client.get("/").content.decode()
+    assert (
+        "<strong>Москва</strong><span>сегодня, 14:00–15:00 · самовывоз</span>" in html
+    )
+    assert "data-receiving-close" in html
+
+
+def test_place_and_time_details_name_a_chosen_date():
+    from datetime import date
+
+    from market.context import FulfillmentContext
+    from market.context_processors import receiving_details
+
+    context = FulfillmentContext(when="date", day=date(2026, 10, 17), method="delivery")
+    assert receiving_details(context) == "17 октября · доставка"
+    assert receiving_details(FulfillmentContext(when="asap")) == "как можно скорее"
 
 
 def test_home_carousel_starts_with_one_visible_slide_and_catalogue_links(client):
@@ -90,7 +131,10 @@ def test_home_carousel_starts_with_one_visible_slide_and_catalogue_links(client)
         '<h1 class="hero-kicker" id="home-heading">'
         "Доставка цветов по Москве и области</h1>"
     ) in slides[0][1]
-    assert "<h2>Для важных слов.<br>И просто так.</h2>" in slides[0][1]
+    assert (
+        '<h2>Для важных слов. <span class="nowrap">И просто так.</span></h2>'
+        in slides[0][1]
+    )
 
 
 def test_card_keeps_the_receiving_time_on_one_line(client, listing):
@@ -100,12 +144,14 @@ def test_card_keeps_the_receiving_time_on_one_line(client, listing):
     assert f'получение <span class="slot-time">{label}</span>' in html
 
 
-def test_category_tile_is_active_and_clears_the_filter_on_the_home_page(
+def test_category_chip_is_active_and_clears_the_filter_on_the_home_page(
     client, listing
 ):
     response = client.get("/", {"category": "basket"})
     html = response.content.decode()
-    assert 'class="category-tile is-active" href="/#catalogue"' in html
+    # A chosen category stays a link even when it is empty, so it can be cleared.
+    assert 'class="category-chip is-active" href="/#catalogue"' in html
+    assert '<a class="category-chip" href="/#catalogue"' in html
     assert response.context["total_count"] == 0
 
 

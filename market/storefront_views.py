@@ -28,10 +28,13 @@ from market.catalogue import (
 from market.context import ContextForm, FulfillmentContext, get_context
 from market.context_processors import rail_categories
 from market.filters import (
+    SORTS,
+    current_sort,
     filter_chips,
     flower_label,
     price_label,
     price_range_links,
+    sort_links,
     toggle_category_url,
     toggle_flower_url,
     without_url,
@@ -156,7 +159,11 @@ def home(request):
                 "zero": not count and str(flower.pk) not in chosen,
             }
         )
-    rail = flower_rail(params)
+    # The rail offers only flowers that bouquets in the current results have.
+    counts = {option["pk"]: option["count"] for option in flower_options}
+    rail = [
+        item for item in flower_rail(params) if counts.get(item["pk"]) or item["active"]
+    ]
     active_chips = filter_chips(params, categories, flowers, shops)
     return render(
         request,
@@ -171,6 +178,8 @@ def home(request):
             "category_total": sum(
                 1 for listing in candidates if spec.matches(listing, skip={"category"})
             ),
+            "category_selected": any(option["selected"] for option in category_options),
+            "all_categories_url": without_url(params, "category"),
             "flower_rail": rail,
             "flower_options": flower_options,
             "flower_pill": flower_label(params, {str(f.pk): f.name for f in flowers}),
@@ -180,6 +189,9 @@ def home(request):
             "price_set": bool(price_label(params)),
             "price_ranges": price_range_links(params),
             "price_reset_url": without_url(params, "min_price", "max_price"),
+            "sort_options": sort_links(params),
+            "sort_label": dict(SORTS)[current_sort(params)],
+            "sort_set": current_sort(params) != SORTS[0][0],
             "reset_url": without_url(
                 params, "q", "category", "flower", "min_price", "max_price", "shop"
             ),

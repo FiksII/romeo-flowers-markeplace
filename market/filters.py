@@ -12,6 +12,13 @@ PRICE_RANGES = (
     ("3 000 – 5 000 ₽", "3000", "5000"),
     ("От 5 000 ₽", "5000", ""),
 )
+# Orders understood by ``catalogue.sort_listings``; the first one is the default.
+SORTS = (
+    ("newest", "Сначала новые"),
+    ("price-asc", "Сначала дешевле"),
+    ("price-desc", "Сначала дороже"),
+    ("soon", "Быстрее получить"),
+)
 
 
 def _roubles(value) -> str:
@@ -79,6 +86,25 @@ def price_range_links(params):
             }
         )
     return links
+
+
+def current_sort(params) -> str:
+    """The chosen order; an unknown value means the default, as in ``sort_listings``."""
+    value = params.get("sort", "")
+    return value if value in dict(SORTS) else SORTS[0][0]
+
+
+def sort_links(params):
+    """Sort orders as links that keep every filter; the default order has no parameter."""
+    kept, current = _pairs(params, drop={"sort"}), current_sort(params)
+    return [
+        {
+            "label": label,
+            "url": _url(kept if value == SORTS[0][0] else [*kept, ("sort", value)]),
+            "active": value == current,
+        }
+        for value, label in SORTS
+    ]
 
 
 def price_label(params) -> str:

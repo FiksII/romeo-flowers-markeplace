@@ -1,10 +1,12 @@
 {% load static %}
-<nav class="catalogue-categories" aria-label="Категории букетов">
+<nav class="category-chips" aria-label="Категории букетов">
+  <a class="category-chip{% if not category_selected %} is-active{% endif %}" href="{{ all_categories_url }}" data-live-link{% if not category_selected %} aria-current="true"{% endif %}><span class="category-name">Все</span><small>{{ category_total }}</small></a>
   {% for item in category_options %}
-    <a class="category-tile{% if item.selected %} is-active{% endif %}" href="{{ item.url }}" data-live-link{% if item.selected %} aria-current="true" aria-label="{{ item.label }} — убрать фильтр"{% endif %}>
-      <img class="category-tile-image" src="{% static item.image %}" alt="" width="64" height="64" loading="lazy">
-      <span class="category-name">{{ item.label }}</span>
-      {% if item.selected %}{% include "storefront/partials/icon.html" with name="check" %}{% else %}{% include "storefront/partials/icon.html" with name="arrow-right" %}{% endif %}
-    </a>
+    {% if item.count or item.selected %}
+    <a class="category-chip{% if item.selected %} is-active{% endif %}" href="{{ item.url }}" data-live-link{% if item.selected %} aria-current="true" aria-label="{{ item.label }} — убрать фильтр"{% endif %}><img src="{% static item.image %}" alt="" width="28" height="28" loading="lazy"><span class="category-name">{{ item.label }}</span><small>{{ item.count }}</small></a>
+    {% else %}
+    {# Nothing to show under the current filters: visible, but not a dead-end link. #}
+    <span class="category-chip is-zero" aria-disabled="true"><img src="{% static item.image %}" alt="" width="28" height="28" loading="lazy"><span class="category-name">{{ item.label }}</span><small>0</small></span>
+    {% endif %}
   {% endfor %}
 </nav>

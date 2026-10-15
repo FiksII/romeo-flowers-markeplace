@@ -199,6 +199,25 @@ const openReceivingPanel = () => {
 window.addEventListener("hashchange", openReceivingPanel);
 openReceivingPanel();
 
+// On phones the open place-and-time form is a bottom sheet: the page under it does not scroll,
+// and the shade, the close button or Escape put it away.
+const receivingPanel = document.getElementById("receiving");
+if (receivingPanel) {
+  const sheet = window.matchMedia("(max-width: 759px)");
+  const lock = () => document.body.classList.toggle("has-dialog", sheet.matches && receivingPanel.open);
+  receivingPanel.addEventListener("toggle", lock);
+  sheet.addEventListener("change", lock);
+  // The shade is the panel's ::before, so a click on it targets the panel itself.
+  receivingPanel.addEventListener("click", (event) => {
+    if ((sheet.matches && event.target === receivingPanel) || event.target.closest("[data-receiving-close]")) receivingPanel.open = false;
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !receivingPanel.open || !sheet.matches) return;
+    receivingPanel.open = false;
+    receivingPanel.querySelector("summary").focus();
+  });
+}
+
 // Catalogue filters on the home page. Every change refreshes the results in place: the page is
 // fetched again and the regions marked data-live-region are swapped, so an open menu stays open
 // while several flowers are picked. Without JavaScript the form and links still work.

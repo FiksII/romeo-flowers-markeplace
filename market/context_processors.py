@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.templatetags.static import static
+from django.utils import dateformat
 
 from market.access import shops_for_user
 from market.addresses import demo_address_search
@@ -14,6 +15,23 @@ RAIL_CATEGORY_IMAGES = {
     "basket": "category-korziny",
     "box": "category-v-korobke",
 }
+
+
+WHEN_LABELS = {"asap": "как можно скорее", "today": "сегодня", "tomorrow": "завтра"}
+METHOD_LABELS = {"delivery": "доставка", "pickup": "самовывоз"}
+
+
+def receiving_details(context):
+    """When and how for the place-and-time bar: «сегодня, 14:00–15:00 · самовывоз»."""
+    when = WHEN_LABELS.get(context.when, "любое время")
+    if context.when == "date" and context.day:
+        when = dateformat.format(context.day, "j E")
+    if context.hour is not None:
+        hour = int(context.hour)
+        when += f", {hour:02}:00–{hour + 1:02}:00"
+    return " · ".join(
+        part for part in (when, METHOD_LABELS.get(context.method)) if part
+    )
 
 
 def rail_categories():
@@ -42,6 +60,7 @@ def market_context(request):
         "receiving_label": context.address["value"]
         if context.address
         else (city.name if city else "Москва и область"),
+        "receiving_details": receiving_details(context),
         "rail_categories": rail_categories(),
         "demo_mode": settings.MARKET_DEMO,
         "address_demo": demo_address_search(),

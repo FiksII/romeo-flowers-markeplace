@@ -2,7 +2,7 @@
 <section class="shell listing" id="catalogue" aria-labelledby="listing-heading" data-testid="catalogue-browse" data-catalogue-live>
   <div class="listing-head">
     <h2 id="listing-heading">Каталог букетов</h2>
-    <p class="count" data-live-region="count" aria-live="polite"><b>{{ total_count }}</b> {{ total_count|ru_plural:"букет,букета,букетов" }} · {{ receiving_label }}</p>
+    <p class="count" data-live-region="count" aria-live="polite"><b>{{ total_count }}</b> {{ total_count|ru_plural:"букет,букета,букетов" }}</p>
   </div>
 
   <div data-live-region="categories">{% include 'market/partials/category_rail.html' %}</div>
@@ -12,7 +12,7 @@
     <label class="filter-search">
       {% include "storefront/partials/icon.html" with name="search" %}
       <span class="visually-hidden">Название или магазин</span>
-      <input id="filter-q" type="search" name="q" placeholder="Название или магазин" autocomplete="off" value="{{ filters.q }}">
+      <input id="filter-q" type="search" name="q" placeholder="Найти букет" autocomplete="off" value="{{ filters.q }}">
     </label>
     {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
     {% if filters.shop %}<input type="hidden" name="shop" value="{{ filters.shop }}">{% endif %}

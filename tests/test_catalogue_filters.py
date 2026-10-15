@@ -11,10 +11,12 @@ from oscar.core.loading import get_model
 from market.catalogue import ListingFilter, flower_values, public_listings
 from market.context import FulfillmentContext
 from market.filters import (
+    current_sort,
     filter_chips,
     flower_label,
     price_label,
     price_range_links,
+    sort_links,
     toggle_flower_url,
 )
 from market.models import Flower, Listing
@@ -191,13 +193,56 @@ def test_flower_checkboxes_are_a_plain_form_field(client, bouquets):
     )
 
 
-def test_filter_bar_has_no_shop_or_sort_controls(client, bouquets):
+def test_filter_bar_has_sort_but_no_shop_control(client, bouquets):
     html = client.get("/").content.decode()
 
     assert 'data-pop="category"' not in html and 'data-pop="flower"' in html
-    assert 'data-pop="price"' in html
-    assert 'data-pop="shop"' not in html and 'data-pop="sort"' not in html
-    assert "Сначала новые" not in html
+    assert 'data-pop="price"' in html and 'data-pop="sort"' in html
+    assert 'data-pop="shop"' not in html
+    assert 'aria-label="Сортировка: Сначала новые"' in html
+
+
+def test_sort_links_keep_the_filters_and_mark_the_chosen_order():
+    params = QueryDict(f"flower={pk('Роза')}&min_price=2000&page=2&sort=price-desc")
+
+    links = {link["label"]: link for link in sort_links(params)}
+
+    assert current_sort(params) == "price-desc" and links["Сначала дороже"]["active"]
+    assert links["Сначала новые"]["url"] == (
+        f"/?flower={pk('Роза')}&min_price=2000#catalogue"
+    )
+    assert links["Сначала дешевле"]["url"] == (
+        f"/?flower={pk('Роза')}&min_price=2000&sort=price-asc#catalogue"
+    )
+    assert current_sort(QueryDict("sort=unknown")) == "newest"
+
+
+def test_sort_orders_the_catalogue_and_names_the_order(client, bouquets):
+    cheap_first = client.get("/", {"sort": "price-asc"})
+    expensive_first = client.get("/", {"sort": "price-desc"})
+
+    assert [item.product.title for item in cheap_first.context["page"]] == [
+        "Нежность",
+        "Пара",
+        "Пионы",
+    ]
+    assert [item.product.title for item in expensive_first.context["page"]] == [
+        "Пионы",
+        "Пара",
+        "Нежность",
+    ]
+    html = expensive_first.content.decode()
+    assert 'class="pill is-set" aria-label="Сортировка: Сначала дороже"' in html
+    assert 'name="sort" value="price-desc"' in html
+
+
+def test_flower_rail_offers_only_flowers_that_bouquets_have(client, bouquets):
+    rail = {c["label"] for c in client.get("/").context["flower_rail"]}
+    assert rail == {"Розы", "Пионы"}
+
+    roses = client.get("/", {"flower": [pk("Роза")], "category": "composition"})
+    # A chosen flower stays in the rail even without results, so it can be cleared.
+    assert {c["label"] for c in roses.context["flower_rail"]} == {"Розы"}
 
 
 def test_filters_work_without_javascript(client, bouquets):

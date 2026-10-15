@@ -29,36 +29,45 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 @media(max-width:760px){.report-toolbar{align-items:start;flex-direction:column;gap:16px}.report-toolbar form{flex-wrap:wrap}.stats-grid.report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.report-stats .money{white-space:normal}.sales-chart{padding:18px}.sales-chart .section-heading{flex-wrap:wrap}.sales-chart-plot{height:240px}div.dt-container .dt-layout-row:not(.dt-layout-table){align-items:start;justify-content:start;gap:14px}div.dt-container .dt-search .dt-input{min-width:180px;max-width:65vw}div.dt-container .dt-paging{overflow-wrap:anywhere}}
 
 /* ---------- Marketplace layout (design v2): header, panels, catalogue, product, basket, footer ---------- */
-[data-carousel] .hero{height:clamp(250px,22vw,300px)}
-[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:clamp(36px,4.2vw,56px)}
-[data-carousel] .hero-lead{margin-top:12px}
-[data-carousel] .hero-copy .button{min-height:44px;margin-top:18px}
-.hero-controls{display:flex;align-items:center;justify-content:center;gap:12px}
-.hero-controls .hero-dots{height:44px;gap:4px}
-.hero-controls .hero-dots button{display:grid;place-items:center;width:32px;height:32px;background:transparent}
+/* Compact banner: the dots and the pause button sit inside it, over the photo. */
+.hero-wrap[data-carousel]{position:relative;margin-top:20px}
+[data-carousel] .hero{height:clamp(200px,15vw,224px)}
+[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:clamp(30px,3vw,42px)}
+[data-carousel] .hero-lead{margin-top:8px;font-size:16px;line-height:1.45}
+[data-carousel] .hero-copy .button{min-height:40px;margin-top:14px}
+.hero-controls{position:absolute;right:14px;bottom:12px;z-index:3;display:flex;align-items:center;gap:2px;height:36px;padding:0 4px 0 6px;border-radius:999px;background:rgb(251 250 247/.86)}
+.hero-controls .hero-dots{height:36px;gap:0}
+.hero-controls .hero-dots button{display:grid;place-items:center;width:26px;height:32px;background:transparent}
 .hero-controls .hero-dots button::before{content:"";width:8px;height:8px;border-radius:4px;background:var(--border-strong);transition:width .2s,background-color .2s}
-.hero-controls .hero-dots button.is-active{width:44px}
-.hero-controls .hero-dots button.is-active::before{width:32px;background:var(--forest)}
-.carousel-pause{min-height:32px;padding:4px 8px;border-radius:var(--r-sm);font-size:12px;color:var(--muted)}
+.hero-controls .hero-dots button.is-active{width:36px}
+.hero-controls .hero-dots button.is-active::before{width:24px;background:var(--forest)}
+.carousel-pause{min-height:28px;padding:2px 8px;border-radius:999px;font-size:12px;color:var(--text-soft)}
 .carousel-pause:hover{background:var(--cream);color:var(--forest)}
 [data-carousel-track]{touch-action:pan-y}
-@media(max-width:540px){[data-carousel] .hero{height:auto;min-height:250px}[data-carousel] .hero-slide{min-height:250px}[data-carousel] .hero-copy{max-width:min(78%,280px);padding:16px 0 16px 16px}[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:28px}[data-carousel] .hero-lead{margin-top:10px;line-height:1.35}[data-carousel] .hero-copy .button{min-height:40px;margin-top:12px}}
+.nowrap{white-space:nowrap}
+@media(max-width:759px){.hero-wrap[data-carousel]{margin-top:12px}[data-carousel] .hero,[data-carousel] .hero-slide{height:auto;min-height:172px}[data-carousel] .hero-copy{max-width:min(68%,300px);padding:16px 0 16px 16px}[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:26px;line-height:1.05}[data-carousel] .hero-lead{display:none}[data-carousel] .hero-copy .button{min-height:38px;margin-top:12px;padding:0 14px;font-size:14px}.hero-controls{right:8px;bottom:8px;height:32px}.hero-controls .hero-dots{height:32px}.hero-controls .hero-dots button{width:22px;height:28px}.hero-controls .hero-dots button.is-active{width:30px}.hero-controls .hero-dots button.is-active::before{width:20px}}
+@media(max-width:540px){[data-carousel] .hero,[data-carousel] .hero-slide{min-height:164px}[data-carousel] .hero-copy{max-width:min(74%,300px)}[data-carousel] .hero-copy h1,[data-carousel] .hero-copy h2{font-size:24px}}
 @media(prefers-reduced-motion:reduce){[data-carousel] .hero-slide,[data-carousel] .hero-dots button,[data-carousel] .hero-dots button::before{transition:none}}
 /* The page h1 is a small line above the slogan of the first slide. */
 [data-carousel] .hero-copy .hero-kicker{margin:0 0 12px;font:500 12px/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--forest-soft)}
-@media(max-width:540px){[data-carousel] .hero-copy .hero-kicker{margin-bottom:8px;font-size:11px;letter-spacing:.04em}}
-.catalogue-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
-.category-tile{display:flex;align-items:center;gap:14px;min-width:0;min-height:88px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--cream);color:var(--text-soft);font:500 15px/1.3 var(--sans);transition:border-color .15s,background-color .15s,color .15s}
-.category-tile-image{flex:none;width:64px;height:64px;object-fit:contain;mix-blend-mode:multiply}
-.category-tile .category-name{flex:1;min-width:0}
-.category-tile>.icon{flex:none;width:18px;height:18px;color:var(--muted)}
-.category-tile:hover{border-color:var(--forest);background:var(--sage-note);color:var(--forest)}
-.category-tile.is-active{border-color:var(--forest);background:var(--sage);color:var(--forest);font-weight:600}
-.category-tile.is-active>.icon{color:var(--forest)}
-@media(max-width:1000px){.catalogue-categories{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:540px){.catalogue-categories{gap:8px;margin-top:18px}.category-tile{gap:8px;min-height:72px;padding:10px;font-size:13px}.category-tile-image{width:40px;height:40px}.category-tile>.icon{display:none}}
+@media(max-width:540px){[data-carousel] .hero-copy .hero-kicker{margin-bottom:8px;font-size:11px;letter-spacing:.02em}}
+/* Categories: one row of chips with counts; an empty category stays visible but is not a link. */
+.category-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.category-chip{display:inline-flex;flex:none;align-items:center;gap:8px;height:42px;padding:0 10px 0 6px;border:1px solid var(--border);border-radius:999px;background:#fff;font:500 14px/1 var(--sans);color:var(--text-soft);white-space:nowrap;transition:border-color .15s,background-color .15s,color .15s}
+.category-chip:first-child{padding-left:16px}
+.category-chip img{width:30px;height:30px;object-fit:contain;mix-blend-mode:multiply}
+.category-chip small{min-width:22px;padding:3px 6px;border-radius:999px;background:var(--cream);font:600 12px/1.2 var(--sans);color:var(--muted);text-align:center}
+a.category-chip:hover{border-color:var(--forest);color:var(--forest)}
+.category-chip.is-active{border-color:var(--forest);background:var(--forest);color:#fff}
+.category-chip.is-active img{mix-blend-mode:normal}
+.category-chip.is-active small{background:rgb(255 255 255/.2);color:#fff}
+.category-chip.is-zero{opacity:.45}
+@media(max-width:1023px) and (pointer:coarse),(max-width:759px){.category-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:14px calc(-1*var(--gutter)) 0;padding:0 var(--gutter) 2px}.category-chips::-webkit-scrollbar{display:none}}
+@media(max-width:759px){.category-chip{height:38px}.category-chip img{width:26px;height:26px}}
 /* A mouse cannot swipe the rail and its scrollbar is hidden, so the flowers wrap instead. */
 @media(hover:hover) and (pointer:fine){.flower-rail{flex-wrap:wrap;overflow:visible;margin-right:0;padding-right:0}}
+/* Phones get the flowers from the «Цветы» button: the rail would push the bouquets down. */
+@media(max-width:759px){.flower-rail{display:none}}
 .mobile-bottom-nav{grid-template-columns:repeat(3,1fr)}
 .city{max-width:280px;text-decoration:none}
 .city span{min-width:0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -87,17 +96,19 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 .small-flower{font-family:Georgia,serif;font-size:34px;line-height:1;color:var(--forest)}
 .text-link{font-size:inherit}
 
-/* Receiving (place and time) panel */
-.receiving-panel{scroll-margin-top:104px;margin-block:24px 20px;padding:18px 24px;border:1px solid var(--border);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-sm)}
-.receiving-panel summary{display:flex;justify-content:space-between;align-items:center;gap:20px;cursor:pointer;list-style:none}
+/* Place and time: one slim bar. The form opens under it; on phones it is a bottom sheet. */
+.receiving-panel{scroll-margin-top:104px;margin-top:16px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff}
+.receiving-panel summary{display:flex;align-items:center;gap:12px;min-height:54px;padding:8px 18px;cursor:pointer;list-style:none}
 .receiving-panel summary::-webkit-details-marker{display:none}
-.receiving-panel .eyebrow{font-size:11px}
-.receiving-panel h2{margin:2px 0 4px;font:600 20px/1.25 var(--sans);color:var(--forest)}
-.receiving-panel summary p{font-size:14px;color:var(--muted)}
-.receiving-toggle{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:50%;background:var(--cream);font-size:20px;line-height:1;color:var(--forest);transition:transform .2s,background-color .15s}
-.receiving-panel summary:hover .receiving-toggle{background:var(--sage)}
-.receiving-panel[open] .receiving-toggle{transform:rotate(45deg)}
-.receiving-form{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+.receiving-pin{flex:none;width:22px;height:22px;color:var(--forest)}
+.receiving-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-width:0;margin-right:auto}
+.receiving-summary strong{font:600 16px/1.3 var(--sans);color:var(--forest)}
+.receiving-summary span{font-size:14px;line-height:1.35;color:var(--muted)}
+.receiving-edit{flex:none;font-size:14px;font-weight:500;color:var(--forest);text-decoration:underline;text-underline-offset:4px}
+.receiving-chevron{flex:none;width:18px;height:18px;color:var(--muted);transition:transform .2s}
+.receiving-panel[open] .receiving-chevron{transform:rotate(180deg)}
+.receiving-sheet-head{display:none}
+.receiving-form{padding:20px 18px;border-top:1px solid var(--line)}
 .receiving-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .receiving-fields .address-field{grid-column:span 2}
 .receiving-fields .field{margin-bottom:0}
@@ -147,7 +158,10 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 
 /* Catalogue */
 /* Catalogue filter bar: search, pill buttons with popover menus, applied-filter chips */
+.listing{margin-top:28px}
+.listing .product-grid{margin-top:22px}
 .listing-head{align-items:flex-end}
+@media(max-width:759px){.listing{margin-top:22px}.listing-head{flex-wrap:nowrap;align-items:baseline;justify-content:space-between}.listing-head h2{font-size:26px;line-height:1.1}.listing-head .count{margin:0;white-space:nowrap}}
 .count{margin:0 0 6px;font-size:14px;color:var(--muted)}
 .count b{font-weight:600;color:var(--text)}
 .filter-bar{position:relative;z-index:30;display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:22px}
@@ -155,7 +169,16 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 .filter-search .icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
 .filter-search input{width:100%;height:46px;padding:0 18px 0 44px;border:1px solid var(--border-strong);border-radius:999px;background:#fff;font-size:15px}
 .filter-search input::-webkit-search-cancel-button{cursor:pointer}
-.filter-pills{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.filter-pills{display:flex;flex:1 1 auto;align-items:center;flex-wrap:wrap;gap:10px}
+/* The sort order is a preference, not a filter: it sits at the far end of the bar. */
+.pop-sort{margin-left:auto}
+.pop-sort .menu{left:auto;right:0}
+.menu.sort{width:280px}
+.menu.sort .options{display:grid;gap:2px}
+.option.is-on{background:var(--sage);font-weight:600;color:var(--forest)}
+.option.is-on .tick{opacity:1}
+/* Computers: the bar stays under the header while the bouquets scroll. */
+@media(min-width:1024px){.filter-bar{position:sticky;top:81px;margin:12px -12px 0;padding:8px 12px;background:var(--page)}}
 .pop{position:relative}
 .pill{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 14px 0 18px;border:1px solid var(--border-strong);border-radius:999px;background:#fff;font-size:15px;font-weight:500;white-space:nowrap;cursor:pointer;list-style:none;transition:border-color .15s,background-color .15s,color .15s,box-shadow .15s}
 .pill::-webkit-details-marker{display:none}
@@ -215,7 +238,7 @@ table.market-table.dataTable thead>tr>th,table.market-table.dataTable tbody>tr>t
 .link{font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:4px}
 .link:hover{color:var(--forest)}
 .chips{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px}
-.chips:empty{display:none}
+.chips:empty,.chips:not(:has(*)){display:none}
 .chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 6px 0 14px;border-radius:999px;background:var(--sage);color:var(--forest);font-size:14px;font-weight:500}
 .chip a{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;transition:background-color .12s}
 .chip a:hover{background:var(--sage-strong)}
@@ -320,16 +343,20 @@ html:not(.js) .live-only{display:none}
   .city span{max-width:140px}
 }
 @media(max-width:900px){
-  .filter-bar{position:static;z-index:auto}
-  .filter-search{flex:1 1 100%;max-width:none}
-  .filter-pills{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:calc(-1*var(--gutter));padding:0 var(--gutter) 4px}
+  /* One row: a short search field, then the buttons scroll sideways. The field widens while typing. */
+  .filter-bar{position:static;z-index:auto;flex-wrap:nowrap}
+  .filter-search{flex:0 0 158px;max-width:none}
+  .filter-search:focus-within{flex-basis:100%}
+  .filter-search .icon{left:13px}
+  .filter-search input{padding:0 10px 0 38px}
+  .filter-pills{flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:calc(-1*var(--gutter));padding:2px var(--gutter) 2px 0}
   .filter-pills::-webkit-scrollbar{display:none}
   .pop{position:static}
-  .menu,.menu.price,.menu.flowers{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;width:100%;max-width:none;min-width:0;max-height:78vh;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom));border:0;border-radius:24px 24px 0 0;box-shadow:0 0 0 100vmax rgb(28 35 26/.42);animation:sheet-in .26s cubic-bezier(.2,.8,.2,1)}
+  .menu,.menu.price,.menu.flowers,.menu.sort{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;width:100%;max-width:none;min-width:0;max-height:78vh;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom));border:0;border-radius:24px 24px 0 0;box-shadow:0 0 0 100vmax rgb(28 35 26/.42);animation:sheet-in .26s cubic-bezier(.2,.8,.2,1)}
   @keyframes sheet-in{from{transform:translateY(100%)}to{transform:none}}
   .menu-title{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 12px;font:600 18px/1.2 var(--sans)}
   .menu-title button{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--cream)}
-  .menu.price,.menu.flowers{padding:10px 18px calc(18px + env(safe-area-inset-bottom))}
+  .menu.price,.menu.flowers,.menu.sort{padding:10px 18px calc(18px + env(safe-area-inset-bottom))}
   .tags{max-height:42vh}
 }
 @media(max-width:759px){
@@ -343,11 +370,19 @@ html:not(.js) .live-only{display:none}
   .section-space{margin-block:28px 48px}
   .page-heading{margin-bottom:20px}
   .page-heading p{font-size:15px}
-  .receiving-panel{padding:16px 18px}
-  .receiving-panel h2{font-size:18px}
-  .receiving-panel summary p{font-size:13px}
-  .receiving-fields{grid-template-columns:1fr 1fr;gap:14px}
-  .receiving-fields .address-field{grid-column:1/-1}
+  .receiving-panel{margin-top:12px}
+  .receiving-panel summary{min-height:52px;padding:8px 14px;gap:10px}
+  .receiving-summary{flex:1 1 auto;flex-direction:column;align-items:flex-start;gap:1px}
+  .receiving-summary strong,.receiving-summary span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .receiving-summary strong{font-size:15px}
+  .receiving-summary span{font-size:13px}
+  .receiving-edit{display:none}
+  .receiving-panel[open]::before{content:"";position:fixed;inset:0;z-index:69;background:rgb(28 35 26/.42)}
+  .receiving-panel[open] .receiving-form{position:fixed;left:0;right:0;bottom:0;z-index:70;max-height:88vh;overflow:auto;padding:8px 18px calc(18px + env(safe-area-inset-bottom));border:0;border-radius:24px 24px 0 0;background:#fff;animation:sheet-in .26s cubic-bezier(.2,.8,.2,1)}
+  .receiving-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px;font:600 18px/1.2 var(--sans)}
+  .receiving-sheet-head button{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--cream)}
+  .receiving-fields{grid-template-columns:1fr;gap:14px}
+  .receiving-fields .address-field{grid-column:auto}
   .receiving-actions{flex-wrap:wrap;gap:14px}
   .receiving-actions p{width:100%}
   .benefits{margin-top:48px}
