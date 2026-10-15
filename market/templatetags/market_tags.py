@@ -6,6 +6,20 @@ register = template.Library()
 
 
 @register.filter
+def bouquet_size(line):
+    from market.bouquet_options import SIZE_OPTION
+
+    return next(
+        (
+            attribute.value
+            for attribute in line.attributes.all()
+            if attribute.option_id and attribute.option.code == SIZE_OPTION
+        ),
+        "",
+    )
+
+
+@register.filter
 def unlocalize_money(value):
     return str(value)
 

@@ -224,6 +224,7 @@ def product_detail(request, pk):
         {
             "listing": listing,
             "options": options,
+            "size_options": listing.size_options(context.method),
             "recommendations": [
                 row for row in public_listings(get_context(request)) if row.pk != pk
             ][:4],
@@ -339,6 +340,12 @@ def basket_add(request, pk):
             request, "Этот товар недоступен по выбранным условиям получения."
         )
         return redirect(safe_next(request))
+    size = request.POST.get("size") or (
+        listing.sizes[0] if not listing.has_size_choice else None
+    )
+    if size not in listing.sizes:
+        messages.error(request, "Выберите доступный размер букета.")
+        return redirect("market:product", pk=pk)
     try:
         basket = editable_basket(request)
         quantity = int(request.POST.get("quantity", "1"))
@@ -349,7 +356,18 @@ def basket_add(request, pk):
         )
         if not 1 <= quantity <= 101 or not listing.can_supply(current + quantity):
             raise ValueError
-        basket.add_product(listing.product, quantity=quantity)
+        from market.bouquet_options import SIZE_OPTION, SIZES
+
+        option, _ = get_model("catalogue", "Option").objects.get_or_create(
+            code=SIZE_OPTION,
+            defaults={"name": "Размер", "type": "text", "required": False},
+        )
+        with basket.strategy.for_size(size):
+            basket.add_product(
+                listing.product,
+                quantity=quantity,
+                options=[{"option": option, "value": dict(SIZES)[size]}],
+            )
         messages.success(request, f"«{listing.product.title}» добавлен в корзину.")
     except (ValueError, TypeError):
         messages.error(request, "Проверьте количество и наличие товара.")
@@ -366,10 +384,17 @@ def basket_update(request, pk):
         line = get_object_or_404(basket.lines, pk=pk)
         quantity = int(request.POST.get("quantity", "0"))
         listing = Listing.objects.filter(product_id=line.product_id).first()
+        others = sum(
+            item.quantity
+            for item in basket.all_lines()
+            if item.pk != line.pk and item.product_id == line.product_id
+        )
         if not 0 <= quantity <= 101 or (
             quantity
             and (
-                not line.stockrecord or not listing or not listing.can_supply(quantity)
+                not line.stockrecord
+                or not listing
+                or not listing.can_supply(quantity + others)
             )
         ):
             raise ValueError
@@ -415,9 +440,16 @@ def _basket_display(request, *, checkout=False):
         group["pickup_goods_total"] = 0
         for item in group["lines"]:
             listing = item["listing"]
+            from market.bouquet_options import line_size
+
+            size = line_size(item["line"])
+            if size not in listing.sizes:
+                item["customer_price"] = item["line"].unit_price_incl_tax
+                item["unavailable"] = True
+                continue
             delivery_unit, pickup_unit = (
-                listing.price_for("delivery"),
-                listing.price_for("pickup"),
+                listing.price_for("delivery", size),
+                listing.price_for("pickup", size),
             )
             if delivery_unit is not None:
                 quantity = item["line"].quantity
@@ -450,6 +482,7 @@ def _basket_display(request, *, checkout=False):
             shop.status == "active"
             and all(
                 item["listing"].stockrecord
+                and not item.get("unavailable")
                 and item["listing"].can_supply(item["line"].quantity)
                 for item in group["lines"]
             )

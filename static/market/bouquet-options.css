@@ -1,0 +1,17 @@
+.bouquet-tags { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; }
+.bouquet-tag { border-radius:20px; background:var(--paper, #f6f3ef); padding:7px 12px; font-size:14px; }
+.size-picker { border:0; padding:0; margin:16px 0; min-width:0; }
+.size-picker legend { font-weight:600; margin-bottom:12px; }
+.size-option { display:flex; align-items:center; gap:12px; border:1px solid #ddd4cd; border-radius:12px; padding:12px 16px; margin-bottom:8px; cursor:pointer; }
+.size-option:has(input:checked) { border-color:#8c2944; background:#fcf4f6; }
+.size-option input { width:auto; margin:0; accent-color:#8c2944; }
+.size-option strong { margin-left:auto; white-space:nowrap; }
+.size-dialog { border:0; border-radius:20px; padding:24px; width:min(420px, calc(100% - 32px)); max-height:90vh; overflow:auto; color:inherit; }
+.size-dialog::backdrop { background:rgb(30 15 20 / 45%); }
+.size-dialog-heading { display:flex; align-items:start; justify-content:space-between; gap:16px; }
+.size-dialog-heading h2 { margin:0 0 12px; font-size:22px; }
+.size-dialog-heading button { background:transparent; border:0; font-size:28px; cursor:pointer; padding:0 4px; }
+.field [id="id_tags"], .field [id="id_sizes"] { display:flex; flex-wrap:wrap; gap:8px 16px; }
+.field [id="id_tags"] label, .field [id="id_sizes"] label { display:flex; align-items:center; gap:8px; }
+.field [id="id_tags"] input, .field [id="id_sizes"] input { width:auto; }
+.basket-size { display:block; font-size:14px; margin-top:4px; }

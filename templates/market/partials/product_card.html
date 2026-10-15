@@ -5,8 +5,19 @@
   </div>
   <div class="product-copy">
     <h3><a href="{% url 'market:product' listing.pk %}">{{ listing.product.title }}</a></h3>
-    <p class="product-price"><b>{{ listing.display_price|rub }}</b></p>
+    <p class="product-price"><b>{% if listing.has_size_choice %}от {% endif %}{{ listing.display_price|rub }}</b></p>
+    {% if listing.has_size_choice %}
+    <a class="button button-pill" href="{% url 'market:product' listing.pk %}" data-size-dialog-open="size-dialog-{{ listing.pk }}">Выбрать размер</a>
+    <dialog class="size-dialog" id="size-dialog-{{ listing.pk }}" aria-labelledby="size-heading-{{ listing.pk }}">
+      <div class="size-dialog-heading"><h2 id="size-heading-{{ listing.pk }}">{{ listing.product.title }}</h2><button type="button" data-size-dialog-close aria-label="Закрыть">×</button></div>
+      <form method="post" action="{% url 'market:basket-add' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% include 'market/partials/size_picker.html' with size_options=listing.display_sizes %}
+        <button class="button button-primary button-block">В корзину</button>
+      </form>
+    </dialog>
+    {% else %}
     <form class="basket-add-form" method="post" action="{% url 'market:basket-add' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button button-pill" type="submit" aria-label="Добавить {{ listing.product.title }} в корзину">{% include "storefront/partials/icon.html" with name="plus" class="icon-sm" %}<span>В корзину</span></button></form>
+    {% endif %}
     <p class="product-meta"><a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · получение {{ listing.nearest_slot.label }}</p>
   </div>
 </article>

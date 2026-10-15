@@ -16,6 +16,7 @@ from oscar.core.prices import Price
 from market.access import shops_for_user
 from market.addresses import validate_address
 from market.availability import available_slots, location_matches
+from market.bouquet_options import line_size
 from market.context import FulfillmentContext
 from market.models import Listing, Shop, ShopOrder
 from market.pricing import quote_product
@@ -88,6 +89,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         )
     }
     groups = defaultdict(list)
+    quantities = defaultdict(int)
     for line in lines:
         listing, stock = (
             listing_rows.get(line.product_id),
@@ -102,8 +104,10 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             raise ValidationError(
                 "Одно из предложений больше недоступно. Обновите корзину."
             )
+        listing.prices_for_size(line_size(line))
+        quantities[stock.pk] += line.quantity
         if stock.price is None or not (
-            listing.always_in_stock or stock.net_stock_level >= line.quantity
+            listing.always_in_stock or stock.net_stock_level >= quantities[stock.pk]
         ):
             raise ValidationError(
                 f"Недостаточно цветов для «{line.product.title}». Обновите корзину."
@@ -178,10 +182,12 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             has_delivery = True
         goods, payout, commission = Decimal(0), Decimal(0), Decimal(0)
         for line, stock, listing in items:
-            quote = quote_product(shop, stock.price, listing.delivery_price, method)
-            line._info = basket.strategy.fetch_for_product(
-                line.product, stockrecord=stock
+            size = line_size(line)
+            pickup, delivery = listing.prices_for_size(size)
+            quote = quote_product(
+                shop, stock.price if size == "standard" else pickup, delivery, method
             )
+            line._info = basket.strategy.fetch_for_line(line, stockrecord=stock)
             goods += quote.customer * line.quantity
             payout += quote.payout * line.quantity
             commission += quote.commission * line.quantity

@@ -11,7 +11,7 @@
     {% for group in groups %}
     <section class="group-card" data-checkout-group data-own-delivery="{% if group.own_delivery %}1{% else %}0{% endif %}" data-goods="{{ group.total|unlocalize_money }}">
       <div class="section-heading"><div><h2>{{ group.shop.name }}</h2><p class="muted">{{ group.shop.settlement.name }}</p></div><strong class="money" data-group-goods>{{ group.total|rub }}</strong></div>
-      {% for item in group.lines %}<p class="checkout-item">{{ item.listing.product.title }} <span>× {{ item.line.quantity }}</span></p>{% endfor %}
+      {% for item in group.lines %}<p class="checkout-item">{{ item.listing.product.title }}{% if item.line|bouquet_size %} · {{ item.line|bouquet_size }}{% endif %} <span>× {{ item.line.quantity }}</span></p>{% endfor %}
       <div class="two-fields">
         <div class="field"><label for="method-{{ group.shop.pk }}">Получение</label>
           <select id="method-{{ group.shop.pk }}" name="method_{{ group.shop.pk }}" data-method required>

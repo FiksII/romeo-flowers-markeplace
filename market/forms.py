@@ -10,6 +10,7 @@ from django.db.models import Count, Q
 from oscar.core.loading import get_model
 
 from market.addresses import decode_address
+from market.bouquet_options import SIZES, TAGS
 from market.models import (
     Flower,
     Listing,
@@ -104,6 +105,18 @@ class ProductForm(forms.Form):
     category = forms.ChoiceField(
         label="Категория", choices=Listing._meta.get_field("category").choices
     )
+    tags = forms.MultipleChoiceField(
+        label="Теги", choices=TAGS, required=False, widget=forms.CheckboxSelectMultiple
+    )
+    size_config = forms.CharField(initial="1", required=False, widget=forms.HiddenInput)
+    sizes = forms.MultipleChoiceField(
+        label="Размеры",
+        choices=SIZES,
+        required=False,
+        initial=["standard"],
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Отметьте доступные варианты и задайте цену каждого. Количество в наличии общее для всех размеров.",
+    )
     flowers = forms.ModelMultipleChoiceField(
         label="Цветы в составе",
         queryset=Flower.objects.all(),
@@ -141,6 +154,27 @@ class ProductForm(forms.Form):
     def __init__(self, *args, shop=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.shop = shop
+        self.fields["pickup_price"].required = False
+        self.fields["pickup_price"].label = "Стандартный — цена самовывозом, ₽"
+        self.fields["pickup_price"].widget.attrs["data-size-price"] = "standard"
+        self.fields["delivery_price"].required = False
+        self.fields["delivery_price"].label = "Стандартный — цена с доставкой, ₽"
+        self.fields["delivery_price"].widget.attrs["data-size-price"] = "standard"
+        for code, label in SIZES[1:]:
+            for method, text in [
+                ("pickup", "самовывозом"),
+                ("delivery", "с доставкой"),
+            ]:
+                if method == "delivery" and shop is not None and not shop.own_delivery:
+                    continue
+                self.fields[f"{method}_price_{code}"] = forms.DecimalField(
+                    label=f"{label} — цена {text}, ₽",
+                    required=False,
+                    min_value=Decimal("0.01"),
+                    max_digits=10,
+                    decimal_places=2,
+                    widget=forms.NumberInput(attrs={"data-size-price": code}),
+                )
         if shop is not None:
             self.fields["flowers"].queryset = Flower.objects.annotate(
                 usage=Count("listings", filter=Q(listings__shop=shop))
@@ -149,6 +183,49 @@ class ProductForm(forms.Form):
                 del self.fields["delivery_price"]
         self.fields["stock"].widget.attrs["data-stock-count"] = ""
         self.fields["always_in_stock"].widget.attrs["data-stock-always"] = ""
+        names = list(self.fields)
+        price_names = [
+            name
+            for name in names
+            if name.startswith(("pickup_price", "delivery_price"))
+        ]
+        names = [name for name in names if name not in price_names]
+        index = names.index("sizes") + 1
+        self.order_fields(names[:index] + price_names + names[index:])
+
+    def _clean_sizes(self, data):
+        # Older clients submit only the original single-price fields.
+        sizes = data.get("sizes") or (
+            [] if self.data.get("size_config") else ["standard"]
+        )
+        if not sizes:
+            self.add_error("sizes", "Выберите хотя бы один размер.")
+            return
+        prices = {}
+        for code in sizes:
+            if code not in dict(SIZES):
+                continue
+            suffix = "" if code == "standard" else f"_{code}"
+            values = {}
+            for method in ("pickup", "delivery"):
+                name = f"{method}_price{suffix}"
+                if name not in self.fields:
+                    continue
+                price = data.get(name)
+                if price is None and name not in self.errors:
+                    self.add_error(name, "Укажите цену выбранного размера.")
+                values[method] = str(price) if price is not None else None
+            prices[code] = {} if code == "standard" else values
+        data["size_prices"] = prices if sizes != ["standard"] else {}
+        if "standard" not in sizes and prices:
+            first = next(iter(prices.values()))
+            data["pickup_price"] = (
+                Decimal(first["pickup"]) if first.get("pickup") else None
+            )
+            if "delivery_price" in self.fields:
+                data["delivery_price"] = (
+                    Decimal(first["delivery"]) if first.get("delivery") else None
+                )
 
     def clean_photo(self):
         photo = self.cleaned_data.get("photo")
@@ -161,6 +238,7 @@ class ProductForm(forms.Form):
 
     def clean(self):
         data = super().clean()
+        self._clean_sizes(data)
         if (
             not data.get("always_in_stock")
             and data.get("stock") is None
@@ -252,6 +330,8 @@ def save_listing(shop, data, listing=None):
     stock.save()
     listing = listing or Listing(product=product, shop=shop)
     listing.category = data["category"]
+    listing.tags = data.get("tags", [])
+    listing.size_prices = data.get("size_prices", {})
     listing.flower_kind = data.get("flower_kind", "")
     if "delivery_price" in data:
         listing.delivery_price = data["delivery_price"]

@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from market.bouquet_options import SIZES, TAGS, validate_size_prices, validate_tags
 from market.zones import validate_zone
 
 
@@ -178,6 +179,12 @@ class Flower(models.Model):
 
 
 class Listing(models.Model):
+    tags = models.JSONField(
+        "Теги", default=list, blank=True, validators=[validate_tags]
+    )
+    size_prices = models.JSONField(
+        "Размеры и цены", default=dict, blank=True, validators=[validate_size_prices]
+    )
     product = models.OneToOneField(
         "catalogue.Product", on_delete=models.CASCADE, related_name="market_listing"
     )
@@ -240,14 +247,65 @@ class Listing(models.Model):
         stock = self.stockrecord
         return stock.price if stock else None
 
-    def price_for(self, method):
+    @property
+    def tag_labels(self):
+        return [label for code, label in TAGS if code in self.tags]
+
+    @property
+    def sizes(self):
+        return [
+            code for code, _ in SIZES if code in (self.size_prices or {"standard": {}})
+        ]
+
+    @property
+    def has_size_choice(self):
+        return len(self.sizes) > 1
+
+    def prices_for_size(self, size):
+        if size not in self.sizes:
+            raise ValidationError(
+                "Этот размер больше недоступен. Выберите другой размер букета."
+            )
+        if size == "standard":
+            return self.pickup_price, self.delivery_price
+        prices = self.size_prices[size]
+        return Decimal(prices["pickup"]), Decimal(prices["delivery"]) if prices.get(
+            "delivery"
+        ) is not None else None
+
+    def size_options(self, method):
+        return [
+            {"value": code, "label": label, "price": self.price_for(method, code)}
+            for code, label in SIZES
+            if code in self.sizes
+        ]
+
+    @property
+    def price_variants(self):
+        return [
+            {
+                "label": label,
+                "pickup": self.price_for("pickup", code),
+                "delivery": self.price_for("delivery", code),
+                "delivery_set": self.prices_for_size(code)[1] is not None,
+            }
+            for code, label in SIZES
+            if code in self.sizes
+        ]
+
+    def price_for(self, method, size=None):
         """What the buyer pays for one bouquet with this way of receiving it."""
         from market.pricing import customer_price
 
-        pickup = self.pickup_price
-        if pickup is None:
-            return None
-        return customer_price(self.shop, pickup, self.delivery_price, method)
+        if size is None:
+            prices = [self.price_for(method, code) for code in self.sizes]
+            return min((price for price in prices if price is not None), default=None)
+        pickup, delivery = self.prices_for_size(size)
+        return (
+            customer_price(self.shop, pickup, delivery, method)
+            if pickup is not None
+            else None
+        )
 
     @property
     def price(self):

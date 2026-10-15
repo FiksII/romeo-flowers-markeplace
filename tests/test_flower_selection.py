@@ -132,7 +132,21 @@ def test_flower_picker_renders_search_colours_and_saved_selection(
     assert "flower-palette-red" in html
     assert "flower-palette-ivory" in html
     assert html.count('name="flowers"') == 53
-    assert html.count("checked") == 3  # two flowers and public-product checkbox
+    from html.parser import HTMLParser
+
+    class SelectedFlowers(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.selected = []
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == "input" and attrs.get("name") == "flowers" and "checked" in attrs:
+                self.selected.append(int(attrs["value"]))
+
+    parser = SelectedFlowers()
+    parser.feed(html)
+    assert set(parser.selected) == {red.pk, white.pk}
     assert (
         "flower-palette-red" in client.get(f"/products/{listing.pk}/").content.decode()
     )

@@ -139,6 +139,7 @@ def catalogue_candidates(context, filters=None, now=None):
             listing.receiving_options = options
             listing.nearest_slot = min(options.values(), key=lambda slot: slot.start)
             listing.display_price = listing.price_for(context.method)
+            listing.display_sizes = listing.size_options(context.method)
             listings.append(listing)
     return listings
 
