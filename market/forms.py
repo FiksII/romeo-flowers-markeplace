@@ -130,7 +130,6 @@ class ProductForm(forms.Form):
         min_value=Decimal("0.01"),
         max_digits=10,
         decimal_places=2,
-        help_text="Столько платит покупатель, который забирает букет сам. Если у магазина нет своей доставки, эту же цену увидит и покупатель с доставкой Ромео; доставка добавляется отдельно.",
     )
     delivery_price = forms.DecimalField(
         label="Цена с доставкой, ₽",
