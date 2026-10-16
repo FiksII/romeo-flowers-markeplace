@@ -1,0 +1,6 @@
+{% extends 'market/base.html' %}{% block title %}{{ title }} — Цветы от Ромео{% endblock %}{% block content %}
+<section class="shell section-space narrow-section">
+  <div class="page-heading"><span class="eyebrow">Документы</span><h1>{{ title }}</h1><p>Документ готовится и будет опубликован на этой странице.</p></div>
+  <a class="button button-secondary button-sm" href="{% url 'market:home' %}">На главную</a>
+</section>
+{% endblock %}

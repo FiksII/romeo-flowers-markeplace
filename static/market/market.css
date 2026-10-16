@@ -76,6 +76,10 @@ a.category-chip:hover{border-color:var(--forest);color:var(--forest)}
 @media(min-width:760px) and (max-width:1023px){.header-row{flex-wrap:wrap;row-gap:0}.site-search{order:1;flex:1 0 100%;margin:0 0 14px}}
 .service-contacts span{white-space:nowrap}
 .footer-grid{grid-template-columns:1fr auto auto;column-gap:clamp(40px,7vw,120px)}
+.footer-grid:has(.footer-contacts){grid-template-columns:1fr auto auto auto}
+.footer-legal{display:flex;flex-wrap:wrap;gap:6px 22px}
+@media(max-width:1023px){.footer-grid:has(.footer-contacts){grid-template-columns:repeat(2,minmax(0,1fr));row-gap:32px}}
+@media(max-width:759px){.footer-grid,.footer-grid:has(.footer-contacts){grid-template-columns:minmax(0,1fr)}.footer-legal{justify-content:center}}
 .footer-col form{margin:0}
 .footer-col .muted-link{padding:0;font:400 14px/1.4 var(--sans);color:var(--muted);text-align:left}
 .footer-col .muted-link:hover{color:var(--forest)}
@@ -147,11 +151,27 @@ a.category-chip:hover{border-color:var(--forest);color:var(--forest)}
 .empty-state{grid-column:1/-1;padding:56px 24px;border:0;background:var(--cream);text-align:center}
 .empty-state h2,.empty-state h3{margin:14px 0 8px;font:600 24px/1.2 var(--sans)}
 .empty-state p{margin-bottom:22px;font-size:15px;color:var(--muted)}
-.benefits{margin-top:80px}
-.benefits-grid{padding-block:36px}
-/* The benefits band ends the home page: the footer follows it without a page-colour stripe. */
-@media(min-width:760px){main:has(>.benefits:last-child)+.site-footer{margin-top:0}}
-.benefit h2{font-size:16px}
+/* Benefits right under the banner: three short promises in one row. */
+.home-benefits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;padding:0;list-style:none}
+.home-benefits li{display:flex;align-items:center;gap:12px;min-width:0}
+.home-benefits .icon{flex:none;width:34px;height:34px;color:var(--forest);stroke-width:1.4}
+.home-benefits strong{display:block;font:600 15px/1.3 var(--sans);color:var(--text)}
+.home-benefits li>span>span{display:block;font-size:13px;line-height:1.35;color:var(--muted)}
+@media(max-width:759px){.home-benefits{gap:8px;margin-top:12px}.home-benefits li{flex-direction:column;gap:4px;text-align:center}.home-benefits .icon{width:26px;height:26px}.home-benefits strong{font-size:12px;line-height:1.25}.home-benefits li>span>span{display:none}}
+/* Partner shops close the home page: who makes the bouquets, with a few of their photos. */
+.partner-shops{margin-top:72px;scroll-margin-top:100px}
+.partner-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:22px}
+.partner-card{display:flex;flex-direction:column;gap:14px;padding:20px;border:1px solid var(--border);border-radius:var(--r-lg);background:#fff}
+.partner-head{display:flex;align-items:center;gap:14px;min-width:0}
+.partner-monogram{display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:50%;background:var(--sage);font:600 26px/1 var(--display);color:var(--forest)}
+.partner-head h3{font:600 18px/1.25 var(--sans)}
+.partner-head p{margin-top:2px;font-size:13px;color:var(--muted)}
+.partner-about{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:1.5;color:var(--text-soft)}
+.partner-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.partner-photos img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:var(--r-sm);background:var(--cream)}
+.partner-more{align-self:flex-start;margin-top:auto;font-size:14px;font-weight:500;color:var(--forest);text-decoration:underline;text-underline-offset:4px}
+@media(max-width:1023px){.partner-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:759px){.partner-shops{margin-top:48px}.partner-shops .listing-head{flex-wrap:wrap}.partner-shops .listing-head .count{white-space:normal}.partner-grid{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:18px calc(-1*var(--gutter)) 0;padding:0 var(--gutter) 4px}.partner-grid::-webkit-scrollbar{display:none}.partner-card{flex:0 0 min(290px,82vw);padding:16px}}
 .partner-callout{display:flex;margin-top:32px;justify-content:space-between;align-items:center;gap:32px;padding:36px;border-radius:var(--r-lg);background:var(--blush)}
 .partner-callout h2{margin:8px 0 12px;font-size:28px}
 .partner-callout p{font-size:15px;line-height:1.7;color:var(--muted)}
@@ -385,8 +405,6 @@ html:not(.js) .live-only{display:none}
   .receiving-fields .address-field{grid-column:auto}
   .receiving-actions{flex-wrap:wrap;gap:14px}
   .receiving-actions p{width:100%}
-  .benefits{margin-top:48px}
-  .benefits-grid{flex-direction:column;align-items:flex-start;gap:20px;padding-block:28px}
   .partner-callout{flex-direction:column;align-items:flex-start;gap:20px;padding:24px}
   .section-heading{align-items:flex-start;gap:12px}
   .product-detail{grid-template-columns:1fr;gap:24px}

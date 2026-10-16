@@ -113,6 +113,7 @@ def test_four_categories_and_no_partner_promotion(client):
     html = client.get("/").content.decode()
     assert "Стать партнёром" not in html
     assert ">Партнёрам<" not in html
+    assert "Подключить магазин" not in html
 
 
 def test_flower_picker_renders_search_colours_and_saved_selection(

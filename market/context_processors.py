@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.templatetags.static import static
 from django.utils import dateformat
@@ -34,6 +36,18 @@ def receiving_details(context):
     )
 
 
+def support_contacts():
+    """Footer contacts from the settings; an empty value is simply not shown."""
+    phone = settings.SUPPORT_PHONE.strip()
+    return {
+        "phone": phone,
+        "phone_href": "tel:" + re.sub(r"[^\d+]", "", phone) if phone else "",
+        "email": settings.SUPPORT_EMAIL.strip(),
+        "telegram": settings.TELEGRAM_URL.strip(),
+        "instagram": settings.INSTAGRAM_URL.strip(),
+    }
+
+
 def rail_categories():
     labels = dict(Listing._meta.get_field("category").choices)
     return [
@@ -62,6 +76,7 @@ def market_context(request):
         else (city.name if city else "Москва и область"),
         "receiving_details": receiving_details(context),
         "rail_categories": rail_categories(),
+        "contacts": support_contacts(),
         "demo_mode": settings.MARKET_DEMO,
         "address_demo": demo_address_search(),
         "dadata_addresses": bool(settings.DADATA_TOKEN) and not demo_address_search(),

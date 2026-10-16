@@ -248,3 +248,75 @@ def test_receiving_panel_has_an_anchor_for_the_header_place_chip(client):
     html = client.get("/").content.decode()
     assert 'href="/#receiving"' in html
     assert '<details class="receiving-panel" id="receiving"' in html
+
+
+def test_benefits_sit_under_the_banner(client, listing):
+    html = client.get("/").content.decode()
+    order = [
+        html.index(marker)
+        for marker in (
+            'class="shell hero-wrap"',
+            'class="shell home-benefits"',
+            'id="receiving"',
+            'id="catalogue"',
+            'id="partners"',
+        )
+    ]
+    assert order == sorted(order)
+    assert "<strong>Местные флористы</strong>" in html
+
+
+def test_partner_shops_show_shops_with_available_bouquets(client, listing):
+    html = client.get("/").content.decode()
+    block = html.split('id="partners"', 1)[1].split("</section>", 1)[0]
+    assert '<a href="/shops/test-shop/">Тестовые цветы</a>' in block
+    assert "Москва · доставка · самовывоз" in block
+    assert "1 букет в магазине →" in block
+    assert f'<a href="/products/{listing.pk}/"><img' in block
+
+
+def test_partner_shops_ignore_the_catalogue_search(client, listing):
+    response = client.get("/", {"q": "нет такого букета"})
+    assert response.context["total_count"] == 0
+    shops = [item["shop"].slug for item in response.context["partner_shops"]]
+    assert shops == ["test-shop"]
+
+
+def test_footer_has_documents_and_hides_contacts_that_are_not_set(client):
+    footer = client.get("/").content.decode().split('<footer class="site-footer">')[1]
+    for path, title in (
+        ("/privacy/", "Политика конфиденциальности"),
+        ("/terms/", "Пользовательское соглашение"),
+        ("/requisites/", "Реквизиты"),
+    ):
+        assert f'<a href="{path}">{title}</a>' in footer
+    assert "Контакты" not in footer and "tel:" not in footer
+    assert "social-links" not in footer
+
+
+def test_footer_shows_the_contacts_from_the_settings(client, settings):
+    settings.SUPPORT_PHONE = "+7 (999) 123-45-67"
+    settings.SUPPORT_EMAIL = "hello@example.com"
+    settings.TELEGRAM_URL = "https://t.me/example"
+    footer = client.get("/").content.decode().split('<footer class="site-footer">')[1]
+    assert '<a href="tel:+79991234567">' in footer and "+7 (999) 123-45-67" in footer
+    assert '<a href="mailto:hello@example.com">' in footer
+    assert '<a href="https://t.me/example" aria-label="Telegram"' in footer
+    assert 'aria-label="Instagram"' not in footer
+
+
+@pytest.mark.parametrize(
+    "path, title",
+    (
+        ("/privacy/", "Политика конфиденциальности"),
+        ("/terms/", "Пользовательское соглашение"),
+        ("/requisites/", "Реквизиты"),
+    ),
+)
+def test_legal_pages_are_placeholders_kept_out_of_search(client, path, title):
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response["X-Robots-Tag"] == "noindex"
+    html = response.content.decode()
+    assert f"<h1>{title}</h1>" in html and "Документ готовится" in html
+    assert client.head(path).status_code == 200

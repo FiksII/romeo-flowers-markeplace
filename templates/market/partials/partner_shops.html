@@ -1,0 +1,21 @@
+{% load market_tags %}{% if partner_shops %}
+<section class="shell partner-shops" id="partners" aria-labelledby="partners-heading">
+  <div class="listing-head">
+    <h2 id="partners-heading">Магазины-партнёры</h2>
+    <p class="count">Букеты собирают местные флористы</p>
+  </div>
+  <div class="partner-grid">
+    {% for item in partner_shops %}
+    <article class="partner-card">
+      <div class="partner-head">
+        <span class="partner-monogram" aria-hidden="true">{{ item.shop.name|first|upper }}</span>
+        <div><h3><a href="{% url 'market:shop' item.shop.slug %}">{{ item.shop.name }}</a></h3><p>{{ item.shop.settlement.name }}{% if item.shop.delivery_enabled %} · доставка{% endif %}{% if item.shop.pickup_enabled %} · самовывоз{% endif %}</p></div>
+      </div>
+      {% if item.shop.description %}<p class="partner-about">{{ item.shop.description }}</p>{% endif %}
+      <div class="partner-photos">{% for listing in item.listings %}{% listing_photo listing "line" as photo %}<a href="{% url 'market:product' listing.pk %}"><img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 759px) 80px, 120px"{% endif %} alt="{{ listing.product.title }}" width="100" height="125" loading="lazy"></a>{% endfor %}</div>
+      <a class="partner-more" href="{% url 'market:shop' item.shop.slug %}">{{ item.count }} {{ item.count|ru_plural:"букет,букета,букетов" }} в магазине →</a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

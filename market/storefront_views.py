@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_safe
 from oscar.core.loading import get_model
 
 from market.addresses import suggest_addresses
@@ -78,6 +78,36 @@ def flower_rail(params):
     ]
 
 
+def partner_shops(listings):
+    """Shops with bouquets for the chosen place and time, the fullest first."""
+    by_shop = {}
+    for listing in listings:
+        by_shop.setdefault(listing.shop_id, []).append(listing)
+    groups = sorted(
+        by_shop.values(), key=lambda group: (-len(group), group[0].shop.name)
+    )
+    return [
+        {"shop": group[0].shop, "count": len(group), "listings": group[:3]}
+        for group in groups
+    ]
+
+
+# Footer documents. The owner has not provided the texts yet, so the pages say so.
+LEGAL_PAGES = {
+    "privacy": "Политика конфиденциальности",
+    "terms": "Пользовательское соглашение",
+    "requisites": "Реквизиты",
+}
+
+
+@require_safe
+def legal_page(request, page):
+    response = render(request, "market/legal.html", {"title": LEGAL_PAGES[page]})
+    # A placeholder must not end up in search results instead of the document.
+    response["X-Robots-Tag"] = "noindex"
+    return response
+
+
 def safe_next(request, fallback="market:home"):
     target = request.POST.get("next", "")
     return (
@@ -112,7 +142,14 @@ class MarketLoginView(LoginView):
 def home(request):
     """Main page: banner, entry points and the whole bouquet listing with its filters."""
     params = request.GET
-    candidates = catalogue_candidates(get_context(request), params)
+    context = get_context(request)
+    candidates = catalogue_candidates(context, params)
+    # The partner shops block ignores the catalogue search; filters below never narrow it.
+    unsearched = (
+        candidates
+        if not (params.get("q") or params.get("shop"))
+        else catalogue_candidates(context)
+    )
     spec = ListingFilter.parse(params)
     items = sort_listings(
         [listing for listing in candidates if spec.matches(listing)],
@@ -205,6 +242,7 @@ def home(request):
                 hide_flowers={str(item["pk"]) for item in rail},
             ),
             "can_reset_filters": len(active_chips) > 1,
+            "partner_shops": partner_shops(unsearched),
         },
     )
 

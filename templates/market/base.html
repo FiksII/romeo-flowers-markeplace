@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'storefront/css/romeo.css' %}?v=2">
   {% block report_assets %}{% endblock %}
   {% block map_assets %}{% endblock %}
-  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=12">
+  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=13">
   <link rel="stylesheet" href="{% static 'market/flower-tags.css' %}?v=4">
   <link rel="stylesheet" href="{% static 'market/bouquet-options.css' %}?v=1">
   <script src="{% static 'market/bouquet-options.js' %}?v=1" defer></script>
@@ -56,11 +56,14 @@
   <div class="shell footer-grid">
     <section class="footer-brand" aria-label="О маркетплейсе">
       <a class="brand" href="{% url 'market:home' %}"><img class="brand-logo" src="{% static 'storefront/images/design/logo.webp' %}" width="190" height="72" alt="Цветы от Ромео"></a>
+      <p>Букеты от местных флористов с доставкой и самовывозом по Москве и области.</p>
+      {% if contacts.telegram or contacts.instagram %}<div class="social-links">{% if contacts.telegram %}<a href="{{ contacts.telegram }}" aria-label="Telegram" rel="noopener">{% include "storefront/partials/icon.html" with name="telegram" %}</a>{% endif %}{% if contacts.instagram %}<a href="{{ contacts.instagram }}" aria-label="Instagram" rel="noopener">{% include "storefront/partials/icon.html" with name="instagram" %}</a>{% endif %}</div>{% endif %}
     </section>
     <nav class="footer-col footer-catalogue" aria-label="Каталог">
       <h2>Каталог</h2>
       {% for item in rail_categories %}<a href="{% url 'market:home' %}?category={{ item.value }}#catalogue">{{ item.label }}</a>{% endfor %}
       <a href="{% url 'market:home' %}#catalogue">Все букеты</a>
+      <a href="{% url 'market:home' %}#partners">Магазины-партнёры</a>
     </nav>
     <nav class="footer-col footer-info" aria-label="Покупателям">
       <h2>Покупателям</h2>
@@ -69,8 +72,16 @@
       {% if has_shops %}<a href="{% url 'market:partner' %}">Кабинет магазина</a>{% endif %}
       {% if request.user.is_authenticated %}<form method="post" action="{% url 'market:logout' %}">{% csrf_token %}<button class="muted-link">Выйти · {{ request.user.username }}</button></form>{% endif %}
     </nav>
+    {% if contacts.phone or contacts.email %}<section class="footer-col footer-contacts" aria-labelledby="footer-contacts-heading">
+      <h2 id="footer-contacts-heading">Контакты</h2>
+      {% if contacts.phone %}<a href="{{ contacts.phone_href }}">{% include "storefront/partials/icon.html" with name="phone" %}<span>{{ contacts.phone }}</span></a>{% endif %}
+      {% if contacts.email %}<a href="mailto:{{ contacts.email }}">{% include "storefront/partials/icon.html" with name="mail" %}<span>{{ contacts.email }}</span></a>{% endif %}
+    </section>{% endif %}
   </div>
-  <div class="shell footer-bottom"><small>© {% now "Y" %} Цветы от Ромео. Москва и Московская область.</small></div>
+  <div class="shell footer-bottom">
+    <small>© {% now "Y" %} Цветы от Ромео. Москва и Московская область.</small>
+    <nav class="footer-legal" aria-label="Документы"><a href="{% url 'market:privacy' %}">Политика конфиденциальности</a><a href="{% url 'market:terms' %}">Пользовательское соглашение</a><a href="{% url 'market:requisites' %}">Реквизиты</a></nav>
+  </div>
 </footer>
 <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
   <a href="{% url 'market:home' %}"{% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'product' or request.resolver_match.url_name == 'shop' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="bouquet" %}<span>Букеты</span></a>

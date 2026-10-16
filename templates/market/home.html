@@ -1,12 +1,11 @@
 {% extends 'market/base.html' %}{% load static %}{% block content %}
 {% include 'market/partials/hero_carousel.html' %}
+<ul class="shell home-benefits" aria-label="Преимущества">
+  <li>{% include "storefront/partials/icon.html" with name="pin" %}<span><strong>Местные флористы</strong><span>Видите, кто соберёт и привезёт букет</span></span></li>
+  <li>{% include "storefront/partials/icon.html" with name="clock" %}<span><strong>Ваше время</strong><span>Получение с учётом работы магазина</span></span></li>
+  <li>{% include "storefront/partials/icon.html" with name="truck" %}<span><strong>Доставка или самовывоз</strong><span>Для каждого магазина — свой способ</span></span></li>
+</ul>
 <div class="shell">{% include 'market/partials/receiving.html' %}</div>
 {% include 'market/partials/catalogue.html' %}
-<section class="benefits" aria-label="Преимущества">
-  <div class="shell benefits-grid">
-    <article class="benefit">{% include "storefront/partials/icon.html" with name="pin" %}<div><h2>Местные флористы</h2><p>Видите, кто соберёт и привезёт букет</p></div></article>
-    <article class="benefit">{% include "storefront/partials/icon.html" with name="clock" %}<div><h2>Ваше время</h2><p>Получение с учётом работы магазина</p></div></article>
-    <article class="benefit">{% include "storefront/partials/icon.html" with name="truck" %}<div><h2>Доставка или самовывоз</h2><p>Для каждого магазина — свой способ</p></div></article>
-  </div>
-</section>
+{% include 'market/partials/partner_shops.html' %}
 {% endblock %}
