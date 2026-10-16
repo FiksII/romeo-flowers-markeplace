@@ -338,7 +338,20 @@ def save_listing(shop, data, listing=None):
     if data.get("photo"):
         listing.photo = data["photo"]
     listing.full_clean()
-    listing.save()
+    if listing.pk:
+        # Romeo's own sale prices are the administrator's; the seller never overwrites them.
+        listing.save(
+            update_fields=[
+                "category",
+                "tags",
+                "size_prices",
+                "flower_kind",
+                "delivery_price",
+                "photo",
+            ]
+        )
+    else:
+        listing.save()
     if "flowers" in data:
         listing.flowers.set(data["flowers"])
     return listing
@@ -348,9 +361,9 @@ class ShopFormBase(forms.ModelForm):
     """Shared by every form that edits a part of a shop.
 
     Saving writes only the fields of the form, so a seller who had the page open cannot
-    overwrite a status or commission the administrator changed meanwhile."""
+    overwrite a status or markup the administrator changed meanwhile."""
 
-    OPERATOR_FIELDS = ("status", "commission_percent", "delivery_fee")
+    OPERATOR_FIELDS = ("status", "markup_percent", "delivery_fee")
     address_token = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args, operator=False, **kwargs):
@@ -370,13 +383,14 @@ class ShopFormBase(forms.ModelForm):
             self.fields["status"] = forms.ChoiceField(
                 label="Статус", choices=Shop.STATUSES, initial=self.instance.status
             )
-            self.fields["commission_percent"] = forms.DecimalField(
-                label="Комиссия платформы, % от цены букета",
+            self.fields["markup_percent"] = forms.DecimalField(
+                label="Наценка Ромео, % к цене магазина",
+                help_text="Покупатель платит цену магазина плюс наценку; магазин получает свою цену полностью. Свою цену продажи букета можно задать на витрине.",
                 min_value=0,
-                max_value=100,
-                max_digits=5,
+                max_value=1000,
+                max_digits=6,
                 decimal_places=2,
-                initial=self.instance.commission_percent,
+                initial=self.instance.markup_percent,
             )
             self.fields["delivery_fee"] = forms.DecimalField(
                 label="Доставка Ромео из этого магазина, ₽",
@@ -845,76 +859,77 @@ class PayoutForm(forms.Form):
 
 
 class ListingPriceForm(forms.Form):
-    """Only the prices of a bouquet: one pair per size it is sold in."""
+    """Romeo's sale price of a bouquet, per size; the shop's own prices stay as they are."""
 
     def __init__(self, *args, listing, **kwargs):
         super().__init__(*args, **kwargs)
+        from market.pricing import quote_product
+
         self.listing = listing
+        self.rows = []
         labels = dict(SIZES)
+        methods = ["pickup", "delivery"] if listing.shop.own_delivery else ["pickup"]
         for code in listing.sizes:
             pickup, delivery = listing.prices_for_size(code)
-            suffix = "" if code == "standard" else f"_{code}"
-            prefix = f"{labels[code]} — " if listing.has_size_choice else ""
-            self.fields[f"pickup_price{suffix}"] = self._price(
-                f"{prefix}цена самовывозом, ₽", pickup, required=True
-            )
-            if listing.shop.own_delivery:
-                self.fields[f"delivery_price{suffix}"] = self._price(
-                    f"{prefix}цена с доставкой магазина, ₽", delivery, required=False
+            for method in methods:
+                name = f"sale_{method}_{code}"
+                current = listing.sale_price_for(code, method)
+                quote = quote_product(listing.shop, pickup, delivery, method)
+                title = labels[code] if listing.has_size_choice else ""
+                if listing.shop.own_delivery:
+                    way = "самовывоз" if method == "pickup" else "с доставкой магазина"
+                    title = f"{title} · {way}" if title else way.capitalize()
+                self.fields[name] = forms.DecimalField(
+                    label=title or "Цена продажи",
+                    required=False,
+                    min_value=Decimal("0.01"),
+                    max_digits=10,
+                    decimal_places=2,
+                    initial=current,
+                    widget=forms.NumberInput(
+                        attrs={"step": "0.01", "placeholder": f"{quote.customer:.0f}"}
+                    ),
+                )
+                self.rows.append(
+                    {
+                        "field": name,
+                        "label": title or "Букет",
+                        "partner": quote.payout,
+                        "by_markup": quote.customer,
+                        "current": current,
+                        "selling": current if current is not None else quote.customer,
+                    }
                 )
 
-    @staticmethod
-    def _price(label, value, required):
-        return forms.DecimalField(
-            label=label,
-            required=required,
-            min_value=Decimal("0.01"),
-            max_digits=10,
-            decimal_places=2,
-            initial=value,
-            widget=forms.NumberInput(attrs={"step": "0.01"}),
-        )
+    def bound_rows(self):
+        return [{**row, "bound": self[row["field"]]} for row in self.rows]
 
-    def prices(self):
-        """{size: (pickup, delivery or None)} from the cleaned data."""
+    def sale_prices(self):
+        """The ``Listing.sale_prices`` value; an empty field means «by the markup»."""
         result = {}
         for code in self.listing.sizes:
-            suffix = "" if code == "standard" else f"_{code}"
-            result[code] = (
-                self.cleaned_data[f"pickup_price{suffix}"],
-                self.cleaned_data.get(f"delivery_price{suffix}"),
-            )
+            entry = {}
+            for method in ("pickup", "delivery"):
+                value = self.cleaned_data.get(f"sale_{method}_{code}")
+                if value is not None:
+                    entry[method] = str(value)
+            if entry:
+                result[code] = entry
         return result
 
 
-def update_listing_prices(listing, prices):
-    """Set new prices without touching anything else of the bouquet.
+def update_sale_prices(listing, sale_prices):
+    """Set Romeo's sale prices without touching anything the shop set.
 
     Orders already placed keep the prices they were bought at (``ShopOrderItem``)."""
     Stock = get_model("partner", "StockRecord")
     with transaction.atomic():
-        stock = Stock.objects.select_for_update().get(
+        # Sellers edit a listing while holding its stock row; take it first as they do.
+        Stock.objects.select_for_update().filter(
             product_id=listing.product_id, partner=listing.shop.partner
-        )
+        ).first()
         listing = Listing.objects.select_for_update().get(pk=listing.pk)
-        sizes = listing.sizes
-        size_prices = dict(listing.size_prices or {})
-        for code, (pickup, delivery) in prices.items():
-            if code == "standard":
-                stock.price = pickup
-                listing.delivery_price = delivery
-            else:
-                size_prices[code] = {
-                    "pickup": str(pickup),
-                    "delivery": str(delivery) if delivery is not None else None,
-                }
-        if "standard" not in sizes:
-            # The stock record mirrors the first size, as when the seller saves the bouquet.
-            first_pickup, first_delivery = prices[sizes[0]]
-            stock.price = first_pickup
-            listing.delivery_price = first_delivery
-        stock.save(update_fields=["price"])
-        listing.size_prices = size_prices
+        listing.sale_prices = sale_prices
         listing.full_clean()
-        listing.save(update_fields=["size_prices", "delivery_price"])
+        listing.save(update_fields=["sale_prices"])
     return listing

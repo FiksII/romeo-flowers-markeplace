@@ -23,7 +23,7 @@ def operator_data(shop, **changes):
     return {
         **shop_data(shop),
         "status": "active",
-        "commission_percent": "12.50",
+        "markup_percent": "12.50",
         "delivery_fee": "400",
         "members": list(shop.memberships.values_list("user_id", flat=True)),
         **changes,
@@ -45,14 +45,14 @@ def test_admin_creates_shop_with_selected_owner(client, admin, owner, city):
             "minimum_order": "1500",
             "prep_minutes": "30",
             "status": "active",
-            "commission_percent": "7.50",
+            "markup_percent": "7.50",
             "delivery_fee": "250",
             "members": [owner.pk],
         },
     )
     assert response.status_code == 302
     created = Shop.objects.get(name="Новый магазин")
-    assert (created.status, created.commission_percent, created.delivery_fee) == (
+    assert (created.status, created.markup_percent, created.delivery_fee) == (
         "active",
         Decimal("7.50"),
         Decimal(250),
@@ -80,13 +80,13 @@ def test_invalid_creation_does_not_leave_shop_or_partner(client, admin, owner, c
             "minimum_order": "0",
             "prep_minutes": "30",
             "status": "active",
-            "commission_percent": "101",
+            "markup_percent": "1001",
             "delivery_fee": "0",
             "members": [owner.pk],
         },
     )
     assert response.status_code == 200
-    assert {"address", "commission_percent"} <= response.context["form"].errors.keys()
+    assert {"address", "markup_percent"} <= response.context["form"].errors.keys()
     assert not Shop.objects.filter(name="Без точного адреса").exists()
     assert get_model("partner", "Partner").objects.count() == before
 
@@ -137,11 +137,11 @@ def test_partner_cannot_change_owners_or_platform_settings(
 ):
     client.force_login(owner)
     data = info_post(shop, work_0_start="09:00", work_0_end="18:00")
-    data.update(members=[stranger.pk], status="suspended", commission_percent="99")
+    data.update(members=[stranger.pk], status="suspended", markup_percent="99")
     assert client.post(f"/partner/{shop.slug}/info/", data).status_code == 302
     shop.refresh_from_db()
     assert shop.status == "active"
-    assert shop.commission_percent == 0
+    assert shop.markup_percent == 0
     assert shop.memberships.get().user == owner
     assert (
         client.post(f"/operator/{shop.slug}/", operator_data(shop)).status_code == 403

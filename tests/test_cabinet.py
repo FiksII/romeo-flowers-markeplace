@@ -322,7 +322,7 @@ def test_info_page_does_not_touch_moderation_or_requisites(client, owner, shop):
     shop.inn = "7707083893"
     shop.save()
     client.force_login(owner)
-    Shop.objects.filter(pk=shop.pk).update(status="suspended", commission_percent=17)
+    Shop.objects.filter(pk=shop.pk).update(status="suspended", markup_percent=17)
     assert (
         client.post(
             f"/partner/{shop.slug}/info/", info_post(shop, phone="+7 495 000-00-00")
@@ -331,7 +331,7 @@ def test_info_page_does_not_touch_moderation_or_requisites(client, owner, shop):
     )
     shop.refresh_from_db()
     assert shop.phone == "+7 495 000-00-00"
-    assert (shop.status, shop.commission_percent, shop.inn) == (
+    assert (shop.status, shop.markup_percent, shop.inn) == (
         "suspended",
         Decimal(17),
         "7707083893",
@@ -614,10 +614,7 @@ def test_buyer_pages_show_the_right_price_and_delivery_terms(client, owner, shop
     assert "Самовывоз — 2" in product and "с доставкой магазина — 2" in product
     assert "Доставка магазина" in product
     assert "Доставку Ромео добавим" not in product
-    assert (
-        "Доставка магазина"
-        in client.get(f"/shops/{shop.slug}/").content.decode()
-    )
+    assert "Доставка магазина" in client.get(f"/shops/{shop.slug}/").content.decode()
     client.force_login(owner)
     client.post(f"/basket/add/{listing.pk}/", {"quantity": "1"})
     checkout = client.get("/checkout/").content.decode()
@@ -651,7 +648,7 @@ def test_administrator_edits_commission_and_delivery_fee(client, shop):
     client.force_login(admin)
     page = client.get(f"/operator/{shop.slug}/")
     assert page.status_code == 200
-    assert {"commission_percent", "delivery_fee", "status"} <= page.context[
+    assert {"markup_percent", "delivery_fee", "status"} <= page.context[
         "form"
     ].fields.keys()
     data = {
@@ -666,12 +663,12 @@ def test_administrator_edits_commission_and_delivery_fee(client, shop):
         "minimum_order": "0",
         "prep_minutes": "60",
         "status": "active",
-        "commission_percent": "12.50",
+        "markup_percent": "12.50",
         "delivery_fee": "400",
     }
     assert client.post(f"/operator/{shop.slug}/", data).status_code == 302
     shop.refresh_from_db()
-    assert (shop.commission_percent, shop.delivery_fee) == (
+    assert (shop.markup_percent, shop.delivery_fee) == (
         Decimal("12.50"),
         Decimal(400),
     )

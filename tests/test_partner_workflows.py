@@ -31,12 +31,12 @@ def test_partner_profile_cannot_overwrite_new_moderation(shop):
     form = ShopForm(shop_data(shop), instance=shop)
     assert form.is_valid(), form.errors
     Shop.objects.filter(pk=shop.pk).update(
-        status="suspended", commission_percent=Decimal(17)
+        status="suspended", markup_percent=Decimal(17)
     )
     form.save()
     shop.refresh_from_db()
     assert shop.status == "suspended"
-    assert shop.commission_percent == Decimal(17)
+    assert shop.markup_percent == Decimal(17)
 
 
 def test_unpaid_fulfillment_and_paid_completion(owner, shop, listing):
@@ -126,7 +126,7 @@ def test_new_shop_requires_signed_local_address_and_approval(client, owner, city
         "minimum_order": "1500",
         "prep_minutes": "30",
         "status": "active",
-        "commission_percent": "0",
+        "markup_percent": "0",
     }
     response = client.post("/partner/new/", data)
     assert response.status_code == 302

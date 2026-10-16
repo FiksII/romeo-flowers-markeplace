@@ -24,7 +24,7 @@ from market.forms import (
     ShopPayoutForm,
     WeeklyHoursForm,
     save_listing,
-    update_listing_prices,
+    update_sale_prices,
 )
 from market.models import (
     AuditEntry,
@@ -631,18 +631,18 @@ def operator_listing_price(request, pk):
         back = ""
     if request.method == "POST" and form.is_valid():
         try:
-            update_listing_prices(listing, form.prices())
+            update_sale_prices(listing, form.sale_prices())
         except ValidationError as error:
             form.add_error(None, "; ".join(error.messages))
         else:
             AuditEntry.objects.create(
                 shop=listing.shop,
                 actor=request.user,
-                action=f"Цена букета #{listing.pk} изменена администратором",
+                action=f"Цена продажи букета #{listing.pk} изменена",
             )
             messages.success(
                 request,
-                "Цены сохранены. Они действуют для новых заказов; оформленные заказы не меняются.",
+                "Цена продажи сохранена. Она действует для новых заказов; цена магазина не изменилась.",
             )
             return redirect(back) if back else redirect("market:product", pk=pk)
     return render(

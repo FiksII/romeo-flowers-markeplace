@@ -56,7 +56,9 @@ class MarketplaceStrategy(Default):
         # Standard prices always use the locked stock row supplied at checkout.
         if size == "standard":
             pickup = stockrecord.price
-        quote = quote_product(shop, pickup, delivery, method)
+        quote = quote_product(
+            shop, pickup, delivery, method, listing.sale_price_for(size, method)
+        )
         return FixedPrice(
             currency=stockrecord.price_currency, excl_tax=quote.customer, tax=Decimal(0)
         )

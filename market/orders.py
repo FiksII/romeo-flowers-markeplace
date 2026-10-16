@@ -191,7 +191,11 @@ def place_market_order(
             size = line_size(line)
             pickup, delivery = listing.prices_for_size(size)
             quote = quote_product(
-                shop, stock.price if size == "standard" else pickup, delivery, method
+                shop,
+                stock.price if size == "standard" else pickup,
+                delivery,
+                method,
+                listing.sale_price_for(size, method),
             )
             line._info = basket.strategy.fetch_for_line(line, stockrecord=stock)
             snapshot.append((line, listing, size, quote))
@@ -282,7 +286,7 @@ def place_market_order(
             base_goods_total=payout,
             delivery_total=fee,
             delivery_owner=owner,
-            commission_percent=shop.commission_percent,
+            commission_percent=shop.markup_percent,
             commission_total=commission,
             partner_total=payout,
             payment_method=payment_method,
@@ -298,7 +302,7 @@ def place_market_order(
                 unit_price=quote.customer,
                 unit_commission=quote.commission,
                 unit_payout=quote.payout,
-                commission_percent=shop.commission_percent,
+                commission_percent=shop.markup_percent,
             )
             for line, listing, size, quote in snapshot
         )

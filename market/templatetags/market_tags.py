@@ -43,6 +43,11 @@ def rub(value):
 
 
 @register.filter
+def sub_money(value, other):
+    return Decimal(value) - Decimal(other)
+
+
+@register.filter
 def abs_money(value):
     return abs(value)
 

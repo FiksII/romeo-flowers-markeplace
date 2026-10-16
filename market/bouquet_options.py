@@ -55,3 +55,25 @@ def line_size(line):
                 (code for code, label in SIZES if attribute.value == label), "invalid"
             )
     return "standard"
+
+
+def validate_sale_prices(value):
+    if not isinstance(value, dict) or any(size not in dict(SIZES) for size in value):
+        raise ValidationError("Выберите размеры из списка.")
+    for prices in value.values():
+        if not isinstance(prices, dict) or set(prices) - {"pickup", "delivery"}:
+            raise ValidationError("Проверьте цены продажи.")
+        for raw in prices.values():
+            if raw is None:
+                continue
+            try:
+                amount = Decimal(raw)
+                valid = (
+                    amount.is_finite()
+                    and 0 < amount <= Decimal("99999999.99")
+                    and amount == amount.quantize(Decimal("0.01"))
+                )
+            except (InvalidOperation, TypeError, ValueError):
+                valid = False
+            if not valid:
+                raise ValidationError("Цена продажи должна быть положительной.")

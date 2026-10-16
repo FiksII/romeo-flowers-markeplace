@@ -30,7 +30,7 @@ def admin_user():
 
 
 def order_part(owner, shop, listing, method="pickup", payment="cash"):
-    shop.commission_percent = Decimal(20)
+    shop.markup_percent = Decimal(20)
     shop.save()
     basket = basket_for(owner, listing)
     order = place_market_order(
@@ -60,14 +60,14 @@ def test_item_keeps_the_price_it_was_bought_at(owner, shop, listing):
     listing.product.save()
     item = part.items.get()
     assert (item.title, item.quantity) == ("Нежность", 1)
-    assert item.unit_price == Decimal(2500)
+    assert item.unit_price == Decimal(3000)
     assert item.unit_commission == Decimal(500)
-    assert item.unit_payout == Decimal(2000)
+    assert item.unit_payout == Decimal(2500)
     assert item.commission_percent == Decimal(20)
     listing.delete()
     item.refresh_from_db()
     assert item.listing is None
-    assert item.unit_price == Decimal(2500)
+    assert item.unit_price == Decimal(3000)
 
 
 def test_online_payment_credits_the_shop_once(owner, shop, listing):
@@ -77,7 +77,7 @@ def test_online_payment_credits_the_shop_once(owner, shop, listing):
     record_online_payment(part)
     part.refresh_from_db()
     assert part.payment_status == "paid"
-    assert shop_balance(shop) == Decimal(2000)
+    assert shop_balance(shop) == Decimal(2500)
     assert BalanceEntry.objects.get().kind == "platform_collected"
 
 
@@ -90,7 +90,7 @@ def test_refund_takes_the_share_back(owner, shop, listing):
     assert shop_balance(shop) == 0
 
 
-def test_cash_in_the_shop_makes_the_shop_owe_the_commission(owner, shop, listing):
+def test_cash_in_the_shop_makes_the_shop_owe_romeo_its_part(owner, shop, listing):
     part = order_part(owner, shop, listing, "pickup")
     assert part.payment_status == "pending"
     assert part.order.status == "Processing"
@@ -105,7 +105,7 @@ def test_cash_taken_by_romeo_courier_credits_the_shop(owner, shop, listing):
     part = order_part(owner, shop, listing, "delivery")
     assert part.platform_collects
     deliver(part, owner)
-    assert shop_balance(shop) == Decimal(2000)
+    assert shop_balance(shop) == Decimal(2500)
 
 
 def test_cash_order_can_be_worked_without_prepayment_and_cancelled(
@@ -149,7 +149,7 @@ def test_payout_lowers_the_balance_and_needs_the_shop_to_confirm(
 ):
     paid_up(owner, shop, listing)
     payout = create_payout(shop, Decimal(1500), admin_user, "Неделя 41")
-    assert shop_balance(shop) == Decimal(500)
+    assert shop_balance(shop) == Decimal(1000)
     assert payout.status == "sent"
     with pytest.raises(PermissionDenied):
         confirm_payout(payout, stranger)
@@ -160,13 +160,13 @@ def test_payout_lowers_the_balance_and_needs_the_shop_to_confirm(
     assert (payout.status, payout.responded_by) == ("confirmed", owner)
     with pytest.raises(ValidationError):
         dispute_payout(payout, owner)
-    assert shop_balance(shop) == Decimal(500)
+    assert shop_balance(shop) == Decimal(1000)
 
 
 def test_payout_is_limited_to_what_romeo_owes(owner, shop, listing, admin_user):
     paid_up(owner, shop, listing)
     with pytest.raises(ValidationError):
-        create_payout(shop, Decimal("2000.01"), admin_user)
+        create_payout(shop, Decimal("2500.01"), admin_user)
     with pytest.raises(ValidationError):
         create_payout(shop, Decimal(0), admin_user)
     with pytest.raises(PermissionDenied):
@@ -182,7 +182,7 @@ def test_disputed_payout_can_be_cancelled_and_restores_the_debt(
     cancel_payout(payout, admin_user)
     payout.refresh_from_db()
     assert payout.status == "cancelled"
-    assert shop_balance(shop) == Decimal(2000)
+    assert shop_balance(shop) == Decimal(2500)
     with pytest.raises(ValidationError):
         cancel_payout(payout, admin_user)
     assert Payout.objects.count() == 1

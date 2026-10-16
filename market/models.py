@@ -6,7 +6,13 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from market.bouquet_options import SIZES, TAGS, validate_size_prices, validate_tags
+from market.bouquet_options import (
+    SIZES,
+    TAGS,
+    validate_sale_prices,
+    validate_size_prices,
+    validate_tags,
+)
 from market.zones import validate_zone
 
 
@@ -105,12 +111,12 @@ class Shop(models.Model):
     inn = models.CharField("ИНН", max_length=12, blank=True)
     bank_account = models.CharField("Расчётный счёт", max_length=20, blank=True)
     bank_bik = models.CharField("БИК", max_length=9, blank=True)
-    commission_percent = models.DecimalField(
-        "Комиссия платформы, % от цены букета",
-        max_digits=5,
+    markup_percent = models.DecimalField(
+        "Наценка Ромео, % к цене магазина",
+        max_digits=6,
         decimal_places=2,
-        default=10,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        default=4,
+        validators=[MinValueValidator(0), MaxValueValidator(1000)],
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -184,6 +190,14 @@ class Listing(models.Model):
     )
     size_prices = models.JSONField(
         "Размеры и цены", default=dict, blank=True, validators=[validate_size_prices]
+    )
+    # Prices Romeo sells at, set by the administrator: {size: {"pickup": "...",
+    # "delivery": "..."}}. Without one the buyer pays the shop's price plus the markup.
+    sale_prices = models.JSONField(
+        "Цены продажи Ромео",
+        default=dict,
+        blank=True,
+        validators=[validate_sale_prices],
     )
     product = models.OneToOneField(
         "catalogue.Product", on_delete=models.CASCADE, related_name="market_listing"
@@ -273,6 +287,14 @@ class Listing(models.Model):
             "delivery"
         ) is not None else None
 
+    def sale_key(self, method):
+        """Which of Romeo's prices applies: shops without their own delivery have one."""
+        return "delivery" if method != "pickup" and self.shop.own_delivery else "pickup"
+
+    def sale_price_for(self, size, method):
+        value = ((self.sale_prices or {}).get(size) or {}).get(self.sale_key(method))
+        return Decimal(value) if value not in (None, "") else None
+
     def size_options(self, method):
         return [
             {"value": code, "label": label, "price": self.price_for(method, code)}
@@ -302,7 +324,9 @@ class Listing(models.Model):
             return min((price for price in prices if price is not None), default=None)
         pickup, delivery = self.prices_for_size(size)
         return (
-            customer_price(self.shop, pickup, delivery, method)
+            customer_price(
+                self.shop, pickup, delivery, method, self.sale_price_for(size, method)
+            )
             if pickup is not None
             else None
         )
@@ -310,6 +334,11 @@ class Listing(models.Model):
     @property
     def price(self):
         return self.price_for("delivery")
+
+    @property
+    def buyer_pickup_price(self):
+        """What a buyer pays for pickup; ``pickup_price`` is the shop's own price."""
+        return self.price_for("pickup")
 
     @property
     def always_in_stock(self):
@@ -442,7 +471,9 @@ class ShopOrder(models.Model):
         default="platform",
         choices=[("platform", "Ромео"), ("partner", "Магазин")],
     )
-    commission_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    # Romeo's part of the goods (markup or its own price minus the shop's price) and the
+    # markup percent at the time of the order. The shop gets ``partner_total``.
+    commission_percent = models.DecimalField(max_digits=6, decimal_places=2)
     commission_total = models.DecimalField(max_digits=12, decimal_places=2)
     partner_total = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=12, choices=STATUSES, default="accepted")
@@ -545,7 +576,7 @@ class ShopOrderItem(models.Model):
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     unit_commission = models.DecimalField(max_digits=12, decimal_places=2)
     unit_payout = models.DecimalField(max_digits=12, decimal_places=2)
-    commission_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    commission_percent = models.DecimalField(max_digits=6, decimal_places=2)
 
     class Meta:
         ordering = ["pk"]

@@ -56,7 +56,7 @@ def test_seller_cannot_approve_own_shop(client, owner, shop):
 
     form = ShopForm(instance=shop)
     assert "status" not in form.fields
-    assert "commission_percent" not in form.fields
+    assert "markup_percent" not in form.fields
 
 
 @override_settings(MARKET_DEMO=True)

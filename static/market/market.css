@@ -514,3 +514,4 @@ html:not(.js) .live-only{display:none}
 .order-card-total strong{font-size:20px}
 .order-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
 @media (max-width:759px){.order-cards{grid-template-columns:1fr}.order-card{padding:16px}}
+.sale-price-table input{width:120px;min-width:0}

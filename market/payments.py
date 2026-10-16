@@ -6,7 +6,7 @@ shop, negative means the shop owes Romeo. Who holds the customer's money decides
 * paid online, or cash taken by Romeo's courier: Romeo holds the money and owes the shop
   its share (``partner_total``);
 * cash taken in the shop (pickup or the shop's own courier): the shop holds the money and
-  owes Romeo the commission.
+  owes Romeo its part (sale price minus the shop's price).
 
 Entries are written once per order part, so repeating a call never counts a sale twice.
 """
