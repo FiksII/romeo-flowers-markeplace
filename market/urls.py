@@ -78,6 +78,11 @@ urlpatterns = [
     path("operator/", portal.operator_index, name="operator"),
     path("operator/balances/", portal.operator_balances, name="operator-balances"),
     path(
+        "operator/listings/<int:pk>/price/",
+        portal.operator_listing_price,
+        name="listing-price",
+    ),
+    path(
         "operator/balances/<slug:slug>/pay/",
         portal.operator_payout_create,
         name="payout-create",

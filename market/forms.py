@@ -843,3 +843,79 @@ class PayoutForm(forms.Form):
             attrs={"placeholder": "Комментарий", "aria-label": "Комментарий"}
         ),
     )
+
+
+class ListingPriceForm(forms.Form):
+    """Only the prices of a bouquet: one pair per size it is sold in."""
+
+    def __init__(self, *args, listing, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.listing = listing
+        labels = dict(SIZES)
+        for code in listing.sizes:
+            pickup, delivery = listing.prices_for_size(code)
+            suffix = "" if code == "standard" else f"_{code}"
+            prefix = f"{labels[code]} — " if listing.has_size_choice else ""
+            self.fields[f"pickup_price{suffix}"] = self._price(
+                f"{prefix}цена самовывозом, ₽", pickup, required=True
+            )
+            if listing.shop.own_delivery:
+                self.fields[f"delivery_price{suffix}"] = self._price(
+                    f"{prefix}цена с доставкой магазина, ₽", delivery, required=False
+                )
+
+    @staticmethod
+    def _price(label, value, required):
+        return forms.DecimalField(
+            label=label,
+            required=required,
+            min_value=Decimal("0.01"),
+            max_digits=10,
+            decimal_places=2,
+            initial=value,
+            widget=forms.NumberInput(attrs={"step": "0.01"}),
+        )
+
+    def prices(self):
+        """{size: (pickup, delivery or None)} from the cleaned data."""
+        result = {}
+        for code in self.listing.sizes:
+            suffix = "" if code == "standard" else f"_{code}"
+            result[code] = (
+                self.cleaned_data[f"pickup_price{suffix}"],
+                self.cleaned_data.get(f"delivery_price{suffix}"),
+            )
+        return result
+
+
+def update_listing_prices(listing, prices):
+    """Set new prices without touching anything else of the bouquet.
+
+    Orders already placed keep the prices they were bought at (``ShopOrderItem``)."""
+    Stock = get_model("partner", "StockRecord")
+    with transaction.atomic():
+        stock = Stock.objects.select_for_update().get(
+            product_id=listing.product_id, partner=listing.shop.partner
+        )
+        listing = Listing.objects.select_for_update().get(pk=listing.pk)
+        sizes = listing.sizes
+        size_prices = dict(listing.size_prices or {})
+        for code, (pickup, delivery) in prices.items():
+            if code == "standard":
+                stock.price = pickup
+                listing.delivery_price = delivery
+            else:
+                size_prices[code] = {
+                    "pickup": str(pickup),
+                    "delivery": str(delivery) if delivery is not None else None,
+                }
+        if "standard" not in sizes:
+            # The stock record mirrors the first size, as when the seller saves the bouquet.
+            first_pickup, first_delivery = prices[sizes[0]]
+            stock.price = first_pickup
+            listing.delivery_price = first_delivery
+        stock.save(update_fields=["price"])
+        listing.size_prices = size_prices
+        listing.full_clean()
+        listing.save(update_fields=["size_prices", "delivery_price"])
+    return listing

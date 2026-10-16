@@ -18,6 +18,7 @@
     {% else %}
     <form class="basket-add-form" method="post" action="{% url 'market:basket-add' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button button-pill" type="submit" aria-label="Добавить {{ listing.product.title }} в корзину">{% include "storefront/partials/icon.html" with name="plus" class="icon-sm" %}<span>В корзину</span></button></form>
     {% endif %}
+    {% if request.user.is_superuser %}<a class="text-link admin-price-link" href="{% url 'market:listing-price' listing.pk %}?next={{ request.get_full_path|urlencode }}">Изменить цену</a>{% endif %}
     <p class="product-meta"><a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · получение <span class="slot-time">{{ listing.nearest_slot.label }}</span></p>
   </div>
 </article>

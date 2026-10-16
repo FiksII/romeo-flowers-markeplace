@@ -1,0 +1,15 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}Цена · {{ listing.product.title }} — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space narrow-section">
+  <a class="back-link" href="{% if back %}{{ back }}{% else %}{% url 'market:product' listing.pk %}{% endif %}">← Назад</a>
+  <div class="page-heading"><span class="eyebrow">Супер администратор</span><h1>Изменить цену</h1><p>{{ listing.product.title }} · {{ listing.shop.name }}</p></div>
+  <form method="post" class="form-card">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ back }}">
+    {{ form.non_field_errors }}
+    {% for field in form %}{% include 'market/partials/field.html' with field=field %}{% endfor %}
+    <p class="field-help">Цена действует для новых заказов: в оформленных заказах сохранена цена покупки. Комиссия магазина {{ listing.shop.commission_percent }}% удерживается из этой цены.{% if listing.shop.own_delivery %} Пустая цена с доставкой — покупатель платит цену самовывоза.{% endif %}</p>
+    <button class="button button-primary">Сохранить цену</button>
+  </form>
+</section>
+{% endblock %}

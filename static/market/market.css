@@ -487,3 +487,4 @@ html:not(.js) .live-only{display:none}
 .payment-choice label{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:15px;cursor:pointer}
 .payment-choice label:has(input:checked){border-color:var(--forest);background:var(--cream)}
 .payment-choice input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--forest)}
+.admin-price-link{display:inline-block;margin-top:6px;font-size:13px}

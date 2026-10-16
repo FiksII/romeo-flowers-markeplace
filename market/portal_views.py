@@ -7,12 +7,14 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 from oscar.core.loading import get_model
 
 from market.access import get_shop_for_user, shops_for_user
 from market.forms import (
     ExceptionForm,
+    ListingPriceForm,
     NotificationSettingsForm,
     OperatorShopForm,
     PayoutForm,
@@ -22,10 +24,12 @@ from market.forms import (
     ShopPayoutForm,
     WeeklyHoursForm,
     save_listing,
+    update_listing_prices,
 )
 from market.models import (
     AuditEntry,
     DateException,
+    Listing,
     Membership,
     Payout,
     Shop,
@@ -586,3 +590,40 @@ def operator_payout_cancel(request, pk):
     except ValidationError as error:
         messages.error(request, "; ".join(error.messages))
     return redirect("market:operator-balances")
+
+
+@login_required
+def operator_listing_price(request, pk):
+    """The administrator changes the prices of any shop's bouquet in one place."""
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    listing = get_object_or_404(
+        Listing.objects.select_related("shop__settlement", "product"), pk=pk
+    )
+    form = ListingPriceForm(
+        request.POST if request.method == "POST" else None, listing=listing
+    )
+    back = request.POST.get("next") or request.GET.get("next") or ""
+    if not url_has_allowed_host_and_scheme(back, {request.get_host()}):
+        back = ""
+    if request.method == "POST" and form.is_valid():
+        try:
+            update_listing_prices(listing, form.prices())
+        except ValidationError as error:
+            form.add_error(None, "; ".join(error.messages))
+        else:
+            AuditEntry.objects.create(
+                shop=listing.shop,
+                actor=request.user,
+                action=f"Цена букета #{listing.pk} изменена администратором",
+            )
+            messages.success(
+                request,
+                "Цены сохранены. Они действуют для новых заказов; оформленные заказы не меняются.",
+            )
+            return redirect(back) if back else redirect("market:product", pk=pk)
+    return render(
+        request,
+        "market/listing_price.html",
+        {"listing": listing, "form": form, "back": back},
+    )
