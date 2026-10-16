@@ -15,6 +15,7 @@ pytestmark = pytest.mark.django_db
         "storefront/fonts/onest-cyrillic.woff2",
         "storefront/fonts/cormorant-garamond-cyrillic.woff2",
         "storefront/images/design/logo.webp",
+        "market/images/logo-emblem.webp",
         "storefront/images/design/hero.webp",
         "market/images/occasion-birthday.webp",
         "market/images/occasion-love.webp",
@@ -28,6 +29,15 @@ pytestmark = pytest.mark.django_db
 )
 def test_shared_design_assets_are_discoverable(asset_path):
     assert finders.find(asset_path)
+
+
+def test_header_and_footer_show_the_round_emblem(client):
+    html = client.get("/").content.decode()
+    emblem = '<img class="brand-logo" src="/static/market/images/logo-emblem.webp"'
+    assert html.count(emblem) == 2
+    assert f'{emblem} width="64" height="64" alt="Цветы от Ромео">' in html
+    assert f'{emblem} width="120" height="120" alt="Цветы от Ромео">' in html
+    assert "storefront/images/design/logo.webp" not in html
 
 
 def test_shared_theme_loads_after_the_base_theme(client):

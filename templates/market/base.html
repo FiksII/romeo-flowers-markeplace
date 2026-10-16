@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'storefront/css/romeo.css' %}?v=2">
   {% block report_assets %}{% endblock %}
   {% block map_assets %}{% endblock %}
-  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=13">
+  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=14">
   <link rel="stylesheet" href="{% static 'market/flower-tags.css' %}?v=4">
   <link rel="stylesheet" href="{% static 'market/bouquet-options.css' %}?v=1">
   <script src="{% static 'market/bouquet-options.js' %}?v=1" defer></script>
@@ -29,7 +29,7 @@
 </div>
 <header class="site-header">
   <div class="shell header-row">
-    <a class="brand" href="{% url 'market:home' %}" aria-label="Цветы от Ромео — главная"><img class="brand-logo" src="{% static 'storefront/images/design/logo.webp' %}" width="190" height="72" alt="Цветы от Ромео"></a>
+    <a class="brand" href="{% url 'market:home' %}" aria-label="Цветы от Ромео — главная"><img class="brand-logo" src="{% static 'market/images/logo-emblem.webp' %}" width="64" height="64" alt="Цветы от Ромео"></a>
     <a class="city" href="{% url 'market:home' %}#receiving" aria-label="Место и время получения: {{ receiving_label }}">{% include "storefront/partials/icon.html" with name="pin" %}<span>{{ receiving_label }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="icon-sm" %}</a>
     <form class="site-search" action="{% url 'market:home' %}#catalogue" method="get" role="search">
       <label class="visually-hidden" for="site-search">Поиск букетов</label>
@@ -55,7 +55,7 @@
 <footer class="site-footer">
   <div class="shell footer-grid">
     <section class="footer-brand" aria-label="О маркетплейсе">
-      <a class="brand" href="{% url 'market:home' %}"><img class="brand-logo" src="{% static 'storefront/images/design/logo.webp' %}" width="190" height="72" alt="Цветы от Ромео"></a>
+      <a class="brand" href="{% url 'market:home' %}"><img class="brand-logo" src="{% static 'market/images/logo-emblem.webp' %}" width="120" height="120" alt="Цветы от Ромео"></a>
       <p>Букеты от местных флористов с доставкой и самовывозом по Москве и области.</p>
       {% if contacts.telegram or contacts.instagram %}<div class="social-links">{% if contacts.telegram %}<a href="{{ contacts.telegram }}" aria-label="Telegram" rel="noopener">{% include "storefront/partials/icon.html" with name="telegram" %}</a>{% endif %}{% if contacts.instagram %}<a href="{{ contacts.instagram }}" aria-label="Instagram" rel="noopener">{% include "storefront/partials/icon.html" with name="instagram" %}</a>{% endif %}</div>{% endif %}
     </section>
