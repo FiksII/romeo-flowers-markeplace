@@ -15,6 +15,7 @@
     <div><span>Распродано</span><strong>{{ bouquets.sold_out }}</strong></div>
     <div><span>Скрыто из каталога</span><strong>{{ bouquets.hidden }}</strong></div>
   </div>
+  <a class="group-card balance-link" href="{% url 'market:partner-balance' shop.slug %}"><span class="muted">Баланс с Ромео</span>{% include 'market/partials/balance_status.html' %}<span class="text-link">Выплаты и движения →</span></a>
   {% include 'market/partials/report.html' %}
   <p class="field-help">Комиссия платформы {{ shop.commission_percent }}% от цены букета. Расчётный доход платформы по неотменённым заказам за период {{ stats.expected_commission|rub }}.</p>
 </section>

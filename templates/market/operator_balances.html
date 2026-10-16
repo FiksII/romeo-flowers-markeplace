@@ -1,0 +1,25 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}Балансы магазинов — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <div class="page-heading"><span class="eyebrow">Супер администратор</span><h1>Балансы и выплаты</h1><p>Кто кому должен: плюс — долг Ромео магазину, минус — долг магазина Ромео.</p></div>
+  {% include 'market/partials/operator_nav.html' %}
+  <div class="stats-grid">
+    <div><span>Ромео должен магазинам</span><strong>{{ owed_to_shops|rub }}</strong></div>
+    <div><span>Магазины должны Ромео</span><strong>{{ owed_to_romeo|rub }}</strong></div>
+  </div>
+  <div class="table-wrap"><table class="market-table"><thead><tr><th>Магазин</th><th>Баланс</th><th>Выплаты без подтверждения</th><th>Выплатить</th></tr></thead><tbody>
+  {% for row in rows %}<tr>
+    <td><a class="text-link" href="{% url 'market:partner-balance' row.shop.slug %}">{{ row.shop.name }}</a><p class="field-help">{{ row.shop.settlement.name }}</p></td>
+    <td data-order="{{ row.balance|unlocalize_money }}">{% include 'market/partials/balance_status.html' with balance=row.balance %}</td>
+    <td>{% if row.unconfirmed %}{{ row.unconfirmed|rub }}{% else %}—{% endif %}</td>
+    <td>{% if row.balance > 0 %}<form method="post" action="{% url 'market:payout-create' row.shop.slug %}" class="payout-form">{% csrf_token %}{{ row.form.amount }}{{ row.form.note }}<button class="button button-primary button-sm">Выплатить</button></form>{% else %}<span class="muted">Нечего выплачивать</span>{% endif %}</td>
+  </tr>{% empty %}<tr><td colspan="4">Магазинов пока нет.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <h2 class="spaced-heading">Последние выплаты</h2>
+  <div class="table-wrap"><table class="market-table"><thead><tr><th>Дата</th><th>Магазин</th><th>Сумма</th><th>Статус</th><th>Комментарий</th><th></th></tr></thead><tbody>
+  {% for payout in payouts %}<tr><td>{{ payout.created_at|date:'d.m.Y H:i' }}</td><td>{{ payout.shop.name }}</td><td>{{ payout.amount|rub }}</td><td><span class="status-chip {% if payout.status == 'disputed' %}chip-warn{% endif %}">{{ payout.get_status_display }}</span></td><td>{{ payout.note|default:'—' }}</td>
+    <td>{% if payout.status == 'sent' or payout.status == 'disputed' %}<form method="post" action="{% url 'market:payout-cancel' payout.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить</button></form>{% endif %}</td></tr>{% empty %}<tr><td colspan="6">Выплат пока не было.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

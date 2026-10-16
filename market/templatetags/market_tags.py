@@ -43,6 +43,11 @@ def rub(value):
 
 
 @register.filter
+def abs_money(value):
+    return abs(value)
+
+
+@register.filter
 def clock_minute(value):
     return f"{int(value) // 60:02}:{int(value) % 60:02}"
 
@@ -60,3 +65,16 @@ def ru_plural(value, forms):
     if 10 < number % 100 < 15:
         return many
     return {1: one, 2: few, 3: few, 4: few}.get(number % 10, many)
+
+
+@register.simple_tag
+def payouts_to_confirm(shop):
+    """Payouts Romeo has sent that the shop has not yet confirmed."""
+    return list(shop.payouts.filter(status="sent"))
+
+
+@register.simple_tag
+def disputed_payouts():
+    from market.models import Payout
+
+    return list(Payout.objects.filter(status="disputed").select_related("shop"))

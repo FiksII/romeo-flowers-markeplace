@@ -2,14 +2,14 @@
 {% block content %}
 <section class="shell section-space narrow-section">
   <a class="back-link" href="{% if request.user.is_superuser %}{% url 'market:operator-orders' %}{% else %}{% url 'market:partner-orders' shop.slug %}{% endif %}">← Заказы</a>
-  <div class="page-heading"><h1>Заказ № {{ part.order.number }}</h1><p>Ваша часть № {{ part.pk }} · {{ part.get_status_display }} · {{ part.get_payment_status_display }}</p></div>
+  <div class="page-heading"><h1>Заказ № {{ part.order.number }}</h1><p>Ваша часть № {{ part.pk }} · {{ part.get_status_display }} · {{ part.get_payment_method_display }} · {{ part.get_payment_status_display }}</p></div>
   {% if request.user.is_superuser %}{% include 'market/partials/operator_nav.html' %}{% else %}{% include 'market/partials/partner_nav.html' %}{% endif %}
   <div class="group-card">
     <h2>{{ part.get_method_display }}</h2>
     {% include 'market/partials/order_receiving.html' %}
     <p>{{ part.contact_name }} · {{ part.contact_phone }}</p>
     {% if part.instructions %}<p class="notice">{{ part.instructions }}</p>{% endif %}
-    {% for line in part.lines %}<div class="summary-row"><span>{{ line.title }}{% if line|bouquet_size %} · {{ line|bouquet_size }}{% endif %} × {{ line.quantity }}</span><strong>{{ line.line_price_incl_tax|rub }}</strong></div>{% endfor %}
+    {% for item in part.items.all %}<div class="summary-row"><span>{{ item.title }}{% if item.size_label %} · {{ item.size_label }}{% endif %} × {{ item.quantity }} <span class="field-help">по {{ item.unit_price|rub }}</span></span><strong>{{ item.line_total|rub }}</strong></div>{% endfor %}
     <div class="summary-row"><span>Товары · цена покупателя</span><span>{{ part.goods_total|rub }}</span></div>
     {% if part.pickup_discount_total %}<p class="field-help">В цене товаров учтена скидка за самовывоз {{ part.pickup_discount_total|rub }}.</p>{% endif %}
     {% if part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
@@ -19,13 +19,20 @@
     <div class="summary-row"><strong>Расчётная сумма магазину</strong><strong>{{ part.partner_total|rub }}</strong></div>
     <p class="field-help">Комиссия удерживается из цены товаров при оформлении заказа.{% if part.delivery_owner == 'platform' and part.delivery_total %} Доставка Ромео оплачивается отдельно и не входит в сумму магазину.{% endif %} Расчётная сумма ещё не является выплатой.</p>
   </div>
+  <div class="group-card">
+    <h2>Оплата</h2>
+    <div class="summary-row"><span>Способ</span><strong>{{ part.get_payment_method_display }}</strong></div>
+    <div class="summary-row"><span>Деньги получает</span><strong>{% if part.platform_collects %}Ромео{% else %}Магазин{% endif %}</strong></div>
+    <div class="summary-row"><span>Изменение баланса после получения</span><strong>{% if part.balance_effect > 0 %}+{% endif %}{{ part.balance_effect|rub }}</strong></div>
+    <p class="field-help">{% if part.platform_collects %}Деньги получит Ромео — мы будем должны магазину его долю.{% else %}Покупатель платит магазину наличными — магазин будет должен Ромео комиссию.{% endif %} Баланс меняется, когда заказ получен{% if part.payment_method == 'online' %} и оплата подтверждена{% endif %}. <a class="text-link" href="{% url 'market:partner-balance' shop.slug %}">Баланс и выплаты</a></p>
+  </div>
   {% if part.status != 'cancelled' and part.status != 'completed' %}
   <form method="post" class="form-card">{% csrf_token %}
     <div class="field"><label for="order-status">Изменить статус</label><select id="order-status" name="status">
-      {% if part.payment_status == 'pending' %}<option value="cancelled">Отменить неоплаченный заказ</option>
-      {% else %}{% if part.status == 'accepted' %}<option value="preparing">Начать сборку</option>
+      {% if part.payment_status == 'paid' or part.payment_method == 'cash' %}{% if part.status == 'accepted' %}<option value="preparing">Начать сборку</option>
       {% elif part.status == 'preparing' %}{% if part.method == 'pickup' %}<option value="ready">Готов к выдаче</option>{% else %}<option value="courier">Передан курьеру</option>{% endif %}
-      {% else %}<option value="completed">Получен</option>{% endif %}{% endif %}
+      {% else %}<option value="completed">{% if part.payment_method == 'cash' %}Получен, наличные приняты{% else %}Получен{% endif %}</option>{% endif %}{% endif %}
+      {% if part.payment_status == 'pending' %}<option value="cancelled">Отменить{% if part.payment_method == 'online' %} неоплаченный{% endif %} заказ</option>{% endif %}
     </select></div><button class="button button-secondary">Сохранить статус</button>
   </form>
   {% endif %}

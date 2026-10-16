@@ -589,7 +589,12 @@ def checkout(request):
                 raise ValidationError("Корзина изменилась. Откройте её ещё раз.")
             address = form.cleaned_data["verified_address"]
             order = place_market_order(
-                request.user, basket, choices, address, form.cleaned_data
+                request.user,
+                basket,
+                choices,
+                address,
+                form.cleaned_data,
+                payment_method=form.cleaned_data["payment_method"],
             )
             return redirect("market:order", number=order.number)
         except (ValidationError, ValueError) as error:

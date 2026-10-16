@@ -1,8 +1,9 @@
-{% with current=request.resolver_match.url_name %}
+{% load market_tags %}{% with current=request.resolver_match.url_name %}
 <nav class="portal-nav" aria-label="Кабинет магазина">
   {% if request.user.is_superuser %}<a href="{% url 'market:operator' %}">← Все магазины</a>{% endif %}
   <a href="{% url 'market:partner-shop' shop.slug %}"{% if current == 'partner-shop' %} aria-current="page"{% endif %}>Дашборд</a>
   <a href="{% url 'market:partner-orders' shop.slug %}"{% if current == 'partner-orders' or current == 'partner-order' %} aria-current="page"{% endif %}>Заказы</a>
+  <a href="{% url 'market:partner-balance' shop.slug %}"{% if current == 'partner-balance' %} aria-current="page"{% endif %}>Баланс</a>
   <a href="{% url 'market:products' shop.slug %}"{% if current == 'products' or current == 'product-new' or current == 'product-edit' %} aria-current="page"{% endif %}>Букеты</a>
   <a href="{% url 'market:shop-info' shop.slug %}"{% if current == 'shop-info' %} aria-current="page"{% endif %}>Информация о магазине</a>
   <a href="{% url 'market:shop-payout' shop.slug %}"{% if current == 'shop-payout' %} aria-current="page"{% endif %}>Реквизиты и зона доставки</a>
@@ -10,4 +11,5 @@
   {% if request.user.is_superuser %}<a href="{% url 'market:operator-shop' shop.slug %}"{% if current == 'operator-shop' %} aria-current="page"{% endif %}>Управление магазином</a>{% endif %}
   {% if shop.status == 'active' %}<a href="{% url 'market:shop' shop.slug %}">Витрина ↗</a>{% endif %}
 </nav>
+{% if current != 'partner-balance' %}{% payouts_to_confirm shop as to_confirm %}{% for payout in to_confirm %}<p class="notice">Ромео отправил вам выплату {{ payout.amount|rub }}. <a class="text-link" href="{% url 'market:partner-balance' shop.slug %}">Подтвердите получение</a></p>{% endfor %}{% endif %}
 {% endwith %}

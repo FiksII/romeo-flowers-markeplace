@@ -126,6 +126,8 @@ LOGIN_REDIRECT_URL = "/account/orders/"
 LOGOUT_REDIRECT_URL = "/"
 MARKET_DEMO = False
 MARKET_RESERVATION_MINUTES = 30
+# Online payment is offered at checkout only once a payment provider is connected.
+MARKET_ONLINE_PAYMENTS = env.bool("MARKET_ONLINE_PAYMENTS", default=False)
 DADATA_TOKEN = env("DADATA_TOKEN", default="")
 # A configured DaData key enables live addresses independently of demo orders.
 ADDRESS_DEMO = env.bool("ADDRESS_DEMO", default=not bool(DADATA_TOKEN))

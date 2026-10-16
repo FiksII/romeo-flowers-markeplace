@@ -15,6 +15,7 @@ from market.forms import (
     ExceptionForm,
     NotificationSettingsForm,
     OperatorShopForm,
+    PayoutForm,
     ProductForm,
     ShopForm,
     ShopInfoForm,
@@ -26,10 +27,20 @@ from market.models import (
     AuditEntry,
     DateException,
     Membership,
+    Payout,
     Shop,
     ShopOrder,
 )
 from market.orders import transition_shop_order
+from market.payments import (
+    balance_totals,
+    balances_by_shop,
+    cancel_payout,
+    confirm_payout,
+    create_payout,
+    dispute_payout,
+    shop_balance,
+)
 from market.reporting import dashboard_report
 
 
@@ -442,3 +453,136 @@ def operator_index(request):
             **report,
         },
     )
+
+
+@login_required
+@require_GET
+def partner_balance(request, slug):
+    """Balance with Romeo, every movement behind it and the payouts to confirm."""
+    shop = get_shop_for_user(request.user, slug)
+    entries = shop.balance_entries.select_related("part__order", "payout")
+    return render(
+        request,
+        "market/partner_balance.html",
+        {
+            "shop": shop,
+            "balance": shop_balance(shop),
+            "entries": Paginator(entries, 25).get_page(request.GET.get("page")),
+            "payouts": shop.payouts.select_related("created_by")[:20],
+            "can_confirm": Membership.objects.filter(
+                user=request.user, shop=shop
+            ).exists(),
+        },
+    )
+
+
+@login_required
+@require_POST
+def partner_payout_answer(request, slug, pk, action):
+    shop = get_shop_for_user(request.user, slug)
+    if action not in {"confirm", "dispute"}:
+        raise PermissionDenied
+    payout = get_object_or_404(shop.payouts, pk=pk)
+    try:
+        if action == "confirm":
+            confirm_payout(payout, request.user)
+            messages.success(request, "Спасибо! Получение выплаты подтверждено.")
+        else:
+            dispute_payout(payout, request.user)
+            messages.success(
+                request, "Отметили, что выплата не пришла. Ромео проверит."
+            )
+        AuditEntry.objects.create(
+            shop=shop,
+            actor=request.user,
+            action=f"Выплата #{payout.pk}: "
+            + ("получение подтверждено" if action == "confirm" else "не получена"),
+        )
+    except ValidationError as error:
+        messages.error(request, "; ".join(error.messages))
+    return redirect("market:partner-balance", slug=slug)
+
+
+@login_required
+@require_GET
+def operator_balances(request):
+    """Who owes whom: every shop's balance, with payouts to make and track."""
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    balances = balances_by_shop()
+    shops = list(Shop.objects.select_related("settlement").order_by("name"))
+    unconfirmed = {}
+    for payout in Payout.objects.filter(status__in=["sent", "disputed"]):
+        unconfirmed[payout.shop_id] = unconfirmed.get(payout.shop_id, 0) + payout.amount
+    rows = [
+        {
+            "shop": shop,
+            "balance": balances.get(shop.pk, 0),
+            "unconfirmed": unconfirmed.get(shop.pk, 0),
+            "form": PayoutForm(
+                initial={"amount": balances[shop.pk]}
+                if balances.get(shop.pk, 0) > 0
+                else None,
+                prefix=f"shop{shop.pk}",
+            ),
+        }
+        for shop in shops
+    ]
+    owed_to_shops, owed_to_romeo = balance_totals(balances)
+    return render(
+        request,
+        "market/operator_balances.html",
+        {
+            "rows": rows,
+            "owed_to_shops": owed_to_shops,
+            "owed_to_romeo": owed_to_romeo,
+            "payouts": Payout.objects.select_related("shop", "created_by")[:30],
+        },
+    )
+
+
+@login_required
+@require_POST
+def operator_payout_create(request, slug):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    shop = get_object_or_404(Shop, slug=slug)
+    form = PayoutForm(request.POST, prefix=f"shop{shop.pk}")
+    try:
+        if not form.is_valid():
+            raise ValidationError("Укажите сумму выплаты в рублях и копейках.")
+        payout = create_payout(
+            shop, form.cleaned_data["amount"], request.user, form.cleaned_data["note"]
+        )
+        AuditEntry.objects.create(
+            shop=shop,
+            actor=request.user,
+            action=f"Выплата #{payout.pk} на {payout.amount} ₽ отправлена",
+        )
+        messages.success(
+            request, f"Выплата {payout.amount} ₽ записана. Магазин получит уведомление."
+        )
+    except ValidationError as error:
+        messages.error(request, "; ".join(error.messages))
+    return redirect("market:operator-balances")
+
+
+@login_required
+@require_POST
+def operator_payout_cancel(request, pk):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    payout = get_object_or_404(Payout, pk=pk)
+    try:
+        cancel_payout(payout, request.user)
+        AuditEntry.objects.create(
+            shop=payout.shop,
+            actor=request.user,
+            action=f"Выплата #{payout.pk} отменена",
+        )
+        messages.success(
+            request, "Выплата отменена, долг перед магазином восстановлен."
+        )
+    except ValidationError as error:
+        messages.error(request, "; ".join(error.messages))
+    return redirect("market:operator-balances")

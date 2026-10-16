@@ -67,7 +67,26 @@ urlpatterns = [
         portal.partner_order,
         name="partner-order",
     ),
+    path(
+        "partner/<slug:slug>/balance/", portal.partner_balance, name="partner-balance"
+    ),
+    path(
+        "partner/<slug:slug>/payouts/<int:pk>/<str:action>/",
+        portal.partner_payout_answer,
+        name="payout-answer",
+    ),
     path("operator/", portal.operator_index, name="operator"),
+    path("operator/balances/", portal.operator_balances, name="operator-balances"),
+    path(
+        "operator/balances/<slug:slug>/pay/",
+        portal.operator_payout_create,
+        name="payout-create",
+    ),
+    path(
+        "operator/payouts/<int:pk>/cancel/",
+        portal.operator_payout_cancel,
+        name="payout-cancel",
+    ),
     path("operator/orders/", portal.operator_orders_page, name="operator-orders"),
     path("operator/settings/", portal.operator_settings, name="operator-settings"),
     path(

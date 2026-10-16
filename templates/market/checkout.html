@@ -60,9 +60,12 @@
     <aside class="summary-card"><h2>Общий заказ</h2>
       <div class="summary-row"><span>Товары</span><strong data-goods-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
       <div class="summary-row total-row"><span>Итого</span><strong data-order-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
-      <p class="notice">Приём оплаты пока не подключён. Созданный заказ будет ожидать оплаты.</p>
+      <fieldset class="payment-choice"><legend>Оплата</legend>
+        {{ form.payment_method }}{{ form.payment_method.errors }}
+        {% if form.payment_method.field.choices|length < 2 %}<p class="field-help">Онлайн-оплата скоро появится.</p>{% endif %}
+      </fieldset>
       <button class="button button-primary button-block">Создать заказ</button>
-      <p class="field-help">При самовывозе учитывается цена магазина для самовывоза. Неоплаченный резерв действует 30 минут.</p>
+      <p class="field-help">При самовывозе учитывается цена магазина для самовывоза. Заказ с оплатой при получении резервируется до получения.</p>
     </aside>
   </form>
   {% else %}<div class="empty-state"><h2>Корзина пуста</h2><a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать цветы</a></div>{% endif %}

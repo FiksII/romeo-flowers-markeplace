@@ -446,6 +446,14 @@ class ShopOrder(models.Model):
     commission_total = models.DecimalField(max_digits=12, decimal_places=2)
     partner_total = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=12, choices=STATUSES, default="accepted")
+    payment_method = models.CharField(
+        max_length=8,
+        default="online",
+        choices=[
+            ("cash", "Наличными при получении"),
+            ("online", "Онлайн"),
+        ],
+    )
     payment_status = models.CharField(
         max_length=12,
         default="pending",
@@ -474,6 +482,155 @@ class ShopOrder(models.Model):
     @property
     def lines(self):
         return self.order.lines.filter(partner_id=self.shop.partner_id)
+
+    @property
+    def platform_collects(self):
+        """Whether Romeo, not the shop, is the one who receives the customer's money."""
+        return self.payment_method == "online" or (
+            self.method == "delivery" and self.delivery_owner == "platform"
+        )
+
+    @property
+    def balance_effect(self):
+        """How this part moves the shop's balance once the money has been received."""
+        return self.partner_total if self.platform_collects else -self.commission_total
+
+
+class ShopOrderItem(models.Model):
+    """What one bouquet cost when it was bought.
+
+    The values are copied at checkout and never recalculated, so a later change of the
+    listing's price (or the listing's removal) does not touch past orders."""
+
+    part = models.ForeignKey(ShopOrder, on_delete=models.CASCADE, related_name="items")
+    listing = models.ForeignKey(
+        Listing, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    title = models.CharField(max_length=255)
+    size = models.CharField(max_length=8, blank=True)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_commission = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_payout = models.DecimalField(max_digits=12, decimal_places=2)
+    commission_percent = models.DecimalField(max_digits=5, decimal_places=2)
+
+    class Meta:
+        ordering = ["pk"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0), name="market_item_quantity"
+            )
+        ]
+
+    @property
+    def line_total(self):
+        return self.unit_price * self.quantity
+
+    @property
+    def size_label(self):
+        return dict(SIZES).get(self.size, "")
+
+
+class Payout(models.Model):
+    """Money Romeo sends a shop to settle its balance.
+
+    Romeo records the transfer; the shop then confirms that it arrived."""
+
+    STATUSES = [
+        ("sent", "Отправлена, ждёт подтверждения"),
+        ("confirmed", "Получена"),
+        ("disputed", "Магазин не получил"),
+        ("cancelled", "Отменена"),
+    ]
+    shop = models.ForeignKey(Shop, on_delete=models.PROTECT, related_name="payouts")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUSES, default="sent")
+    note = models.CharField("Комментарий", max_length=255, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Выплата магазину"
+        verbose_name_plural = "Выплаты магазинам"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0), name="market_payout_positive"
+            )
+        ]
+
+
+class BalanceEntry(models.Model):
+    """One movement on a shop's balance with Romeo.
+
+    Positive amounts are what Romeo owes the shop, negative ones what the shop owes
+    Romeo. The balance is the sum of entries; entries are never edited or deleted."""
+
+    KINDS = [
+        ("platform_collected", "Оплата получена Ромео"),
+        ("shop_collected", "Наличные получил магазин"),
+        ("refund", "Возврат оплаты"),
+        ("payout", "Выплата магазину"),
+        ("payout_cancelled", "Выплата отменена"),
+    ]
+    shop = models.ForeignKey(
+        Shop, on_delete=models.PROTECT, related_name="balance_entries"
+    )
+    part = models.ForeignKey(
+        ShopOrder,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="balance_entries",
+    )
+    payout = models.ForeignKey(
+        Payout,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="balance_entries",
+    )
+    kind = models.CharField(max_length=20, choices=KINDS)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Движение по балансу"
+        verbose_name_plural = "Баланс магазинов"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["part", "kind"],
+                condition=models.Q(part__isnull=False),
+                name="market_balance_once_per_part",
+            ),
+            models.UniqueConstraint(
+                fields=["payout", "kind"],
+                condition=models.Q(payout__isnull=False),
+                name="market_balance_once_per_payout",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(amount=0), name="market_balance_nonzero"
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError("Движения по балансу не изменяются.")
+        super().save(*args, **kwargs)
 
 
 class AuditEntry(models.Model):

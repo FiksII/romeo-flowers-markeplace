@@ -1,0 +1,1 @@
+{% load market_tags %}{% if balance > 0 %}<strong class="balance-plus">Ромео должен магазину {{ balance|rub }}</strong>{% elif balance < 0 %}<strong class="balance-minus">Магазин должен Ромео {{ balance|abs_money|rub }}</strong>{% else %}<strong>Взаиморасчёты закрыты</strong>{% endif %}

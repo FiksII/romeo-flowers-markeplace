@@ -20,6 +20,7 @@ from market.models import (
     ShopOrder,
 )
 from market.orders import cancel_shop_order, place_market_order, transition_shop_order
+from market.payments import record_online_payment, refund_online_payment
 from market.strategy import MarketplaceStrategy
 
 MOSCOW = ZoneInfo("Europe/Moscow")
@@ -307,8 +308,7 @@ class Command(BaseCommand):
             if scenario == "cancelled":
                 cancel_shop_order(part, operator)
                 continue
-            part.payment_status = "paid"
-            part.save(update_fields=["payment_status"])
+            record_online_payment(part)
             # Early in the day some stores have not prepared these examples yet.
             # Keep the scenario at a plausible stage instead of receiving a future order.
             if (
@@ -339,9 +339,9 @@ class Command(BaseCommand):
                     stock.num_in_stock += line.quantity
                     stock.save(update_fields=["num_in_stock"])
             if scenario == "refunded":
-                part.payment_status = "refunded"
+                refund_online_payment(part)
                 part.status = "cancelled"
-                part.save(update_fields=["payment_status", "status"])
+                part.save(update_fields=["status"])
         statuses = set(order.shop_orders.values_list("status", flat=True))
         order.status = (
             "Cancelled"

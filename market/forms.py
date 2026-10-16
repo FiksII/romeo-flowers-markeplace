@@ -2,6 +2,7 @@ import uuid
 from decimal import Decimal
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -764,10 +765,26 @@ class CheckoutContactForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"rows": 3}),
     )
+    payment_method = forms.ChoiceField(
+        label="Оплата",
+        choices=[("cash", "Наличными при получении"), ("online", "Онлайн")],
+        initial="cash",
+        required=False,
+        widget=forms.RadioSelect,
+        error_messages={"invalid_choice": "Выберите способ оплаты."},
+    )
+
+    def clean_payment_method(self):
+        # Cash on receipt is the default way to pay.
+        return self.cleaned_data["payment_method"] or "cash"
 
     def __init__(self, *args, has_delivery=False, user=None, **kwargs):
         self.has_delivery = has_delivery
         super().__init__(*args, **kwargs)
+        if not settings.MARKET_ONLINE_PAYMENTS:
+            self.fields["payment_method"].choices = [
+                ("cash", "Наличными при получении")
+            ]
         if user is not None and not user.email.strip():
             self.fields["email"] = forms.EmailField(
                 label="Ваш email",
@@ -806,3 +823,23 @@ class CheckoutContactForm(forms.Form):
                 except ValidationError as error:
                     self.add_error("address", error)
         return data
+
+
+class PayoutForm(forms.Form):
+    amount = forms.DecimalField(
+        label="Сумма, ₽",
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal("0.01"),
+        widget=forms.NumberInput(
+            attrs={"step": "0.01", "placeholder": "Сумма, ₽", "aria-label": "Сумма, ₽"}
+        ),
+    )
+    note = forms.CharField(
+        label="Комментарий",
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Комментарий", "aria-label": "Комментарий"}
+        ),
+    )

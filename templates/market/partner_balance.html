@@ -1,0 +1,28 @@
+{% extends 'market/base.html' %}{% load market_tags %}
+{% block title %}{{ shop.name }} · Баланс — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <a class="back-link" href="{% url 'market:partner' %}">← Мои магазины</a>
+  <div class="page-heading"><span class="eyebrow">Кабинет партнёра · {{ shop.settlement.name }}</span><h1>Баланс и выплаты</h1><p>Взаиморасчёты магазина «{{ shop.name }}» с Ромео.</p></div>
+  {% include 'market/partials/partner_nav.html' %}
+  <div class="balance-card group-card">
+    <span class="muted">Текущий баланс</span>
+    <div class="balance-figure">{% include 'market/partials/balance_status.html' %}</div>
+    <p class="field-help">Онлайн-оплаты и наличные, которые принял курьер Ромео, увеличивают баланс на долю магазина. Наличные, которые магазин получил сам, уменьшают его на комиссию. Движения появляются, когда заказ получен.</p>
+  </div>
+  {% payouts_to_confirm shop as to_confirm %}
+  {% if to_confirm and can_confirm %}<h2 class="spaced-heading">Подтвердите получение</h2>
+  {% for payout in to_confirm %}<div class="group-card payout-confirm"><div><strong>{{ payout.amount|rub }}</strong><p class="field-help">Отправлено {{ payout.created_at|date:'d.m.Y H:i' }}{% if payout.note %} · {{ payout.note }}{% endif %}</p></div>
+    <div class="payout-actions"><form method="post" action="{% url 'market:payout-answer' shop.slug payout.pk 'confirm' %}">{% csrf_token %}<button class="button button-primary button-sm">Деньги получены</button></form>
+    <form method="post" action="{% url 'market:payout-answer' shop.slug payout.pk 'dispute' %}">{% csrf_token %}<button class="button button-secondary button-sm">Не пришли</button></form></div></div>{% endfor %}{% endif %}
+  <h2 class="spaced-heading">Выплаты</h2>
+  <div class="table-wrap"><table class="market-table"><thead><tr><th>Дата</th><th>Сумма</th><th>Статус</th><th>Комментарий</th></tr></thead><tbody>
+  {% for payout in payouts %}<tr><td>{{ payout.created_at|date:'d.m.Y H:i' }}</td><td>{{ payout.amount|rub }}</td><td><span class="status-chip {% if payout.status == 'disputed' %}chip-warn{% endif %}">{{ payout.get_status_display }}</span></td><td>{{ payout.note|default:'—' }}</td></tr>{% empty %}<tr><td colspan="4">Выплат пока не было.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <h2 class="spaced-heading">Все движения по балансу</h2>
+  <div class="table-wrap"><table class="market-table"><thead><tr><th>Дата</th><th>Что произошло</th><th>Заказ</th><th>Сумма</th></tr></thead><tbody>
+  {% for entry in entries %}<tr><td>{{ entry.created_at|date:'d.m.Y H:i' }}</td><td>{{ entry.get_kind_display }}</td><td>{% if entry.part %}<a class="text-link" href="{% url 'market:partner-order' shop.slug entry.part.pk %}">{{ entry.part.order.number }}</a>{% else %}—{% endif %}</td><td class="{% if entry.amount > 0 %}balance-plus{% else %}balance-minus{% endif %}">{% if entry.amount > 0 %}+{% endif %}{{ entry.amount|rub }}</td></tr>{% empty %}<tr><td colspan="4">Движений пока нет.</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if entries.has_other_pages %}<nav class="pagination" aria-label="Страницы">{% if entries.has_previous %}<a href="?page={{ entries.previous_page_number }}">← Назад</a>{% endif %}<span>{{ entries.number }} / {{ entries.paginator.num_pages }}</span>{% if entries.has_next %}<a href="?page={{ entries.next_page_number }}">Дальше →</a>{% endif %}</nav>{% endif %}
+</section>
+{% endblock %}

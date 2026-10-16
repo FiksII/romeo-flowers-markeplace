@@ -470,3 +470,20 @@ html:not(.js) .live-only{display:none}
 @media(max-width:760px){.hours-table .day-full{display:none}.hours-table .day-short{display:inline}.shop-map{height:280px}.shop-map-tall{height:380px}}
 /* Phones: iOS Safari zooms the page into any field under 16px. Keep this block last to win over field rules above. */
 @media(max-width:759px){input:not([type=checkbox],[type=radio],[type=range],[type=file],[type=hidden],[type=submit],[type=button]),select,textarea,div.dt-container .dt-input{font-size:16px}}
+
+.balance-card{display:grid;gap:6px;margin-bottom:24px}
+.balance-figure{font-size:26px}
+.balance-plus{color:var(--forest)}
+.balance-minus{color:var(--red-dark)}
+.balance-link{display:grid;gap:6px;margin-bottom:20px;text-decoration:none;color:inherit}
+.payout-confirm{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.payout-actions{display:flex;flex-wrap:wrap;gap:8px}
+.payout-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.payout-form input{min-width:0;width:130px}
+.payout-form input[name$=note]{width:180px}
+.payment-choice{padding:0;border:0;margin:0 0 16px}
+.payment-choice legend{margin-bottom:10px;font-size:14px;color:var(--text-soft)}
+.payment-choice>div{display:grid;gap:10px}
+.payment-choice label{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:15px;cursor:pointer}
+.payment-choice label:has(input:checked){border-color:var(--forest);background:var(--cream)}
+.payment-choice input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--forest)}

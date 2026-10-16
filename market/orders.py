@@ -18,7 +18,8 @@ from market.addresses import validate_address
 from market.availability import available_slots, location_matches
 from market.bouquet_options import line_size
 from market.context import FulfillmentContext
-from market.models import Listing, Shop, ShopOrder
+from market.models import Listing, Shop, ShopOrder, ShopOrderItem
+from market.payments import record_cash_receipt
 from market.pricing import quote_product
 from market.strategy import MarketplaceStrategy
 
@@ -43,8 +44,12 @@ def basket_groups(basket):
 
 
 @transaction.atomic
-def place_market_order(user, basket, choices, address, contact, now=None):
+def place_market_order(
+    user, basket, choices, address, contact, now=None, payment_method="online"
+):
     now = now or timezone.now()
+    if payment_method not in {"cash", "online"}:
+        raise ValidationError("Выберите способ оплаты.")
     Basket, Stock = get_model("basket", "Basket"), get_model("partner", "StockRecord")
     if not user.is_authenticated or not basket.pk:
         raise PermissionDenied
@@ -181,6 +186,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
                 )
             has_delivery = True
         goods, payout, commission = Decimal(0), Decimal(0), Decimal(0)
+        snapshot = []
         for line, stock, listing in items:
             size = line_size(line)
             pickup, delivery = listing.prices_for_size(size)
@@ -188,6 +194,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
                 shop, stock.price if size == "standard" else pickup, delivery, method
             )
             line._info = basket.strategy.fetch_for_line(line, stockrecord=stock)
+            snapshot.append((line, listing, size, quote))
             goods += quote.customer * line.quantity
             payout += quote.payout * line.quantity
             commission += quote.commission * line.quantity
@@ -208,6 +215,7 @@ def place_market_order(user, basket, choices, address, contact, now=None):
                 fee,
                 commission,
                 "partner" if own else "platform",
+                snapshot,
             )
         )
         goods_total += goods
@@ -251,10 +259,10 @@ def place_market_order(user, basket, choices, address, contact, now=None):
         ),
         shipping_charge=charge,
         shipping_address=shipping_address,
-        status="AwaitingPayment",
+        status="AwaitingPayment" if payment_method == "online" else "Processing",
     )
-    for shop, method, slot, goods, payout, fee, commission, owner in prepared:
-        ShopOrder.objects.create(
+    for shop, method, slot, goods, payout, fee, commission, owner, snapshot in prepared:
+        part = ShopOrder.objects.create(
             order=order,
             shop=shop,
             method=method,
@@ -277,6 +285,22 @@ def place_market_order(user, basket, choices, address, contact, now=None):
             commission_percent=shop.commission_percent,
             commission_total=commission,
             partner_total=payout,
+            payment_method=payment_method,
+        )
+        # The prices are copied, so later edits of the listing never change this order.
+        ShopOrderItem.objects.bulk_create(
+            ShopOrderItem(
+                part=part,
+                listing=listing,
+                title=line.product.title[:255],
+                size=size if size != "standard" else "",
+                quantity=line.quantity,
+                unit_price=quote.customer,
+                unit_commission=quote.commission,
+                unit_payout=quote.payout,
+                commission_percent=shop.commission_percent,
+            )
+            for line, listing, size, quote in snapshot
         )
     basket.submit()
     return order
@@ -314,6 +338,11 @@ def cancel_shop_order(part, actor):
         and part.order.user_id != actor.pk
     ):
         raise PermissionDenied
+    is_shop = shops_for_user(actor).filter(pk=part.shop_id).exists()
+    if not is_shop and part.status not in {"accepted", "preparing"}:
+        raise ValidationError(
+            "Заказ уже готов или передан курьеру. Для отмены свяжитесь с магазином."
+        )
     return _cancel_locked(part)
 
 
@@ -323,7 +352,9 @@ def expire_unpaid_orders(now=None, limit=100):
     )
     ids = list(
         ShopOrder.objects.filter(
-            payment_status="pending", order__date_placed__lte=cutoff
+            payment_method="online",
+            payment_status="pending",
+            order__date_placed__lte=cutoff,
         )
         .exclude(status__in=["cancelled", "completed"])
         .order_by("order_id")
@@ -341,7 +372,7 @@ def expire_unpaid_orders(now=None, limit=100):
             parts = (
                 ShopOrder.objects.select_for_update(of=("self",))
                 .select_related("order", "shop")
-                .filter(order=order, payment_status="pending")
+                .filter(order=order, payment_method="online", payment_status="pending")
                 .exclude(status__in=["cancelled", "completed"])
                 .order_by("pk")
             )
@@ -365,7 +396,7 @@ def transition_shop_order(part, actor, target):
         raise PermissionDenied
     if target == "cancelled":
         return cancel_shop_order(part, actor)
-    if part.payment_status != "paid":
+    if part.payment_status != "paid" and part.payment_method != "cash":
         raise ValidationError("Исполнение доступно после подтверждения оплаты.")
     allowed = {
         "accepted": {"preparing"},
@@ -383,6 +414,9 @@ def transition_shop_order(part, actor, target):
             ).consume_allocation(line.quantity)
     part.status = target
     part.save(update_fields=["status"])
+    if target == "completed" and part.payment_method == "cash":
+        # The cash is handed over together with the bouquet.
+        part = record_cash_receipt(part)
     order.status = (
         "Completed"
         if not order.shop_orders.exclude(status__in=["completed", "cancelled"]).exists()
