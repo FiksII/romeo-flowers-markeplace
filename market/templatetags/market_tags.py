@@ -78,3 +78,10 @@ def disputed_payouts():
     from market.models import Payout
 
     return list(Payout.objects.filter(status="disputed").select_related("shop"))
+
+
+@register.simple_tag
+def new_orders_count(shop):
+    from market.orders import new_orders
+
+    return new_orders(shop).count()

@@ -424,3 +424,16 @@ def transition_shop_order(part, actor, target):
     )
     order.save(update_fields=["status"])
     return part
+
+
+ACTIVE_STATUSES = ("accepted", "preparing", "ready", "courier")
+HISTORY_STATUSES = ("completed", "cancelled")
+
+
+def new_orders(shop):
+    """Parts the shop has not started yet and can start right now."""
+    from django.db.models import Q
+
+    return shop.shop_orders.filter(status="accepted").filter(
+        Q(payment_method="cash") | Q(payment_status="paid")
+    )

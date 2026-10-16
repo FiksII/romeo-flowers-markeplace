@@ -88,6 +88,7 @@
       ajax: (request, callback) => {
         const url = new URL(table.dataset.ordersUrl, window.location.origin);
         url.searchParams.set("days", table.dataset.days);
+        if (table.dataset.history) url.searchParams.set("history", "1");
         for (const key of ["draw", "start", "length"]) url.searchParams.set(key, request[key]);
         url.searchParams.set("search[value]", request.search.value);
         request.order.forEach((item, index) => {

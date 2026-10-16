@@ -484,6 +484,39 @@ class ShopOrder(models.Model):
         return self.order.lines.filter(partner_id=self.shop.partner_id)
 
     @property
+    def can_be_worked(self):
+        return self.payment_method == "cash" or self.payment_status == "paid"
+
+    @property
+    def next_step(self):
+        """(status, button label) the shop moves this part to next, or ``None``."""
+        if not self.can_be_worked:
+            return None
+        pickup = self.method == "pickup"
+        done = (
+            "completed",
+            "Получен, наличные приняты" if self.payment_method == "cash" else "Получен",
+        )
+        return {
+            "accepted": ("preparing", "Начать сборку"),
+            "preparing": ("ready", "Готов к выдаче")
+            if pickup
+            else ("courier", "Передан курьеру"),
+            "ready": done if pickup else None,
+            "courier": None if pickup else done,
+        }.get(self.status)
+
+    @property
+    def receiving_label(self):
+        if self.method == "pickup":
+            return "Самовывоз"
+        return (
+            "Доставка магазина"
+            if self.delivery_owner == "partner"
+            else "Доставка Ромео"
+        )
+
+    @property
     def platform_collects(self):
         """Whether Romeo, not the shop, is the one who receives the customer's money."""
         return self.payment_method == "online" or (

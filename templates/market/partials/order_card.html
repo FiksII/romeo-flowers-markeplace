@@ -1,0 +1,23 @@
+{% load market_tags %}<article class="order-card{% if part.status == 'accepted' %} order-card-new{% endif %}">
+  <header class="order-card-head">
+    <div><a class="order-card-number" href="{% url 'market:partner-order' part.shop.slug part.pk %}">№ {{ part.order.number }}</a><span class="muted">{{ part.created_at|date:'d.m H:i' }}</span></div>
+    <span class="order-method order-method-{{ part.method }}">{{ part.receiving_label }}</span>
+  </header>
+  <div class="order-card-when">{% if part.slot_start %}<strong>{{ part.slot_start|date:'d.m' }}, {{ part.slot_start|date:'H:i' }}–{{ part.slot_end|date:'H:i' }}</strong>{% else %}<strong>Время уточнить у получателя</strong>{% endif %}
+    {% if part.method == 'delivery' %}{% if part.address %}<span>{{ part.address }}</span>{% endif %}{% if part.address_details %}<span class="muted">{{ part.address_details }}</span>{% endif %}{% if part.delivery_contact == 'call' %}<span class="muted">Позвонить получателю и уточнить {% if part.slot_start %}адрес{% else %}адрес и время{% endif %}</span>{% endif %}{% else %}<span class="muted">Покупатель заберёт в магазине</span>{% endif %}
+  </div>
+  <ul class="order-card-items">{% for item in part.items.all %}<li>
+    {% if item.listing %}{% listing_photo item.listing "line" as photo %}<img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="64px"{% endif %} width="64" height="80" alt="">{% else %}<span class="order-card-noimage" aria-hidden="true"></span>{% endif %}
+    <div><strong>{{ item.title }}</strong><span class="muted">{% if item.size_label %}{{ item.size_label }} · {% endif %}{{ item.quantity }} шт.</span></div>
+    <span class="money">{{ item.line_total|rub }}</span>
+  </li>{% endfor %}</ul>
+  <div class="order-card-contact"><span>{{ part.contact_name }}</span><a class="text-link" href="tel:{{ part.contact_phone }}">{{ part.contact_phone }}</a></div>
+  {% if part.instructions %}<p class="notice order-card-note">{{ part.instructions }}</p>{% endif %}
+  <div class="order-card-total"><div><span class="muted">{{ part.get_payment_method_display }} · {{ part.get_payment_status_display }}</span><strong>{{ part.total|rub }}</strong></div>{% if part.status != 'accepted' %}<span class="status-chip">{{ part.get_status_display }}</span>{% endif %}</div>
+  <div class="order-card-actions">
+    {% with step=part.next_step %}{% if step %}<form method="post" action="{% url 'market:partner-order' part.shop.slug part.pk %}">{% csrf_token %}<input type="hidden" name="next" value="orders"><input type="hidden" name="status" value="{{ step.0 }}"><button class="button button-primary button-sm">{{ step.1 }}</button></form>
+    {% elif not part.can_be_worked %}<span class="status-chip chip-warn">Ждёт онлайн-оплаты</span>{% endif %}{% endwith %}
+    {% if part.payment_status == 'pending' %}<form method="post" action="{% url 'market:partner-order' part.shop.slug part.pk %}" data-confirm="Отменить заказ № {{ part.order.number }}?">{% csrf_token %}<input type="hidden" name="next" value="orders"><input type="hidden" name="status" value="cancelled"><button class="muted-link danger-link">Отменить</button></form>{% endif %}
+    <a class="text-link" href="{% url 'market:partner-order' part.shop.slug part.pk %}">Подробнее</a>
+  </div>
+</article>

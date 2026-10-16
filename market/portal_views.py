@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
@@ -35,7 +35,11 @@ from market.models import (
     Shop,
     ShopOrder,
 )
-from market.orders import transition_shop_order
+from market.orders import (
+    ACTIVE_STATUSES,
+    HISTORY_STATUSES,
+    transition_shop_order,
+)
 from market.payments import (
     balance_totals,
     balances_by_shop,
@@ -93,12 +97,13 @@ def partner_dashboard(request, slug):
     )
 
 
-def _orders_page(request, parts, *, shop=None):
+def _orders_page(request, parts, *, shop=None, extra=None):
     report = dashboard_report(parts, request.GET.get("days"))
     return render(
         request,
         "market/portal_orders.html",
         {
+            **(extra or {}),
             "shop": shop,
             "operator_orders": shop is None,
             "parts": Paginator(
@@ -116,8 +121,24 @@ def _orders_page(request, parts, *, shop=None):
 @require_GET
 def partner_orders_page(request, slug):
     shop = get_shop_for_user(request.user, slug)
+    # Orders still to be handled are cards, whatever their date; the rest is history.
+    active = list(
+        shop.shop_orders.filter(status__in=ACTIVE_STATUSES)
+        .select_related("order", "shop__settlement")
+        .prefetch_related("items__listing")
+        .order_by(F("slot_start").asc(nulls_last=True), "created_at", "pk")
+    )
     return _orders_page(
-        request, shop.shop_orders.order_by("-created_at", "-pk"), shop=shop
+        request,
+        shop.shop_orders.filter(status__in=HISTORY_STATUSES).order_by(
+            "-created_at", "-pk"
+        ),
+        shop=shop,
+        extra={
+            "new_parts": [part for part in active if part.status == "accepted"],
+            "work_parts": [part for part in active if part.status != "accepted"],
+            "history": True,
+        },
     )
 
 
@@ -411,6 +432,8 @@ def partner_order(request, slug, pk):
             messages.success(request, "Статус сохранён.")
         except ValidationError as error:
             messages.error(request, "; ".join(error.messages))
+        if request.POST.get("next") == "orders":
+            return redirect("market:partner-orders", slug=slug)
         return redirect("market:partner-order", slug=slug, pk=pk)
     return render(request, "market/partner_order.html", {"shop": shop, "part": part})
 

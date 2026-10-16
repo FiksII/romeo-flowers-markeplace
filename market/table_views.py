@@ -112,6 +112,8 @@ def _order_response(request, parts, *, operator=False):
         payment_label=_labels("payment_status"),
         status_label=_labels("status"),
     )
+    if request.GET.get("history"):
+        parts = parts.filter(status__in=["completed", "cancelled"])
     count = parts.count()
     term = request.GET.get("search[value]", "").strip()[:200]
     filtered = _search(parts, term, operator)

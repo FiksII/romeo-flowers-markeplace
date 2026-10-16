@@ -69,9 +69,7 @@ class MarketAccountAdapter(DefaultAccountAdapter):
         ratelimit.consume(
             context.request, action="sms_send_hourly", key=phone, raise_exception=True
         )
-        send_sms(
-            phone, f"Ромео: код {code}. Действует 5 мин. Никому не сообщайте."
-        )
+        send_sms(phone, f"Ромео: код {code}. Действует 5 мин. Никому не сообщайте.")
 
     def get_login_redirect_url(self, request):
         from market.access import shops_for_user

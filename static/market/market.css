@@ -488,3 +488,29 @@ html:not(.js) .live-only{display:none}
 .payment-choice label:has(input:checked){border-color:var(--forest);background:var(--cream)}
 .payment-choice input[type=radio]{width:18px;height:18px;min-height:0;flex:none;accent-color:var(--forest)}
 .admin-price-link{display:inline-block;margin-top:6px;font-size:13px}
+
+.nav-badge{display:inline-flex;font-family:Onest,system-ui,sans-serif;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:4px;padding:0 6px;border-radius:999px;background:#d33a2c;color:#fff;font-size:12px;font-weight:600;line-height:1;vertical-align:middle}
+.order-board{margin-bottom:36px}
+.order-empty{padding:18px 0}
+.order-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.order-card{display:grid;gap:14px;padding:20px;border:1px solid var(--border);border-radius:var(--r-md);background:#fff}
+.order-card-new{border-color:#d33a2c;box-shadow:0 0 0 1px #d33a2c inset}
+.order-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.order-card-head>div{display:grid;gap:2px}
+.order-card-number{font-size:18px;font-weight:600;color:inherit;text-decoration:none}
+.order-method{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.order-method-pickup{background:var(--cream);color:var(--forest);border:1px solid var(--forest)}
+.order-method-delivery{background:var(--forest);color:#fff}
+.order-card-when{display:grid;gap:4px;font-size:14px}
+.order-card-when strong{font-size:20px}
+.order-card-items{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.order-card-items li{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:12px}
+.order-card-items img,.order-card-noimage{display:block;width:64px;height:80px;border-radius:var(--r-sm);object-fit:cover;background:var(--cream)}
+.order-card-items li>div{display:grid;gap:2px}
+.order-card-contact{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:15px}
+.order-card-note{margin:0}
+.order-card-total{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--border)}
+.order-card-total>div{display:grid;gap:2px}
+.order-card-total strong{font-size:20px}
+.order-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+@media (max-width:759px){.order-cards{grid-template-columns:1fr}.order-card{padding:16px}}
