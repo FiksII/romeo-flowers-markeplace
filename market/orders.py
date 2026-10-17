@@ -18,7 +18,7 @@ from market.addresses import validate_address
 from market.availability import available_slots, location_matches
 from market.bouquet_options import line_size
 from market.context import FulfillmentContext
-from market.models import Listing, Shop, ShopOrder, ShopOrderItem
+from market.models import Listing, OnlinePayment, Shop, ShopOrder, ShopOrderItem
 from market.payments import record_cash_receipt
 from market.pricing import quote_product
 from market.strategy import MarketplaceStrategy
@@ -351,9 +351,8 @@ def cancel_shop_order(part, actor):
 
 
 def expire_unpaid_orders(now=None, limit=100):
-    cutoff = (now or timezone.now()) - timedelta(
-        minutes=settings.MARKET_RESERVATION_MINUTES
-    )
+    now = now or timezone.now()
+    cutoff = now - timedelta(minutes=settings.MARKET_RESERVATION_MINUTES)
     ids = list(
         ShopOrder.objects.filter(
             payment_method="online",
@@ -372,6 +371,12 @@ def expire_unpaid_orders(now=None, limit=100):
                 get_model("order", "Order").objects.select_for_update().get(pk=order_id)
             )
             if order.date_placed > cutoff:
+                continue
+            if order.online_payments.filter(
+                status__in=OnlinePayment.IN_PROGRESS,
+                updated_at__gt=now - timedelta(minutes=10),
+            ).exists():
+                # The bank is taking the money right now; keep the bouquets for it.
                 continue
             parts = (
                 ShopOrder.objects.select_for_update(of=("self",))

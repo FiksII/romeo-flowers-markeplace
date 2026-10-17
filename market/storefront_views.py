@@ -620,13 +620,38 @@ def account_orders(request):
 
 @login_required
 def order_detail(request, number):
+    from django.conf import settings
+
+    from market import online_payments
+    from market.models import OnlinePayment
+
     order = get_object_or_404(
         get_model("order", "Order"), number=number, user=request.user
     )
+    payment = order.online_payments.first()
+    if payment and request.GET.get("payment") == "return":
+        # Back from the bank's form: the notification may not have arrived yet.
+        payment = online_payments.sync_status(payment)
+    deadline = online_payments.payment_deadline(order)
+    due = list(online_payments.payable_parts(order))
+    awaiting = bool(due)
     return render(
         request,
         "market/order.html",
-        {"order": order, "parts": order.shop_orders.select_related("shop")},
+        {
+            "order": order,
+            "parts": order.shop_orders.select_related("shop"),
+            "awaiting_payment": awaiting,
+            "pay_online": awaiting
+            and online_payments.enabled()
+            and deadline > timezone.now(),
+            "payment_deadline": deadline,
+            "amount_due": sum(part.total for part in due),
+            "payment": payment,
+            "payment_in_progress": bool(payment)
+            and payment.status in OnlinePayment.IN_PROGRESS,
+            "tbank_terminal_key": settings.TBANK_TERMINAL_KEY,
+        },
     )
 
 

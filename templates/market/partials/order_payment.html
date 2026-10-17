@@ -1,0 +1,18 @@
+{% load market_tags static %}
+<section class="pay-card" data-tbank-payment data-terminal-key="{{ tbank_terminal_key }}" data-pay-url="{% url 'market:order-pay' order.number %}" data-status-url="{% url 'market:order-pay-status' order.number %}">
+  {% csrf_token %}
+  <div class="pay-card-head">
+    <div>
+      <h2>Оплатите заказ</h2>
+      <p class="muted">Букеты зарезервированы до {{ payment_deadline|date:'H:i' }}. Если не оплатить заказ до этого времени, он отменится.</p>
+    </div>
+    <strong class="pay-card-sum">{{ amount_due|rub }}</strong>
+  </div>
+  {% if payment.status == 'REJECTED' or payment.status == 'AUTH_FAIL' %}<p class="notice error">Банк не провёл платёж. Попробуйте ещё раз или выберите другой способ.</p>{% endif %}
+  {% if payment_in_progress %}<p class="notice" data-pay-progress>Банк проводит платёж. Страница обновится, когда оплата пройдёт.</p>{% endif %}
+  <p class="muted" data-pay-loading>Загружаем способы оплаты…</p>
+  <div id="paymentContainer" class="pay-buttons"></div>
+  <p class="notice error" data-pay-error hidden></p>
+  <p class="field-help">Оплата проходит на стороне Т-Банка: СБП, T-Pay, SberPay, Mir Pay или картой. Мы не видим и не храним данные карты.</p>
+</section>
+<script src="{% static 'market/payment.js' %}?v=1" defer></script>

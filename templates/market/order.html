@@ -4,7 +4,8 @@
 <section class="shell section-space">
   <a class="back-link" href="{% url 'market:account' %}">← Мои заказы</a>
   <div class="page-heading"><span class="eyebrow">{{ order.date_placed|date:'d.m.Y H:i' }}</span><h1>Заказ № {{ order.number }}</h1><p>Сумма при оформлении {{ order.total_incl_tax|rub }}</p></div>
-  {% if parts %}<p class="notice">{% if parts.0.payment_method == 'cash' %}Оплата наличными при получении: заплатите курьеру или в магазине. Часть заказа можно отменить, пока её не передали курьеру.{% else %}Онлайн-оплата пока не подключена. Неоплаченные части можно отменить; резерв действует 30 минут.{% endif %}</p>{% endif %}
+  {% if parts and not pay_online %}<p class="notice">{% if parts.0.payment_method == 'cash' %}Оплата наличными при получении: заплатите курьеру или в магазине. Часть заказа можно отменить, пока её не передали курьеру.{% elif payment.status == 'CONFIRMED' %}Заказ оплачен онлайн.{% if payment.returned_amount %} {{ payment.returned_amount|rub }} за отменённые позиции вернём на карту или счёт, с которого вы платили.{% endif %}{% elif awaiting_payment %}Время на оплату истекло или онлайн-оплата сейчас недоступна. Неоплаченные части заказа будут отменены.{% else %}Заказ не был оплачен онлайн.{% endif %}</p>{% endif %}
+  {% if pay_online %}{% include 'market/partials/order_payment.html' %}{% endif %}
   <div class="parts-grid">
     {% for part in parts %}
     <section class="group-card">

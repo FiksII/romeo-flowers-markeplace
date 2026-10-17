@@ -1,6 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
+from market import payment_views as payments
 from market import portal_views as portal
 from market import storefront_views as views
 from market import table_views as tables
@@ -24,6 +25,17 @@ urlpatterns = [
     path("checkout/", views.checkout, name="checkout"),
     path("account/orders/", views.account_orders, name="account"),
     path("account/orders/<str:number>/", views.order_detail, name="order"),
+    path("account/orders/<str:number>/pay/", payments.order_pay, name="order-pay"),
+    path(
+        "account/orders/<str:number>/pay/status/",
+        payments.order_payment_status,
+        name="order-pay-status",
+    ),
+    path(
+        "payments/tbank/notification/",
+        payments.tbank_notification,
+        name="tbank-notification",
+    ),
     path("account/cancel/<int:pk>/", views.customer_cancel, name="customer-cancel"),
     path("signup/", SmsSignupView.as_view(), name="signup"),
     path("login/", SmsSignupView.as_view(), name="login"),

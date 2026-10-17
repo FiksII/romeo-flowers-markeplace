@@ -126,8 +126,18 @@ LOGIN_REDIRECT_URL = "/account/orders/"
 LOGOUT_REDIRECT_URL = "/"
 MARKET_DEMO = False
 MARKET_RESERVATION_MINUTES = 30
+# T-Bank internet acquiring: terminal key and password from the bank's personal account.
+TBANK_TERMINAL_KEY = env("TBANK_TERMINAL_KEY", default="")
+TBANK_PASSWORD = env("TBANK_PASSWORD", default="")
+TBANK_API_URL = env("TBANK_API_URL", default="https://securepay.tinkoff.ru/v2/")
+# Set when an online cash register is connected to the terminal (54-FZ receipts):
+# osn, usn_income, usn_income_outcome, esn or patent. Empty sends no receipt.
+TBANK_TAXATION = env("TBANK_TAXATION", default="")
+TBANK_VAT = env("TBANK_VAT", default="none")
 # Online payment is offered at checkout only once a payment provider is connected.
-MARKET_ONLINE_PAYMENTS = env.bool("MARKET_ONLINE_PAYMENTS", default=False)
+MARKET_ONLINE_PAYMENTS = env.bool(
+    "MARKET_ONLINE_PAYMENTS", default=bool(TBANK_TERMINAL_KEY and TBANK_PASSWORD)
+)
 DADATA_TOKEN = env("DADATA_TOKEN", default="")
 # A configured DaData key enables live addresses independently of demo orders.
 ADDRESS_DEMO = env.bool("ADDRESS_DEMO", default=not bool(DADATA_TOKEN))

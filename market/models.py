@@ -702,6 +702,47 @@ class BalanceEntry(models.Model):
         super().save(*args, **kwargs)
 
 
+class OnlinePayment(models.Model):
+    """One attempt to pay an order through T-Bank internet acquiring.
+
+    Every Init call gets its own ``order_ref`` (T-Bank's OrderId must be unique per
+    payment); ``status`` mirrors the bank's payment status."""
+
+    PAID = "CONFIRMED"
+    # The customer can still pay through the link of a payment in these statuses.
+    OPEN = ("NEW", "FORM_SHOWED")
+    # The bank has the money or is taking it; a new attempt must not start.
+    IN_PROGRESS = (
+        "AUTHORIZING",
+        "3DS_CHECKING",
+        "3DS_CHECKED",
+        "AUTHORIZED",
+        "CONFIRMING",
+    )
+
+    order = models.ForeignKey(
+        "order.Order", on_delete=models.PROTECT, related_name="online_payments"
+    )
+    order_ref = models.CharField(max_length=50, unique=True)
+    payment_id = models.CharField(max_length=20, blank=True, db_index=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=20, default="NEW")
+    payment_url = models.URLField(max_length=500, blank=True)
+    expires_at = models.DateTimeField()
+    # Money taken for parts that were cancelled before the payment arrived.
+    returned_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Онлайн-оплата"
+        verbose_name_plural = "Онлайн-оплаты"
+
+    def __str__(self):
+        return f"{self.order_ref} · {self.status}"
+
+
 class AuditEntry(models.Model):
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True

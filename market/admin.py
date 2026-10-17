@@ -5,6 +5,7 @@ from market.models import (
     DateException,
     Listing,
     Membership,
+    OnlinePayment,
     Settlement,
     Shop,
     ShopOrder,
@@ -51,6 +52,19 @@ admin.site.register(DateException)
 class ShopOrderAdmin(admin.ModelAdmin):
     list_display = ["id", "shop", "order", "method", "status", "payment_status"]
     readonly_fields = [field.name for field in ShopOrder._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(OnlinePayment)
+class OnlinePaymentAdmin(admin.ModelAdmin):
+    list_display = ["order_ref", "order", "amount", "status", "created_at"]
+    search_fields = ["order_ref", "payment_id", "order__number"]
+    readonly_fields = [field.name for field in OnlinePayment._meta.fields]
 
     def has_add_permission(self, request):
         return False
