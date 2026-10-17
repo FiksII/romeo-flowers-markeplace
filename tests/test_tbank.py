@@ -151,7 +151,7 @@ def test_init_sends_the_order_amount_and_widget_flag(bank, owner, shop, listing)
     assert payment.payment_url == "https://securepay.tinkoff.ru/pay1"
     # Pressing another SpeedPay button reuses the same open payment.
     assert online_payments.start_payment(order, now=timezone.now(), **URLS) == payment
-    assert len(bank.calls) == 1
+    assert [method for method, _ in bank.calls] == ["Init", "GetState"]
 
 
 def test_receipt_is_sent_when_a_cash_register_is_connected(
@@ -328,3 +328,15 @@ def test_pay_endpoint_reports_errors(bank, owner, shop, listing, client):
         b"data-tbank-payment"
         not in client.get(f"/account/orders/{order.number}/").content
     )
+
+
+def test_a_declined_link_is_not_offered_again(bank, owner, shop, listing):
+    order = online_order(owner, shop, listing)
+    first = online_payments.start_payment(order, now=timezone.now(), **URLS)
+    # The bank declined the card, but its notification has not arrived yet.
+    bank.state, bank.order_ref = "REJECTED", first.order_ref
+    second = online_payments.start_payment(order, now=timezone.now(), **URLS)
+    first.refresh_from_db()
+    assert first.status == "REJECTED"
+    assert second.order_ref == f"{order.number}-2"
+    assert second.payment_url != first.payment_url

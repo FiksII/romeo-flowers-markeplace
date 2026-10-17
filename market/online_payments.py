@@ -115,7 +115,16 @@ def start_payment(order, notification_url, return_url, now):
         .first()
     )
     if open_payment:
-        return open_payment
+        # A declined card leaves the link unusable; the notification may be late.
+        open_payment = sync_status(open_payment)
+        if open_payment.status in OnlinePayment.OPEN:
+            return open_payment
+        if open_payment.status == OnlinePayment.PAID:
+            raise ValidationError("Заказ уже оплачен. Обновите страницу.")
+        if open_payment.status in OnlinePayment.IN_PROGRESS:
+            raise ValidationError(
+                "Оплата уже проводится. Обновите страницу через минуту."
+            )
     payment = OnlinePayment.objects.create(
         order=order,
         order_ref=f"{order.number}-{attempts.count() + 1}",

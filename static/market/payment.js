@@ -26,18 +26,27 @@
     errorBox.hidden = !message;
   }
 
-  // The bank's status can be ahead of its notification to the server; ask the server
-  // to check it and reload once the order is paid.
-  function checkPaid(attempt) {
-    post(card.dataset.statusUrl)
-      .then((data) => {
-        if (!data.waiting) window.location.reload();
-        else if (attempt < 10) setTimeout(() => checkPaid(attempt + 1), 3000);
-      })
-      .catch(() => {});
+  // The widget does not always report the result, and the bank's notification may be
+  // late: while the customer pays, ask the server (it checks with the bank) and reload
+  // once the order is paid. Checks stop after about 15 minutes.
+  let watching = false;
+  function watchPayment() {
+    if (watching) return;
+    watching = true;
+    let left = 180;
+    const check = () =>
+      post(card.dataset.statusUrl)
+        .then((data) => {
+          if (!data.waiting) window.location.reload();
+          else if (--left > 0) setTimeout(check, 5000);
+        })
+        .catch(() => {
+          if (--left > 0) setTimeout(check, 5000);
+        });
+    setTimeout(check, 3000);
   }
 
-  if (card.querySelector("[data-pay-progress]")) checkPaid(0);
+  if (card.querySelector("[data-pay-progress]")) watchPayment();
 
   window.onTbankIntegrationLoad = function () {
     PaymentIntegration.init({
@@ -49,6 +58,7 @@
           paymentStartCallback: async () => {
             showError("");
             const data = await post(card.dataset.payUrl);
+            watchPayment();
             return data.paymentUrl;
           },
           config: {
@@ -57,7 +67,7 @@
             },
             status: {
               changedCallback: async (status) => {
-                if (status === "SUCCESS") checkPaid(0);
+                if (status === "SUCCESS") watchPayment();
               },
             },
             payment: {
