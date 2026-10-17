@@ -21,8 +21,8 @@
     <p class="field-help">Магазин получает свою цену букетов; разница с ценой покупателя — доля Ромео.{% if part.delivery_owner == 'platform' and part.delivery_total %} Доставка Ромео оплачивается отдельно и не входит в сумму магазину.{% endif %} Расчётная сумма ещё не является выплатой.</p>
     {% else %}
     {% for item in part.items.all %}<div class="summary-row"><span>{{ item.title }}{% if item.size_label %} · {{ item.size_label }}{% endif %} × {{ item.quantity }} <span class="field-help">по {{ item.unit_payout|rub }}</span></span><strong>{{ item.payout_total|rub }}</strong></div>{% endfor %}
-    <div class="summary-row total-row"><strong>Вам за заказ</strong><strong>{{ part.partner_total|rub }}</strong></div>
-    {% if not part.platform_collects %}<div class="summary-row"><strong>Получить с покупателя</strong><strong>{{ part.total|rub }}</strong></div>{% endif %}
+    {% if part.platform_collects %}<div class="summary-row total-row"><strong>Вам за заказ</strong><strong>{{ part.partner_total|rub }}</strong></div>
+    {% else %}<div class="summary-row total-row"><strong>Получить с покупателя</strong><strong>{{ part.total|rub }}</strong></div>{% endif %}
     {% endif %}
   </div>
   <div class="group-card">

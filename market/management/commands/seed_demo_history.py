@@ -14,7 +14,6 @@ from market.availability import next_slot
 from market.models import (
     AuditEntry,
     DateException,
-    DemoPayout,
     Membership,
     Shop,
     ShopOrder,
@@ -132,7 +131,6 @@ class Command(BaseCommand):
                 order = self.create_order(number, buyer, selected, placed, rng)
                 self.finish_scenario(order, operator, index, current, rng, now)
                 created += 1
-        self.settle_due_payouts(now)
         self.stdout.write(
             self.style.SUCCESS(
                 f"История {start:%d.%m.%Y}–{end:%d.%m.%Y}: добавлено {created} заказов; "
@@ -353,21 +351,3 @@ class Command(BaseCommand):
             else "Processing"
         )
         order.save(update_fields=["status"])
-
-    def settle_due_payouts(self, now):
-        # Reruns also settle existing completed examples whose weekly due date arrived.
-        due_parts = ShopOrder.objects.filter(
-            order__number__startswith="DEMO-",
-            status="completed",
-            payment_status="paid",
-            demo_payout__isnull=True,
-        )
-        for part in due_parts:
-            due_day = part.slot_end.astimezone(MOSCOW).date() + timedelta(days=2)
-            due_day += timedelta(days=(-due_day.weekday()) % 7)
-            due = datetime.combine(due_day, time(12), MOSCOW)
-            if due <= now:
-                DemoPayout.objects.get_or_create(
-                    part=part,
-                    defaults={"amount": part.partner_total, "paid_at": due},
-                )

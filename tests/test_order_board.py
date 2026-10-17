@@ -130,3 +130,21 @@ def test_shop_cabinet_never_shows_romeo_income(client, owner, stranger, shop, li
         assert "6 500" not in page  # Romeo's part
         assert "Доля Ромео" not in page and "наценк" not in page.lower()
     assert "2 500" in pages[2]  # the shop's own amount
+
+
+def test_cash_card_shows_only_the_amount_to_collect(
+    client, owner, stranger, shop, listing
+):
+    from decimal import Decimal
+
+    shop.markup_percent = Decimal(20)
+    shop.save()
+    part = order_part(stranger, shop, listing)  # cash, pickup: the shop collects
+    client.force_login(owner)
+    for path in [
+        f"/partner/{shop.slug}/orders/",
+        f"/partner/{shop.slug}/orders/{part.pk}/",
+    ]:
+        html = client.get(path).content.decode()
+        assert "Получить с покупателя" in html
+        assert "Вам 2\u00a0500" not in html and "Вам за заказ" not in html

@@ -1,11 +1,8 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
-from unittest.mock import patch
-from zoneinfo import ZoneInfo
 
 import pytest
-from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -60,7 +57,6 @@ def test_history_has_six_weeks_accounts_and_consistent_shop_finances():
     assert ShopOrder.objects.filter(payment_status="refunded").exists()
     assert ShopOrder.objects.filter(method="delivery").exists()
     assert ShopOrder.objects.filter(method="pickup").exists()
-    assert apps.get_model("market", "DemoPayout").objects.exists()
     for order in orders:
         parts = list(order.shop_orders.all())
         assert order.total_incl_tax == sum(part.total for part in parts)
@@ -107,12 +103,7 @@ def test_history_rerun_preserves_credentials_prices_and_existing_order(
     manual_number = str(manual.number)
     seed(weeks=1, orders_per_day=2, end_date="2026-09-01")
     Order = get_model("order", "Order")
-    DemoPayout = apps.get_model("market", "DemoPayout")
-    counts = (
-        Order.objects.count(),
-        ShopOrder.objects.count(),
-        DemoPayout.objects.count(),
-    )
+    counts = (Order.objects.count(), ShopOrder.objects.count())
     buyer = get_user_model().objects.get(username="buyer")
     buyer.set_password("Changed-password-123")
     buyer.save()
@@ -122,11 +113,7 @@ def test_history_rerun_preserves_credentials_prices_and_existing_order(
     seeded_stock.price = Decimal(7654)
     seeded_stock.save()
     seed(weeks=1, orders_per_day=2, end_date="2026-09-01")
-    assert counts == (
-        Order.objects.count(),
-        ShopOrder.objects.count(),
-        DemoPayout.objects.count(),
-    )
+    assert counts == (Order.objects.count(), ShopOrder.objects.count())
     buyer.refresh_from_db()
     seeded_stock.refresh_from_db()
     assert buyer.check_password("Changed-password-123")
@@ -157,7 +144,6 @@ def test_current_day_has_actionable_orders_and_seeded_dashboards(client):
     response = client.get("/partner/petal-studio/")
     assert response.status_code == 200
     assert response.context["stats"]["paid_total"] > 0
-    assert response.context["stats"]["payout_total"] > 0
     assert len(response.context["trend"]) == 42
     assert ShopOrder.objects.filter(
         shop__slug="petal-studio", status="preparing", payment_status="paid"
@@ -173,41 +159,7 @@ def test_current_day_has_actionable_orders_and_seeded_dashboards(client):
         overview.context["stats"]["paid_total"]
         >= response.context["stats"]["paid_total"]
     )
-    assert "Демо-выплаты" in overview.content.decode()
-    # Simulated transfers must never appear as actual payouts outside demo mode.
-    with override_settings(MARKET_DEMO=False):
-        client.force_login(partner)
-        assert (
-            client.get("/partner/petal-studio/").context["stats"]["payout_total"] == 0
-        )
-
-
-@override_settings(MARKET_DEMO=True)
-def test_rerun_settles_due_demo_payouts_without_recreating_orders():
-    first = datetime(2026, 9, 30, 16, tzinfo=ZoneInfo("Europe/Moscow"))
-    with patch(
-        "market.management.commands.seed_demo_history.timezone.now", return_value=first
-    ):
-        seed(weeks=1, orders_per_day=4, end_date="2026-09-29")
-    part = ShopOrder.objects.filter(
-        created_at__date__gte=date(2026, 9, 27),
-        status="completed",
-        payment_status="paid",
-        demo_payout__isnull=True,
-    ).first()
-    assert part is not None
-    DemoPayout = apps.get_model("market", "DemoPayout")
-    assert not DemoPayout.objects.filter(part=part).exists()
-    before = get_model("order", "Order").objects.count()
-    later = datetime(2026, 10, 6, 16, tzinfo=first.tzinfo)
-    with patch(
-        "market.management.commands.seed_demo_history.timezone.now", return_value=later
-    ):
-        seed(weeks=1, orders_per_day=4, end_date="2026-09-29")
-    assert get_model("order", "Order").objects.count() == before
-    assert timezone.localdate(DemoPayout.objects.get(part=part).paid_at) == date(
-        2026, 10, 5
-    )
+    assert "Демо-выплаты" not in overview.content.decode()
 
 
 @pytest.mark.parametrize(

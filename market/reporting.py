@@ -1,12 +1,11 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
-from django.conf import settings
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from market.models import DemoPayout
+from market.models import Payout
 
 
 def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
@@ -26,12 +25,13 @@ def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
     def total(query, field):
         return query.aggregate(value=Sum(field))["value"] or Decimal(0)
 
-    payouts = DemoPayout.objects.none()
-    settled = parts.filter(status="completed", payment_status="paid")
-    if settings.MARKET_DEMO:
-        payouts = DemoPayout.objects.filter(part__in=settled).select_related(
-            "part__order", "part__shop"
-        )
+    # Money Romeo actually sent to these shops (a withdrawn payout does not count).
+    payouts = Payout.objects.filter(
+        shop_id__in=parts.order_by().values("shop_id"),
+        status__in=["sent", "confirmed", "disputed"],
+        created_at__gte=start,
+        created_at__lt=end,
+    )
     stats = {
         "orders": period.count(),
         "created_total": total(live, "goods_total"),
@@ -49,12 +49,7 @@ def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
         ),
         "created_partner_total": total(live, "partner_total"),
         "paid_partner_total": total(paid, "partner_total"),
-        "payout_total": total(
-            payouts.filter(paid_at__gte=start, paid_at__lt=end), "amount"
-        ),
-        "payout_pending": max(
-            Decimal(0), total(settled, "partner_total") - total(payouts, "amount")
-        ),
+        "payout_total": total(payouts, "amount"),
     }
     stats["platform_total"] = stats["commission_total"] + stats["delivery_revenue"]
     by_day = dict(
@@ -84,6 +79,5 @@ def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
         "period_start": start_day,
         "period_end": now.date(),
         "period_options": [7, 30, 42, 90],
-        "payouts": payouts.filter(paid_at__gte=start, paid_at__lt=end)[:12],
         "period_parts": period,
     }

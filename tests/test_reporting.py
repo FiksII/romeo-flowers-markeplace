@@ -6,7 +6,7 @@ import pytest
 from django.test import override_settings
 from oscar.core.loading import get_model
 
-from market.models import DemoPayout, ShopOrder
+from market.models import Payout, ShopOrder
 from market.reporting import dashboard_report
 
 pytestmark = pytest.mark.django_db
@@ -49,14 +49,15 @@ def part_for(shop, number, created, *, payment="paid", status="completed"):
 def test_report_period_refunds_pending_payments_and_shop_scope(shop, other_shop):
     recent = datetime(2026, 10, 5, 12, tzinfo=NOW.tzinfo)
     older = datetime(2026, 9, 20, 12, tzinfo=NOW.tzinfo)
-    paid = part_for(shop, "report-paid", recent)
+    part_for(shop, "report-paid", recent)
     part_for(shop, "report-pending", recent, payment="pending", status="accepted")
     part_for(shop, "report-refunded", recent, payment="refunded", status="cancelled")
-    old_paid = part_for(shop, "report-old", older)
-    foreign = part_for(other_shop, "report-foreign", recent)
-    DemoPayout.objects.create(part=paid, amount=2250, paid_at=recent)
-    DemoPayout.objects.create(part=old_paid, amount=2250, paid_at=older)
-    DemoPayout.objects.create(part=foreign, amount=2250, paid_at=recent)
+    part_for(shop, "report-old", older)
+    part_for(other_shop, "report-foreign", recent)
+    for target, when in [(shop, recent), (shop, older), (other_shop, recent)]:
+        payout = Payout.objects.create(shop=target, amount=2250)
+        Payout.objects.filter(pk=payout.pk).update(created_at=when)
+    Payout.objects.create(shop=shop, amount=999, status="cancelled")
     report = dashboard_report(shop.shop_orders.all(), "7", NOW)
     assert report["stats"] == {
         "orders": 3,
@@ -69,20 +70,12 @@ def test_report_period_refunds_pending_payments_and_shop_scope(shop, other_shop)
         "commission_total": Decimal(250),
         "refunded_total": Decimal(2850),
         "payout_total": Decimal(2250),
-        "payout_pending": Decimal(0),
         "created_partner_total": Decimal(4500),
         "paid_partner_total": Decimal(2250),
         "refunded_partner_total": Decimal(2250),
     }
     assert sum(point["value"] for point in report["trend"]) == Decimal(2500)
-    assert list(report["payouts"].values_list("part_id", flat=True)) == [paid.pk]
     assert dashboard_report(shop.shop_orders.all(), "invalid", NOW)["days"] == 42
-    # No fixture transfer is reported as a real payment in production mode.
-    with override_settings(MARKET_DEMO=False):
-        assert (
-            dashboard_report(shop.shop_orders.all(), "7", NOW)["stats"]["payout_total"]
-            == 0
-        )
 
 
 @override_settings(MARKET_DEMO=True)
@@ -93,7 +86,6 @@ def test_report_includes_local_midnight_and_zero_days(shop):
     assert len(report["trend"]) == 7
     assert report["trend"][0]["value"] == Decimal(2500)
     assert report["trend"][1]["value"] == 0
-    assert report["stats"]["payout_pending"] == Decimal(2250)
 
 
 def test_chart_sums_same_day_orders_even_when_order_table_is_sorted(shop):

@@ -711,26 +711,6 @@ class AuditEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-class DemoPayout(models.Model):
-    """Fixture transfers for local dashboard previews; never a payment ledger."""
-
-    part = models.OneToOneField(
-        ShopOrder, on_delete=models.CASCADE, related_name="demo_payout"
-    )
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    paid_at = models.DateTimeField()
-
-    class Meta:
-        ordering = ["-paid_at", "-pk"]
-        verbose_name = "Демонстрационная выплата"
-        verbose_name_plural = "Демонстрационные выплаты"
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(amount__gte=0), name="market_demo_payout_nonnegative"
-            )
-        ]
-
-
 class CustomerPhone(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
