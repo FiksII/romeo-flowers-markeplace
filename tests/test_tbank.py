@@ -146,7 +146,7 @@ def test_init_sends_the_order_amount_and_widget_flag(bank, owner, shop, listing)
     assert method == "Init"
     assert params["Amount"] == 250000
     assert params["OrderId"] == f"{order.number}-1"
-    assert params["DATA"] == {"connection_type": "Widget"}
+    assert "DATA" not in params
     assert params["NotificationURL"] == URLS["notification_url"]
     assert "Receipt" not in params
     assert payment.payment_url == "https://securepay.tinkoff.ru/pay1"
@@ -302,33 +302,49 @@ def test_reservation_waits_for_a_payment_in_progress(bank, owner, shop, listing)
     assert expire_unpaid_orders(later + timedelta(minutes=15)) == 1
 
 
-def test_pay_endpoint_returns_the_payment_url(
+def test_pay_button_sends_the_customer_to_the_bank_form(
     bank, owner, stranger, shop, listing, client
 ):
     order = online_order(owner, shop, listing)
+    pay_url = f"/account/orders/{order.number}/pay/"
     client.force_login(stranger)
-    assert client.post(f"/account/orders/{order.number}/pay/").status_code == 404
+    assert client.post(pay_url).status_code == 404
     client.force_login(owner)
-    page = client.get(f"/account/orders/{order.number}/")
-    assert b"data-tbank-payment" in page.content
-    assert b'data-terminal-key="TestTerminal"' in page.content
-    response = client.post(f"/account/orders/{order.number}/pay/")
-    assert response.json() == {"paymentUrl": "https://securepay.tinkoff.ru/pay1"}
+    page = client.get(f"/account/orders/{order.number}/").content.decode()
+    assert f'action="{pay_url}"' in page and "Перейти к оплате" in page
+    response = client.post(pay_url)
+    assert response.status_code == 302
+    assert response.url == "https://securepay.tinkoff.ru/pay1"
     status = client.post(f"/account/orders/{order.number}/pay/status/").json()
-    assert status == {"status": "NEW", "waiting": True}
+    assert status == {"status": "NEW", "in_progress": False, "waiting": True}
+    # The page script asks for the URL to show the form in an iframe.
+    framed = client.post(pay_url, HTTP_ACCEPT="application/json")
+    assert framed.json() == {"paymentUrl": "https://securepay.tinkoff.ru/pay1"}
+    assert 'data-terminal-key="TestTerminal"' in page
 
 
-def test_pay_endpoint_reports_errors(bank, owner, shop, listing, client):
+def test_declined_payment_offers_another_try(bank, owner, shop, listing, client):
+    order = online_order(owner, shop, listing)
+    payment = online_payments.start_payment(order, now=timezone.now(), **URLS)
+    online_payments.handle_notification(notification(payment, "REJECTED"))
+    client.force_login(owner)
+    page = client.get(f"/account/orders/{order.number}/").content.decode()
+    assert "Банк не провёл платёж" in page and "Попробовать ещё раз" in page
+
+
+def test_pay_errors_return_to_the_order(bank, owner, shop, listing, client):
     order = online_order(owner, shop, listing)
     cancel_shop_order(order.shop_orders.get(), owner)
     client.force_login(owner)
-    response = client.post(f"/account/orders/{order.number}/pay/")
-    assert response.status_code == 409
-    assert "error" in response.json()
-    assert (
-        b"data-tbank-payment"
-        not in client.get(f"/account/orders/{order.number}/").content
+    response = client.post(f"/account/orders/{order.number}/pay/", follow=True)
+    assert response.redirect_chain[-1][0] == f"/account/orders/{order.number}/"
+    page = response.content.decode()
+    assert "не ждёт онлайн-оплаты" in page
+    assert "Перейти к оплате" not in page
+    framed = client.post(
+        f"/account/orders/{order.number}/pay/", HTTP_ACCEPT="application/json"
     )
+    assert framed.status_code == 409 and "error" in framed.json()
 
 
 def test_a_declined_link_is_not_offered_again(bank, owner, shop, listing):

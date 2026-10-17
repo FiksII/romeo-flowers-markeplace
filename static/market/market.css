@@ -526,6 +526,6 @@ html:not(.js) .live-only{display:none}
 .pay-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
 .pay-card-head h2{margin-bottom:6px;font:600 22px/1.25 var(--sans)}
 .pay-card-sum{flex:none;font:600 24px/1.2 var(--num);white-space:nowrap}
-.pay-buttons{max-width:420px;margin-bottom:12px}
-.pay-buttons:empty{display:none}
-@media (max-width:600px){.pay-card{padding:18px}.pay-card-head{flex-direction:column;gap:8px}.pay-buttons{max-width:none}}
+.pay-form{margin-bottom:12px}
+.pay-frame{margin-bottom:12px;border-radius:var(--r-md);overflow:hidden}
+@media (max-width:600px){.pay-card{padding:18px}.pay-card-head{flex-direction:column;gap:8px}.pay-form .button{width:100%}}

@@ -1,12 +1,15 @@
-// T-Bank SpeedPay buttons on the order page:
-// https://developer.tbank.ru/eacq/intro/developer/setup_js/setup_speedpay
+// T-Bank's full payment form in an iframe on the order page:
+// https://developer.tbank.ru/eacq/intro/developer/setup_js/setup_iframe
+// Without the bank's script the button still works: the server redirects to the form.
 (function () {
   const card = document.querySelector("[data-tbank-payment]");
   if (!card) return;
-  const container = card.querySelector("#paymentContainer");
-  const loading = card.querySelector("[data-pay-loading]");
-  const errorBox = card.querySelector("[data-pay-error]");
   const csrf = card.querySelector("[name=csrfmiddlewaretoken]").value;
+  const form = card.querySelector("[data-pay-form]");
+  const frame = card.querySelector("[data-pay-frame]");
+  const errorBox = card.querySelector("[data-pay-error]");
+  const DECLINED = ["REJECTED", "AUTH_FAIL", "CANCELED", "DEADLINE_EXPIRED"];
+  let integration = null;
 
   function post(url) {
     return fetch(url, {
@@ -21,14 +24,9 @@
     );
   }
 
-  function showError(message) {
-    errorBox.textContent = message;
-    errorBox.hidden = !message;
-  }
-
-  // The widget does not always report the result, and the bank's notification may be
-  // late: while the customer pays, ask the server (it checks with the bank) and reload
-  // once the order is paid. Checks stop after about 15 minutes.
+  // The form does not always report the result and the bank's notification may be
+  // late, so ask the server (it checks with T-Bank) and reload once the payment has
+  // finished. Checks stop after about 15 minutes.
   let watching = false;
   function watchPayment() {
     if (watching) return;
@@ -38,6 +36,8 @@
       post(card.dataset.statusUrl)
         .then((data) => {
           if (!data.waiting) window.location.reload();
+          // Leave the bank's own message on screen for a moment.
+          else if (DECLINED.includes(data.status)) setTimeout(() => window.location.reload(), 4000);
           else if (--left > 0) setTimeout(check, 5000);
         })
         .catch(() => {
@@ -46,51 +46,49 @@
     setTimeout(check, 3000);
   }
 
-  if (card.querySelector("[data-pay-progress]")) watchPayment();
+  if (card.hasAttribute("data-pay-watch")) watchPayment();
+  if (!form) return;
 
-  window.onTbankIntegrationLoad = function () {
-    PaymentIntegration.init({
-      terminalKey: card.dataset.terminalKey,
-      product: "eacq",
-      features: {
-        payment: {
-          container: container,
-          paymentStartCallback: async () => {
-            showError("");
-            const data = await post(card.dataset.payUrl);
-            watchPayment();
-            return data.paymentUrl;
-          },
-          config: {
-            loadedCallback: () => {
-              if (loading) loading.hidden = true;
-            },
-            status: {
-              changedCallback: async (status) => {
-                if (status === "SUCCESS") watchPayment();
-              },
-            },
-            payment: {
-              failedPaymentStartCallback: async (error) => {
-                showError((error && error.message) || "Не удалось начать оплату.");
-              },
-            },
+  form.addEventListener("submit", async (event) => {
+    if (!integration) return; // The server redirects to the bank's page instead.
+    event.preventDefault();
+    const button = form.querySelector("button");
+    button.disabled = true;
+    errorBox.hidden = true;
+    try {
+      const data = await post(form.action);
+      const payment = await integration.iframe.create("romeo-order-" + Date.now(), {
+        status: {
+          changedCallback: async (status) => {
+            if (status !== "NEW") watchPayment();
           },
         },
-      },
-    }).catch(() => {
-      if (loading) loading.hidden = true;
-      showError("Не удалось загрузить способы оплаты. Обновите страницу.");
-    });
-  };
+      });
+      frame.hidden = false;
+      await payment.mount(frame, data.paymentUrl);
+      form.hidden = true;
+      watchPayment();
+    } catch (error) {
+      frame.hidden = true;
+      button.disabled = false;
+      errorBox.textContent = (error && error.message) || "Не удалось открыть форму оплаты.";
+      errorBox.hidden = false;
+    }
+  });
 
   const script = document.createElement("script");
   script.src = "https://integrationjs.t-static.ru/integration.js";
   script.async = true;
-  script.onload = window.onTbankIntegrationLoad;
-  script.onerror = () => {
-    if (loading) loading.hidden = true;
-    showError("Не удалось загрузить способы оплаты. Обновите страницу.");
+  script.onload = () => {
+    PaymentIntegration.init({
+      terminalKey: card.dataset.terminalKey,
+      product: "eacq",
+      features: { iframe: {} },
+    })
+      .then((ready) => {
+        integration = ready;
+      })
+      .catch(() => {});
   };
   document.body.appendChild(script);
 })();

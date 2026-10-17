@@ -651,6 +651,9 @@ def order_detail(request, number):
             "payment_in_progress": bool(payment)
             and payment.status in OnlinePayment.IN_PROGRESS,
             "tbank_terminal_key": settings.TBANK_TERMINAL_KEY,
+            "payment_declined": bool(payment)
+            and payment.status
+            in ("REJECTED", "AUTH_FAIL", "CANCELED", "DEADLINE_EXPIRED"),
         },
     )
 

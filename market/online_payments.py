@@ -1,4 +1,4 @@
-"""Paying orders online through T-Bank (SpeedPay buttons and the bank's payment form).
+"""Paying orders online through T-Bank's payment form (card, SBP, T-Pay).
 
 One Init covers every unpaid online part of an order. The bank reports the outcome by
 notification; ``CONFIRMED`` marks the parts paid and credits the shops' balances. Money
@@ -141,8 +141,6 @@ def start_payment(order, notification_url, return_url, now):
         "SuccessURL": return_url,
         "FailURL": return_url,
         "RedirectDueDate": deadline.replace(microsecond=0).isoformat(),
-        # Required by T-Bank for the SpeedPay widget.
-        "DATA": {"connection_type": "Widget"},
     }
     receipt = _receipt(order, parts)
     if receipt:

@@ -2,10 +2,11 @@
 
 import json
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -13,6 +14,7 @@ from django.views.decorators.http import require_POST
 from oscar.core.loading import get_model
 
 from market import online_payments
+from market.models import OnlinePayment
 from market.tbank import TbankError
 
 
@@ -25,7 +27,8 @@ def _own_order(request, number):
 @login_required
 @require_POST
 def order_pay(request, number):
-    """Called by the SpeedPay buttons: returns the bank's PaymentURL for this order."""
+    """T-Bank's payment form for this order: its URL for the iframe, or a redirect."""
+    wants_json = "application/json" in request.headers.get("Accept", "")
     order = _own_order(request, number)
     order_url = reverse("market:order", args=[order.number])
     try:
@@ -43,14 +46,19 @@ def order_pay(request, number):
             if isinstance(error, ValidationError)
             else str(error)
         )
-        return JsonResponse({"error": message}, status=409)
-    return JsonResponse({"paymentUrl": payment.payment_url})
+        if wants_json:
+            return JsonResponse({"error": message}, status=409)
+        messages.error(request, message)
+        return redirect(order_url)
+    if wants_json:
+        return JsonResponse({"paymentUrl": payment.payment_url})
+    return redirect(payment.payment_url)
 
 
 @login_required
 @require_POST
 def order_payment_status(request, number):
-    """Asks the bank about the latest attempt; the page reloads once the order is paid."""
+    """Asks the bank about the latest attempt; the page reloads once it has finished."""
     order = _own_order(request, number)
     payment = order.online_payments.first()
     if payment:
@@ -58,6 +66,8 @@ def order_payment_status(request, number):
     return JsonResponse(
         {
             "status": payment.status if payment else None,
+            "in_progress": bool(payment)
+            and payment.status in OnlinePayment.IN_PROGRESS,
             "waiting": online_payments.payable_parts(order).exists(),
         }
     )
