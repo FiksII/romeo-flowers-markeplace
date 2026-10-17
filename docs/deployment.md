@@ -4,7 +4,7 @@
 
 ## Текущая версия
 
-- Релиз: `/srv/romeo-marketplace/releases/20261017-191855-messengers` (коммит `71688da`; прежняя запись: `20261016-090618-payments`); фактическая ссылка `/srv/romeo-marketplace/current` проверена при выкладке. Собран из Git-коммита `202e797` ветки `feat/payments` через `git archive` (без локальных патчей); `.env`, `media` и `.venv` — символические ссылки на общие каталоги, как в прежних релизах.
+- Релиз: `/srv/romeo-marketplace/releases/20261017-191855-messengers` (коммит `71688da`; прежняя запись: `20261016-090618-payments`); фактическая ссылка `/srv/romeo-marketplace/current` проверена при выкладке. Собран из ветки `feat/payments` через `git archive` (без локальных патчей); `.env`, `media` и `.venv` — символические ссылки на общие каталоги, как в прежних релизах.
 - Python 3.13.15, Django 5.2, Gunicorn, PostgreSQL 18. Отдельные пользователь Linux и роль/база PostgreSQL: `romeo-marketplace` и `romeo_marketplace` соответственно. У рабочей роли нет прав суперпользователя и создания баз.
 - `romeo-marketplace.service` включена и слушает только `127.0.0.1:8002`. Caddy обслуживает HTTPS и статику; фотографии товаров выдаются из Beget S3 по подписанным ссылкам. `romeo-reservations.timer` каждую минуту освобождает истёкшие резервы.
 - Служебный сокет Gunicorn находится в `/run/romeo-marketplace/gunicorn.ctl`; каталог создаёт systemd с владельцем приложения и правами `0750`. Защита `ProtectSystem=strict` сохранена.
