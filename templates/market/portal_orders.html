@@ -5,6 +5,7 @@
   <div class="page-heading"><span class="eyebrow">{% if shop %}{{ shop.name }}{% else %}Супер-администратор{% endif %}</span><h1>Заказы</h1><p>{% if shop %}Заказы вашего магазина.{% else %}Заказы всех магазинов маркетплейса.{% endif %}</p></div>
   {% if shop %}{% include 'market/partials/partner_nav.html' %}{% else %}{% include 'market/partials/operator_nav.html' %}{% endif %}
   {% if shop %}
+  <div data-order-board>
   <section class="order-board" aria-labelledby="new-orders">
     <div class="section-heading"><h2 id="new-orders">Новые{% if new_parts %} <span class="nav-badge">{{ new_parts|length }}</span>{% endif %}</h2><span class="muted">Ещё не начали собирать</span></div>
     {% if new_parts %}<div class="order-cards">{% for part in new_parts %}{% include 'market/partials/order_card.html' %}{% endfor %}</div>{% else %}<p class="muted order-empty">Новых заказов нет.</p>{% endif %}
@@ -13,6 +14,7 @@
     <div class="section-heading"><h2 id="work-orders">В работе</h2><span class="muted">Собираются, ждут выдачи или у курьера</span></div>
     {% if work_parts %}<div class="order-cards">{% for part in work_parts %}{% include 'market/partials/order_card.html' %}{% endfor %}</div>{% else %}<p class="muted order-empty">Сейчас ничего не собирается.</p>{% endif %}
   </section>
+  </div>
   <h2 class="spaced-heading">Полученные и отменённые</h2>
   {% endif %}
   <div class="report-toolbar">

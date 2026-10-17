@@ -104,9 +104,11 @@ def _order_response(request, parts, *, operator=False):
         now.date() - timedelta(days=days - 1), time.min, now.tzinfo
     )
     end = datetime.combine(now.date() + timedelta(days=1), time.min, now.tzinfo)
+    # A shop sees its own amount; buyer prices and Romeo's part are the administrator's.
+    amount = F("goods_total") + F("delivery_total") if operator else F("partner_total")
     parts = parts.filter(created_at__gte=start, created_at__lt=end).annotate(
         row_total=ExpressionWrapper(
-            F("goods_total") + F("delivery_total"),
+            amount,
             output_field=DecimalField(max_digits=14, decimal_places=2),
         ),
         payment_label=_labels("payment_status"),
@@ -166,7 +168,7 @@ def _order_response(request, parts, *, operator=False):
                 ),
                 timezone.localtime(part.created_at).strftime("%d.%m.%Y"),
                 receiving,
-                rub(part.total),
+                rub(part.total if operator else part.partner_total),
                 escape(part.get_payment_status_display()),
                 escape(part.get_status_display()),
             ]

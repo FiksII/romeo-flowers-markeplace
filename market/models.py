@@ -591,6 +591,11 @@ class ShopOrderItem(models.Model):
         return self.unit_price * self.quantity
 
     @property
+    def payout_total(self):
+        """What the shop gets for this line: its own price times the quantity."""
+        return self.unit_payout * self.quantity
+
+    @property
     def size_label(self):
         return dict(SIZES).get(self.size, "")
 

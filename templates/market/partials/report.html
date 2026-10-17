@@ -4,7 +4,15 @@
   <form method="get">{% if request.resolver_match.url_name == "operator" %}<input type="hidden" name="q" value="{{ shop_query }}"><input type="hidden" name="status" value="{{ shop_status }}">{% if request.GET.shop_page %}<input type="hidden" name="shop_page" value="{{ request.GET.shop_page }}">{% endif %}{% endif %}<label for="report-days">Период</label><select id="report-days" name="days">{% for value in period_options %}<option value="{{ value }}" {% if days == value %}selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>
 </div>
 {% if demo_mode %}<p class="notice">Демо-история: оплата, возвраты и выплаты имитированы для просмотра кабинетов. Все суммы и реквизиты вымышлены.</p>{% endif %}
-<div class="stats-grid report-stats">
+{% if shop %}<div class="stats-grid report-stats">
+  <div><span>Заказы</span><strong>{{ stats.orders }}</strong></div>
+  <div><span>Вам за оплаченные заказы</span><strong>{{ stats.paid_partner_total|rub }}</strong></div>
+  <div><span>{% if demo_mode %}Демо-выплаты{% else %}Выплачено{% endif %}</span><strong>{{ stats.payout_total|rub }}</strong></div>
+  <div><span>К перечислению по полученным заказам · за всё время</span><strong>{{ stats.payout_pending|rub }}</strong></div>
+  <div><span>Возвращено по отменённым оплатам</span><strong>{{ stats.refunded_partner_total|rub }}</strong></div>
+</div>
+<p class="field-help">Суммы — в ваших ценах. По созданным, неотменённым заказам за период вам {{ stats.created_partner_total|rub }}.</p>
+{% else %}<div class="stats-grid report-stats">
   <div><span>Заказы магазинов</span><strong>{{ stats.orders }}</strong></div>
   <div><span>Оплаченные товары · цена покупателей</span><strong>{{ stats.paid_total|rub }}</strong></div>
   <div><span>Доля Ромео с оплаченных товаров</span><strong>{{ stats.commission_total|rub }}</strong></div>
@@ -16,8 +24,9 @@
   <div><span>Возвращено покупателям</span><strong>{{ stats.refunded_total|rub }}</strong></div>
 </div>
 <p class="field-help">Стоимость товаров в созданных, неотменённых заказах {{ stats.created_total|rub }}. Доставка не входит в продажи товаров. {% if not demo_mode %}Выплаты появятся после подключения платёжного сервиса.{% endif %}</p>
+{% endif %}
 <section class="sales-chart" aria-label="Продажи оплаченных товаров по дням">
-  <div class="section-heading"><h2>Продажи по дням</h2><span class="muted">{{ stats.paid_total|rub }}</span></div>
+  <div class="section-heading"><h2>Продажи по дням</h2><span class="muted">{{ trend_total|rub }}</span></div>
   {{ trend|json_script:'sales-trend-data' }}
   <div class="sales-chart-plot" hidden><canvas id="sales-chart" role="img" aria-label="Продажи оплаченных товаров по дням" aria-describedby="sales-chart-values">Данные продаж доступны в таблице ниже.</canvas></div>
   <details class="chart-data" id="sales-chart-values" open><summary>Продажи по дням в таблице</summary><div class="table-wrap"><table class="market-table chart-values"><thead><tr><th>Дата</th><th>Оплаченные товары</th></tr></thead><tbody>{% for point in trend %}<tr><td>{{ point.day|date:'d.m.Y' }}</td><td>{{ point.value|rub }}</td></tr>{% endfor %}</tbody></table></div></details>

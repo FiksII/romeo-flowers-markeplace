@@ -70,6 +70,9 @@ def test_report_period_refunds_pending_payments_and_shop_scope(shop, other_shop)
         "refunded_total": Decimal(2850),
         "payout_total": Decimal(2250),
         "payout_pending": Decimal(0),
+        "created_partner_total": Decimal(4500),
+        "paid_partner_total": Decimal(2250),
+        "refunded_partner_total": Decimal(2250),
     }
     assert sum(point["value"] for point in report["trend"]) == Decimal(2500)
     assert list(report["payouts"].values_list("part_id", flat=True)) == [paid.pk]

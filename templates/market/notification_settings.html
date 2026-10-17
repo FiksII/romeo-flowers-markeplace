@@ -12,4 +12,10 @@
     </div>{% endfor %}
     <p class="field-help">Включить уведомления можно будет после подключения Telegram-бота и сообщества ВК.</p>
   </section>
+  {% if shop %}<section class="form-card narrow-section" data-browser-notify hidden>
+    <h2>Уведомления в этом браузере</h2>
+    <p class="field-help">Пока кабинет открыт, новые заказы и выплаты появляются сразу, без обновления страницы. Можно также получать системные уведомления, даже если вкладка свёрнута.</p>
+    <p class="muted" data-notify-state></p>
+    <button type="button" class="button button-secondary button-sm" data-notify-enable>Включить уведомления браузера</button>
+  </section>{% endif %}
 </section>{% endblock %}

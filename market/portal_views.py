@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
@@ -82,7 +82,7 @@ def partner_index(request):
 def partner_dashboard(request, slug):
     shop = get_shop_for_user(request.user, slug)
     parts = shop.shop_orders.select_related("order").order_by("-created_at")
-    report = dashboard_report(parts, request.GET.get("days"))
+    report = dashboard_report(parts, request.GET.get("days"), value="partner_total")
     return render(
         request,
         "market/dashboard.html",
@@ -650,3 +650,25 @@ def operator_listing_price(request, pk):
         "market/listing_price.html",
         {"listing": listing, "form": form, "back": back},
     )
+
+
+@login_required
+@require_GET
+def partner_live(request, slug):
+    """What the cabinet polls: new orders and payouts waiting for the shop."""
+    from django.db.models import Max
+    from django.http import JsonResponse
+
+    from market.orders import new_orders
+
+    shop = get_shop_for_user(request.user, slug)
+    fresh = new_orders(shop).aggregate(count=Count("pk"), latest=Max("pk"))
+    response = JsonResponse(
+        {
+            "new_orders": fresh["count"],
+            "latest_order": fresh["latest"] or 0,
+            "payouts": shop.payouts.filter(status="sent").count(),
+        }
+    )
+    response["Cache-Control"] = "no-store"
+    return response

@@ -70,6 +70,7 @@ urlpatterns = [
     path(
         "partner/<slug:slug>/balance/", portal.partner_balance, name="partner-balance"
     ),
+    path("partner/<slug:slug>/live/", portal.partner_live, name="partner-live"),
     path(
         "partner/<slug:slug>/payouts/<int:pk>/<str:action>/",
         portal.partner_payout_answer,

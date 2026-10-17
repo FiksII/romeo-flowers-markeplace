@@ -90,3 +90,10 @@ def new_orders_count(shop):
     from market.orders import new_orders
 
     return new_orders(shop).count()
+
+
+@register.simple_tag
+def latest_new_order(shop):
+    from market.orders import new_orders
+
+    return new_orders(shop).order_by("-pk").values_list("pk", flat=True).first() or 0

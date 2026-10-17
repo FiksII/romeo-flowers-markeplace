@@ -9,8 +9,11 @@ from django.utils import timezone
 from market.models import DemoPayout
 
 
-def dashboard_report(parts, requested_days=None, now=None):
-    """Report only the supplied, already-authorized shop orders."""
+def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
+    """Report only the supplied, already-authorized shop orders.
+
+    ``value`` is the amount the sales chart adds up: buyer prices for Romeo, the shop's
+    own amount (``partner_total``) in a shop cabinet."""
     days = int(requested_days) if str(requested_days) in {"7", "30", "42", "90"} else 42
     now = timezone.localtime(now or timezone.now())
     start_day = now.date() - timedelta(days=days - 1)
@@ -41,6 +44,11 @@ def dashboard_report(parts, requested_days=None, now=None):
         "commission_total": total(paid, "commission_total"),
         "refunded_total": total(period.filter(payment_status="refunded"), "goods_total")
         + total(period.filter(payment_status="refunded"), "delivery_total"),
+        "refunded_partner_total": total(
+            period.filter(payment_status="refunded"), "partner_total"
+        ),
+        "created_partner_total": total(live, "partner_total"),
+        "paid_partner_total": total(paid, "partner_total"),
         "payout_total": total(
             payouts.filter(paid_at__gte=start, paid_at__lt=end), "amount"
         ),
@@ -53,7 +61,7 @@ def dashboard_report(parts, requested_days=None, now=None):
         paid.order_by()
         .annotate(day=TruncDate("created_at"))
         .values("day")
-        .annotate(value=Sum("goods_total"))
+        .annotate(value=Sum(value))
         .values_list("day", "value")
     )
     ceiling = max(by_day.values(), default=Decimal(0)) or Decimal(1)
@@ -69,6 +77,7 @@ def dashboard_report(parts, requested_days=None, now=None):
             }
         )
     return {
+        "trend_total": sum((point["value"] for point in trend), Decimal(0)),
         "stats": stats,
         "trend": trend,
         "days": days,

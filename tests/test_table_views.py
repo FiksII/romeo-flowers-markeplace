@@ -111,7 +111,7 @@ def test_json_sorts_money_numerically_and_orders_by_number(client, owner, shop):
     amounts = client.get(url, {"order[0][column]": "3", "order[0][dir]": "asc"}).json()[
         "data"
     ]
-    assert [row[3] for row in amounts] == ["359 ₽", "440 ₽", "1\u00a0350 ₽"]
+    assert [row[3] for row in amounts] == ["358,10 ₽", "431 ₽", "1\u00a0250 ₽"]
     assert "B" in amounts[0][0] and "A" in amounts[1][0] and "C" in amounts[2][0]
     numbers = client.get(
         url, {"order[0][column]": "0", "order[0][dir]": "desc"}
@@ -191,7 +191,7 @@ def test_json_search_matches_displayed_money_receiving_method_and_date(
     make_part(shop, "old", age=2, goods=1000)
     client.force_login(owner)
     url = f"/partner/{shop.slug}/orders/data/"
-    amount = client.get(url, {"search[value]": "2\u00a0500 ₽"}).json()
+    amount = client.get(url, {"search[value]": "2\u00a0285 ₽"}).json()
     assert amount["recordsFiltered"] == 1
     assert "recent" in amount["data"][0][0]
     delivery = client.get(url, {"search[value]": "ДОСТАВКА"}).json()
@@ -243,4 +243,6 @@ def test_orders_tab_supplies_scoped_data_url_and_dashboard_chart_data(
     assert client.get(parser.url, {"days": "7"}).json()["recordsTotal"] == 1
     points = json.loads(parser.script_data)
     assert len(points) == 7
-    assert sum(Decimal(point["value"]) for point in points) == 2500
+    assert (
+        sum(Decimal(point["value"]) for point in points) == 2600
+    )  # the shop's own amount
