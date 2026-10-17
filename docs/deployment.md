@@ -14,6 +14,24 @@
 
 Старая служба `romeo-shop.service` остановлена и отключена. Старые исходники `/srv/romeo-flowers` и база `romeo_flowers` сохранены. Посторонние службы не менялись.
 
+## Онлайн-оплата Т-Банк (SpeedPay) — 17 октября 2026 года
+
+Выложен коммит `1745b1b` (ветка `feat/payments`) в релиз
+`/srv/romeo-marketplace/releases/20261017-123308-tbank-speedpay`, собранный через
+`git archive`. Применена миграция `market.0015` (таблица `OnlinePayment`), выполнен
+`collectstatic`. Резервная копия:
+`/srv/backups/romeo-marketplace-before-tbank-20261017-123308` (база, окружение,
+путь прежнего релиза `20261017-121832-seed-texts`). На релизе прошли 393 теста,
+четыре проверки PostgreSQL пропущены; ruff, Django check и проверка миграций без
+ошибок. После переключения `payment.js` отдаётся, а поддельное уведомление на
+`/payments/tbank/notification/` получает 403.
+
+Онлайн-оплата пока выключена: в `shared/runtime.env` нет `TBANK_TERMINAL_KEY` и
+`TBANK_PASSWORD`. Чтобы её включить, добавьте обе переменные (при онлайн-кассе
+ещё `TBANK_TAXATION`) и перезапустите `romeo-marketplace.service`. Для отката
+верните `current` на `20261017-121832-seed-texts`: новая таблица прежнему коду не
+мешает.
+
 ## Оплата, баланс и выплаты — 16 октября 2026 года
 
 Выложен коммит `202e797` (ветка `feat/payments`): оплата наличными, снимок цен
