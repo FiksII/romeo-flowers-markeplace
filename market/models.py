@@ -760,3 +760,81 @@ class CustomerPhone(models.Model):
     )
     phone = models.CharField(max_length=16, unique=True)
     verified = models.BooleanField(default=False)
+
+
+class MessengerLink(models.Model):
+    """A person's Telegram chat or VK dialog that receives order notifications.
+
+    The row appears with a one-time ``code``; the person sends it to the bot (or the VK
+    community), which fills ``chat_id`` in."""
+
+    TELEGRAM, VK = "telegram", "vk"
+    CHANNELS = [(TELEGRAM, "Telegram"), (VK, "ВК")]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="messenger_links",
+    )
+    channel = models.CharField(max_length=10, choices=CHANNELS)
+    chat_id = models.CharField(max_length=32, blank=True)
+    title = models.CharField(max_length=100, blank=True)
+    enabled = models.BooleanField(default=True)
+    code = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    code_created_at = models.DateTimeField(null=True, blank=True)
+    linked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "channel"], name="market_messenger_link_channel"
+            )
+        ]
+        verbose_name = "Привязка мессенджера"
+        verbose_name_plural = "Привязки мессенджеров"
+
+    def __str__(self):
+        return f"{self.get_channel_display()} · {self.title or self.chat_id or '—'}"
+
+    @property
+    def is_linked(self):
+        return bool(self.chat_id)
+
+
+class MessengerMessage(models.Model):
+    """A notification waiting for (or after) delivery to one messenger link."""
+
+    PENDING, SENT, FAILED = "pending", "sent", "failed"
+
+    link = models.ForeignKey(
+        MessengerLink, on_delete=models.CASCADE, related_name="messages"
+    )
+    part = models.ForeignKey(
+        ShopOrder,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="messenger_messages",
+    )
+    text = models.TextField()
+    status = models.CharField(
+        max_length=8,
+        default=PENDING,
+        choices=[(PENDING, "Ждёт"), (SENT, "Отправлено"), (FAILED, "Не отправлено")],
+    )
+    attempts = models.PositiveSmallIntegerField(default=0)
+    error = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            # A recipient hears about an order part once, even if payment is confirmed twice.
+            models.UniqueConstraint(
+                fields=["link", "part"], name="market_messenger_message_once"
+            )
+        ]
+        indexes = [models.Index(fields=["status", "created_at"])]
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Сообщение в мессенджер"
+        verbose_name_plural = "Сообщения в мессенджеры"

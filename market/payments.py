@@ -18,6 +18,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
+from market import messengers
 from market.models import BalanceEntry, Membership, Payout, Shop, ShopOrder
 
 
@@ -70,6 +71,7 @@ def record_online_payment(part):
     part.payment_status = "paid"
     part.save(update_fields=["payment_status"])
     _post(part, "platform_collected", part.balance_effect)
+    messengers.notify_new_part(part)
     return part
 
 

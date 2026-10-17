@@ -1,5 +1,5 @@
 [Unit]
-Description=Release expired unpaid Romeo marketplace reservations
+Description=Release expired unpaid Romeo marketplace reservations and retry notifications
 After=postgresql.service
 
 [Service]
@@ -9,6 +9,7 @@ Group=romeo-marketplace
 WorkingDirectory=/srv/romeo-marketplace/current
 EnvironmentFile=/srv/romeo-marketplace/shared/runtime.env
 ExecStart=/srv/romeo-marketplace/current/.venv/bin/python manage.py expire_reservations
+ExecStart=/srv/romeo-marketplace/current/.venv/bin/python manage.py send_notifications
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true

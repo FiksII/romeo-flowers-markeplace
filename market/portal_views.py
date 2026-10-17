@@ -6,16 +6,17 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, F, Q
+from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 from oscar.core.loading import get_model
 
+from market import messengers
 from market.access import get_shop_for_user, shops_for_user
 from market.forms import (
     ExceptionForm,
     ListingPriceForm,
-    NotificationSettingsForm,
     OperatorShopForm,
     PayoutForm,
     ProductForm,
@@ -31,6 +32,7 @@ from market.models import (
     DateException,
     Listing,
     Membership,
+    MessengerLink,
     Payout,
     Shop,
     ShopOrder,
@@ -150,15 +152,77 @@ def operator_orders_page(request):
     return _orders_page(request, ShopOrder.objects.order_by("-created_at", "-pk"))
 
 
-@require_GET
+NOTIFY_ACTIONS = {"on", "off", "test", "unlink"}
+
+
+def _notification_post(request):
+    channel, action = request.POST.get("channel"), request.POST.get("action")
+    names = dict(MessengerLink.CHANNELS)
+    if channel not in names or action not in NOTIFY_ACTIONS:
+        return
+    link = (
+        MessengerLink.objects.filter(user=request.user, channel=channel)
+        .exclude(chat_id="")
+        .first()
+    )
+    if link is None:
+        messages.error(request, f"{names[channel]} ещё не подключён.")
+    elif action == "unlink":
+        link.delete()
+        messages.success(request, f"{names[channel]} отключён от кабинета.")
+    elif action in {"on", "off"}:
+        link.enabled = action == "on"
+        link.save(update_fields=["enabled"])
+        state = "включены" if link.enabled else "выключены"
+        messages.success(request, f"Уведомления в {names[channel]} {state}.")
+    else:
+        try:
+            messengers.send_test(link)
+        except messengers.RecipientGone:
+            link.enabled = False
+            link.save(update_fields=["enabled"])
+            messages.error(
+                request,
+                f"{names[channel]} не принимает наши сообщения: похоже, бот или "
+                "сообщество заблокированы. Подключите канал заново.",
+            )
+        except messengers.MessengerError:
+            messages.error(
+                request, "Не удалось отправить проверочное сообщение. Попробуйте позже."
+            )
+        else:
+            messages.success(request, "Проверочное сообщение отправлено.")
+
+
 def _notification_settings_page(request, *, shop=None):
+    if request.method == "POST":
+        _notification_post(request)
+        return redirect(request.path)
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET", "POST"])
+    channels = []
+    for channel, label in MessengerLink.CHANNELS:
+        link = None
+        if messengers.channel_enabled(channel):
+            link = MessengerLink.objects.filter(
+                user=request.user, channel=channel
+            ).first()
+            if link is None or not link.is_linked:
+                link = messengers.link_with_code(request.user, channel)
+        channels.append(
+            {
+                "id": channel,
+                "label": label,
+                "link": link,
+                "connect_url": messengers.connect_url(link)
+                if link and not link.is_linked
+                else "",
+            }
+        )
     return render(
         request,
         "market/notification_settings.html",
-        {
-            "shop": shop,
-            "form": NotificationSettingsForm(),
-        },
+        {"shop": shop, "channels": channels},
     )
 
 

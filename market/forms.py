@@ -37,23 +37,6 @@ SHORT_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 UNLIMITED_CLASS = "market-flowers-unlimited"
 
 
-class NotificationSettingsForm(forms.Form):
-    notify_telegram = forms.BooleanField(
-        label="Уведомлять в Telegram",
-        required=False,
-        disabled=True,
-        initial=False,
-        help_text="Канал ещё не подключён",
-    )
-    notify_vk = forms.BooleanField(
-        label="Уведомлять в ВК",
-        required=False,
-        disabled=True,
-        initial=False,
-        help_text="Канал ещё не подключён",
-    )
-
-
 class ContactAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
         label="Телефон или email",

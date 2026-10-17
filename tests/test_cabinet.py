@@ -87,7 +87,10 @@ def test_partner_settings_opens_notification_channels(client, owner, shop):
     client.force_login(owner)
     response = client.get(f"/partner/{shop.slug}/settings/")
     assert response.status_code == 200
-    assert all(field.disabled for field in response.context["form"].fields.values())
+    assert [channel["id"] for channel in response.context["channels"]] == [
+        "telegram",
+        "vk",
+    ]
 
 
 # --- bouquets -------------------------------------------------------------------------

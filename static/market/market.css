@@ -529,3 +529,11 @@ html:not(.js) .live-only{display:none}
 .pay-form{margin-bottom:12px}
 .pay-frame{margin-bottom:12px;border-radius:var(--r-md);overflow:hidden}
 @media (max-width:600px){.pay-card{padding:18px}.pay-card-head{flex-direction:column;gap:8px}.pay-form .button{width:100%}}
+.messenger-channel{padding:18px 0;border-top:1px solid var(--border)}
+.messenger-channel:first-of-type{margin-top:12px}
+.messenger-channel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.messenger-channel .field-help{margin:0 0 12px}
+.messenger-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.messenger-actions form{margin:0}
+.messenger-code{font-family:var(--num);letter-spacing:.08em}
+.status-chip.chip-muted{background:var(--sage);color:var(--muted)}

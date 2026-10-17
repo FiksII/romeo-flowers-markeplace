@@ -13,6 +13,7 @@ from oscar.apps.order.utils import OrderCreator
 from oscar.core.loading import get_model
 from oscar.core.prices import Price
 
+from market import messengers
 from market.access import shops_for_user
 from market.addresses import validate_address
 from market.availability import available_slots, location_matches
@@ -306,6 +307,9 @@ def place_market_order(
             )
             for line, listing, size, quote in snapshot
         )
+        if payment_method == "cash":
+            # Online parts are announced once the bank confirms the payment.
+            messengers.notify_new_part(part)
     basket.submit()
     return order
 

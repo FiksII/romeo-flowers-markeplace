@@ -43,32 +43,6 @@ def test_superadmin_orders_cover_all_shops(client, shop, other_shop):
     assert 'href="/operator/settings/"' in dashboard
 
 
-@pytest.mark.parametrize("role", ["partner", "admin"])
-def test_unconnected_notification_channels_are_disabled(client, owner, shop, role):
-    user = owner
-    if role == "admin":
-        user = get_user_model().objects.create_superuser(
-            "settings-admin", "settings@example.com", "long-password"
-        )
-    client.force_login(user)
-    url = (
-        "/operator/settings/" if role == "admin" else f"/partner/{shop.slug}/settings/"
-    )
-    response = client.get(url)
-    assert response.status_code == 200
-    assert set(response.context["form"].fields) == {"notify_telegram", "notify_vk"}
-    assert all(
-        field.disabled and not field.initial
-        for field in response.context["form"].fields.values()
-    )
-    html = response.content.decode()
-    assert "Telegram" in html and "ВК" in html and "Канал ещё не подключён" in html
-    assert (
-        client.post(url, {"notify_telegram": "on", "notify_vk": "on"}).status_code
-        == 405
-    )
-
-
 def test_operator_tabs_are_closed_to_partner(client, owner):
     client.force_login(owner)
     assert client.get("/operator/orders/").status_code == 403

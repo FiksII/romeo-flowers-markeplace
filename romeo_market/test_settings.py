@@ -21,3 +21,11 @@ TBANK_TERMINAL_KEY = ""
 TBANK_PASSWORD = ""
 TBANK_TAXATION = ""
 MARKET_ONLINE_PAYMENTS = False
+# Tests talk to fake messengers; a local bot or community must never be messaged.
+SITE_URL = "https://flowers.test"
+TELEGRAM_BOT_TOKEN = ""
+TELEGRAM_BOT_USERNAME = ""
+VK_GROUP_ID = ""
+VK_GROUP_TOKEN = ""
+VK_CONFIRMATION_CODE = ""
+MESSENGER_BACKGROUND = False

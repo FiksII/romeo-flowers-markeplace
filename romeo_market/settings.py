@@ -174,6 +174,17 @@ SUPPORT_PHONE = env("SUPPORT_PHONE", default="")
 SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="")
 TELEGRAM_URL = env("TELEGRAM_URL", default="")
 INSTAGRAM_URL = env("INSTAGRAM_URL", default="")
+# Public address of the site for links in messenger notifications (no trailing slash).
+SITE_URL = env("SITE_URL", default="").rstrip("/")
+# Order notifications. Telegram works with a bot token and its username (without @);
+# VK with a community id, its token (messages access) and the Callback API confirmation.
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
+TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME", default="").lstrip("@")
+VK_GROUP_ID = env("VK_GROUP_ID", default="")
+VK_GROUP_TOKEN = env("VK_GROUP_TOKEN", default="")
+VK_CONFIRMATION_CODE = env("VK_CONFIRMATION_CODE", default="")
+# Tests turn this off to send notifications in the request instead of a thread.
+MESSENGER_BACKGROUND = True
 # Shared between Gunicorn workers; must be writable by the application user.
 CACHES = {
     "default": {

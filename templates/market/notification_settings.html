@@ -5,12 +5,31 @@
   {% if shop %}{% include 'market/partials/partner_nav.html' %}{% else %}{% include 'market/partials/operator_nav.html' %}{% endif %}
   <section class="form-card narrow-section">
     <h2>Уведомления о новых заказах</h2>
-    <p class="field-help">{% if shop %}Личные уведомления о заказах ваших магазинов.{% else %}Личные уведомления о новых заказах всех магазинов.{% endif %}</p>
-    {% for field in form %}<div class="field checkbox-field">
-      {{ field }}<label for="{{ field.id_for_label }}">{{ field.label }}</label>
-      <p id="{{ field.auto_id }}_helptext" class="field-help">{{ field.help_text }}</p>
+    <p class="field-help">{% if shop %}Личные уведомления о заказах ваших магазинов.{% else %}Личные уведомления о новых заказах всех магазинов.{% endif %} Заказ с оплатой наличными приходит сразу, онлайн-заказ — после оплаты.</p>
+    {% for channel in channels %}<div class="messenger-channel" data-channel="{{ channel.id }}">
+      <div class="messenger-channel-head">
+        <strong>{{ channel.label }}</strong>
+        {% if not channel.link %}<span class="status-chip chip-muted">Канал ещё не подключён</span>
+        {% elif channel.link.is_linked %}{% if channel.link.enabled %}<span class="status-chip">Уведомления включены</span>{% else %}<span class="status-chip chip-warn">Уведомления выключены</span>{% endif %}
+        {% else %}<span class="status-chip chip-muted">Не подключён</span>{% endif %}
+      </div>
+      {% if channel.link.is_linked %}
+        <p class="field-help">Чат: {{ channel.link.title|default:channel.link.chat_id }}</p>
+        <div class="messenger-actions">
+          <form method="post">{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}">{% if channel.link.enabled %}<button class="button button-secondary button-sm" name="action" value="off">Выключить</button>{% else %}<button class="button button-primary button-sm" name="action" value="on">Включить</button>{% endif %}</form>
+          <form method="post">{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}"><button class="button button-secondary button-sm" name="action" value="test">Проверить</button></form>
+          <form method="post" data-confirm="Отключить {{ channel.label }} от кабинета?">{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}"><button class="muted-link danger-link" name="action" value="unlink">Отвязать</button></form>
+        </div>
+      {% elif channel.link %}
+        <p class="field-help">{% if channel.id == 'telegram' %}Откройте бота и нажмите «Запустить» — он сразу подтвердит подключение.{% else %}Откройте сообщения сообщества и отправьте код — сообщество ответит, что уведомления подключены.{% endif %} Код: <strong class="messenger-code">{{ channel.link.code }}</strong> (действует 30 минут).</p>
+        <div class="messenger-actions">
+          <a class="button button-primary button-sm" href="{{ channel.connect_url }}" target="_blank" rel="noopener">Подключить {{ channel.label }}</a>
+          <a class="text-link" href="{{ request.path }}">Я подключил — обновить</a>
+        </div>
+      {% else %}
+        <p class="field-help">Включить уведомления можно будет после подключения {% if channel.id == 'telegram' %}Telegram-бота{% else %}сообщества ВК{% endif %}.</p>
+      {% endif %}
     </div>{% endfor %}
-    <p class="field-help">Включить уведомления можно будет после подключения Telegram-бота и сообщества ВК.</p>
   </section>
   {% if shop %}<section class="form-card narrow-section" data-browser-notify hidden>
     <h2>Уведомления в этом браузере</h2>

@@ -1,6 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
+from market import messenger_views
 from market import payment_views as payments
 from market import portal_views as portal
 from market import storefront_views as views
@@ -36,6 +37,12 @@ urlpatterns = [
         payments.tbank_notification,
         name="tbank-notification",
     ),
+    path(
+        "messengers/telegram/webhook/",
+        messenger_views.telegram_webhook,
+        name="telegram-webhook",
+    ),
+    path("messengers/vk/callback/", messenger_views.vk_callback, name="vk-callback"),
     path("account/cancel/<int:pk>/", views.customer_cancel, name="customer-cancel"),
     path("signup/", SmsSignupView.as_view(), name="signup"),
     path("login/", SmsSignupView.as_view(), name="login"),
