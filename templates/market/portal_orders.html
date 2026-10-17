@@ -21,6 +21,5 @@
     <div><p class="muted">{{ period_start|date:'d.m.Y' }} — {{ period_end|date:'d.m.Y' }}</p></div>
     <form method="get"><label for="order-days">Период</label><select id="order-days" name="days">{% for value in period_options %}<option value="{{ value }}"{% if days == value %} selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>
   </div>
-  {% if demo_mode %}<p class="notice">Демонстрационные заказы: оплата и статусы имитированы.</p>{% endif %}
   {% include 'market/partials/portal_order_table.html' %}
 </section>{% endblock %}

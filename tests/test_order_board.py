@@ -148,3 +148,16 @@ def test_cash_card_shows_only_the_amount_to_collect(
         html = client.get(path).content.decode()
         assert "Получить с покупателя" in html
         assert "Вам 2\u00a0500" not in html and "Вам за заказ" not in html
+
+
+def test_cabinet_pages_have_no_demo_notices(client, owner, shop, settings):
+    settings.MARKET_DEMO = True
+    client.force_login(owner)
+    for path in [
+        f"/partner/{shop.slug}/",
+        f"/partner/{shop.slug}/orders/",
+        f"/partner/{shop.slug}/payout/",
+        "/",
+    ]:
+        html = client.get(path).content.decode()
+        assert "Демонстрац" not in html and "Демо-" not in html and "Демо:" not in html

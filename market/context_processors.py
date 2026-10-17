@@ -77,7 +77,6 @@ def market_context(request):
         "receiving_details": receiving_details(context),
         "rail_categories": rail_categories(),
         "contacts": support_contacts(),
-        "demo_mode": settings.MARKET_DEMO,
         "address_demo": demo_address_search(),
         "dadata_addresses": bool(settings.DADATA_TOKEN) and not demo_address_search(),
         "yandex_tiles_api_key": settings.YANDEX_TILES_API_KEY,
