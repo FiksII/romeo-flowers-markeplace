@@ -36,7 +36,9 @@ logger = logging.getLogger(__name__)
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 CODE_LENGTH = 8
-CODE_LIFETIME = timedelta(minutes=30)
+# Invitation links are forwarded by the shop, so they live a week.
+CODE_LIFETIME = timedelta(days=7)
+MAX_SHOP_NUMBERS = 10
 CODE_PATTERN = re.compile(rf"\b[{CODE_ALPHABET}]{{{CODE_LENGTH}}}\b")
 MAX_ATTEMPTS = 5
 VK_API_VERSION = "5.199"
@@ -154,10 +156,11 @@ def _new_code():
             return code
 
 
-def link_with_code(user, channel, now=None):
-    """The person's link for ``channel`` with a valid code to confirm (re)linking."""
+def ensure_code(link, now=None):
+    """Give an unlinked row a valid invitation code; returns the row."""
     now = now or timezone.now()
-    link, _ = MessengerLink.objects.get_or_create(user=user, channel=channel)
+    if link.is_linked:
+        return link
     if (
         not link.code
         or not link.code_created_at
@@ -166,6 +169,32 @@ def link_with_code(user, channel, now=None):
         link.code, link.code_created_at = _new_code(), now
         link.save(update_fields=["code", "code_created_at"])
     return link
+
+
+def link_with_code(user, channel, now=None):
+    """The superadmin's personal link for ``channel``, with a code while unlinked."""
+    link, _ = MessengerLink.objects.get_or_create(user=user, channel=channel)
+    return ensure_code(link, now)
+
+
+def new_invitation(link, now=None):
+    """Forget the chat (if any) and issue a fresh link; the old one stops working."""
+    link.chat_id = link.title = ""
+    link.code, link.code_created_at = _new_code(), now or timezone.now()
+    link.enabled, link.linked_at = True, None
+    link.save()
+    return link
+
+
+def add_shop_number(shop, channel, phone, now=None):
+    """Add a number to the shop's list; ValueError if it is there or the list is full."""
+    numbers = MessengerLink.objects.filter(shop=shop, channel=channel)
+    if numbers.filter(phone=phone).exists():
+        raise ValueError("Этот номер уже есть в списке.")
+    if numbers.count() >= MAX_SHOP_NUMBERS:
+        raise ValueError(f"В списке может быть не больше {MAX_SHOP_NUMBERS} номеров.")
+    link = MessengerLink.objects.create(shop=shop, channel=channel, phone=phone)
+    return ensure_code(link, now)
 
 
 def connect_url(link):
@@ -184,15 +213,15 @@ def find_code(*texts):
 
 @transaction.atomic
 def confirm_link(channel, code, chat_id, title, now=None):
-    """Attach the chat to the person who was shown ``code``; None if it is unknown."""
+    """Attach the chat to the row whose invitation has ``code``; None if unknown."""
     now = now or timezone.now()
     link = (
         MessengerLink.objects.select_for_update()
-        .select_related("user")
+        .select_related("user", "shop")
         .filter(channel=channel, code=code, code_created_at__gte=now - CODE_LIFETIME)
         .first()
     )
-    if link is None or not link.user.is_active:
+    if link is None or (link.user_id and not link.user.is_active):
         return None
     link.chat_id, link.title = str(chat_id), title[:100]
     link.enabled, link.linked_at = True, now
@@ -209,29 +238,30 @@ def forget_chat(channel, chat_id):
 
 
 def linked_reply(link):
-    if link.user.is_superuser:
-        scope = "о новых заказах всех магазинов"
+    if link.shop_id:
+        scope = f"новые заказы магазина «{link.shop.name}»"
     else:
-        names = ", ".join(
-            link.user.shop_memberships.order_by("shop__name").values_list(
-                "shop__name", flat=True
-            )
-        )
         scope = (
-            f"о новых заказах: {names}" if names else "о новых заказах ваших магазинов"
+            "заказы с доставкой Ромео из магазинов, отмеченных в списке "
+            "магазинов супер администратора"
         )
     return (
-        f"Готово! Сюда будут приходить уведомления {scope}.\n"
-        "Отключить их можно в кабинете Ромео, раздел «Настройки»."
+        f"Готово! Сюда будут приходить {scope}.\n"
+        "Отключить уведомления можно командой /stop или в кабинете Ромео."
     )
 
 
+BAD_CODE_REPLY = (
+    "Ссылка не подошла или устарела. Попросите новую ссылку в кабинете Ромео "
+    "(раздел «Настройки»)."
+)
+
+
 def help_reply():
-    where = f" ({settings.SITE_URL}/partner/)" if settings.SITE_URL else ""
     return (
-        "Это бот уведомлений Ромео для магазинов-партнёров.\n"
-        f"Чтобы получать сообщения о новых заказах, откройте кабинет{where}, "
-        "раздел «Настройки», и нажмите «Подключить»."
+        "Это бот уведомлений Ромео о заказах магазинов-партнёров.\n"
+        "Чтобы получать сообщения, откройте ссылку-приглашение: её выдаёт магазин "
+        "в кабинете Ромео, раздел «Настройки»."
     )
 
 
@@ -262,10 +292,7 @@ def handle_telegram_update(update):
         )
         if link:
             return chat["id"], linked_reply(link)
-        return chat["id"], (
-            "Код не подошёл или устарел. Откройте «Настройки» в кабинете и нажмите "
-            "«Подключить Telegram» ещё раз."
-        )
+        return chat["id"], BAD_CODE_REPLY
     return chat["id"], help_reply()
 
 
@@ -287,10 +314,7 @@ def handle_vk_event(event):
         link = confirm_link(MessengerLink.VK, code, peer, _vk_name(peer))
         if link:
             return peer, linked_reply(link)
-        return peer, (
-            "Код не подошёл или устарел. Откройте «Настройки» в кабинете и нажмите "
-            "«Подключить ВК» ещё раз."
-        )
+        return peer, BAD_CODE_REPLY
     return peer, help_reply()
 
 
@@ -358,33 +382,45 @@ def order_text(part, for_admin=False):
     return "\n".join(lines)
 
 
+def admin_wants(part):
+    """Superadmins hear about the Romeo deliveries of the shops ticked in their list."""
+    return (
+        part.shop.notify_admins
+        and part.method == "delivery"
+        and part.delivery_owner == "platform"
+    )
+
+
 def recipients(part):
-    """Links of the shop's people and of the superadmins, without duplicates."""
-    members = Q(user__shop_memberships__shop_id=part.shop_id)
-    admins = Q(user__is_superuser=True)
+    """The shop's numbers and, for a Romeo delivery of a ticked shop, superadmins."""
+    owners = Q(shop_id=part.shop_id)
+    if admin_wants(part):
+        owners |= Q(user__is_superuser=True, user__is_active=True)
     channels = [
         channel
         for channel in (MessengerLink.TELEGRAM, MessengerLink.VK)
         if channel_enabled(channel)
     ]
     return (
-        MessengerLink.objects.filter(members | admins)
-        .filter(channel__in=channels, enabled=True, user__is_active=True)
+        MessengerLink.objects.filter(owners)
+        .filter(channel__in=channels, enabled=True)
         .exclude(chat_id="")
-        .select_related("user")
         .distinct()
     )
 
 
 def notify_new_part(part):
     """Queue «new order» messages for ``part``; delivery starts after the commit."""
-    created = []
-    for link in recipients(part):
-        is_member = link.user.shop_memberships.filter(shop_id=part.shop_id).exists()
+    created, chats = [], set()
+    # Superadmins first: a chat that is on both lists gets the fuller message once.
+    for link in sorted(recipients(part), key=lambda link: link.user_id is None):
+        if (link.channel, link.chat_id) in chats:
+            continue
+        chats.add((link.channel, link.chat_id))
         message, made = MessengerMessage.objects.get_or_create(
             link=link,
             part=part,
-            defaults={"text": order_text(part, for_admin=not is_member)},
+            defaults={"text": order_text(part, for_admin=link.user_id is not None)},
         )
         if made:
             created.append(message.pk)

@@ -40,6 +40,22 @@ document.querySelectorAll("[data-hours-table]").forEach((table) => {
   });
 });
 
+// Settings: copy an invitation link.
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-copy]");
+  if (!button) return;
+  const input = document.getElementById(button.dataset.copy);
+  if (!input) return;
+  input.select();
+  const done = () => {
+    const label = button.textContent;
+    button.textContent = "Скопировано";
+    setTimeout(() => { button.textContent = label; }, 1500);
+  };
+  if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(done, () => document.execCommand("copy") && done());
+  else if (document.execCommand("copy")) done();
+});
+
 document.addEventListener("submit", event => {
   const form = event.target.closest("form[data-confirm]");
   if (form && !window.confirm(form.dataset.confirm)) event.preventDefault();

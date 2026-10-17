@@ -537,3 +537,12 @@ html:not(.js) .live-only{display:none}
 .messenger-actions form{margin:0}
 .messenger-code{font-family:var(--num);letter-spacing:.08em}
 .status-chip.chip-muted{background:var(--sage);color:var(--muted)}
+.messenger-numbers{margin:0 0 14px;padding:0;list-style:none}
+.messenger-number{padding:12px 0;border-top:1px dashed var(--border)}
+.messenger-number-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.messenger-invite{display:flex;gap:8px;margin-bottom:6px}
+.messenger-invite input{flex:1;min-width:0;min-height:40px;padding:0 12px;font-size:13px}
+.messenger-add{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.messenger-add .field{flex:1;min-width:200px;margin:0}
+.operator-notify-col{text-align:center}
+.operator-notify-save{display:flex;justify-content:flex-end;margin-top:12px}

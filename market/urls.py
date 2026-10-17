@@ -115,6 +115,11 @@ urlpatterns = [
     path("operator/orders/", portal.operator_orders_page, name="operator-orders"),
     path("operator/settings/", portal.operator_settings, name="operator-settings"),
     path(
+        "operator/notify-shops/",
+        portal.operator_notify_shops,
+        name="operator-notify-shops",
+    ),
+    path(
         "operator/new/", portal.shop_new, {"operator": True}, name="operator-shop-new"
     ),
     path("operator/orders/data/", tables.operator_orders, name="operator-orders-data"),

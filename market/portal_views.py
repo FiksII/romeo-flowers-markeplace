@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Count, F, Q
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 from oscar.core.loading import get_model
@@ -22,6 +23,7 @@ from market.forms import (
     ProductForm,
     ShopForm,
     ShopInfoForm,
+    ShopNumberForm,
     ShopPayoutForm,
     WeeklyHoursForm,
     save_listing,
@@ -152,63 +154,122 @@ def operator_orders_page(request):
     return _orders_page(request, ShopOrder.objects.order_by("-created_at", "-pk"))
 
 
-NOTIFY_ACTIONS = {"on", "off", "test", "unlink"}
+CHANNEL_NAMES = dict(MessengerLink.CHANNELS)
+ROW_ACTIONS = {"on", "off", "test", "renew", "delete"}
 
 
-def _notification_post(request):
-    channel, action = request.POST.get("channel"), request.POST.get("action")
-    names = dict(MessengerLink.CHANNELS)
-    if channel not in names or action not in NOTIFY_ACTIONS:
-        return
-    link = (
-        MessengerLink.objects.filter(user=request.user, channel=channel)
-        .exclude(chat_id="")
-        .first()
-    )
-    if link is None:
-        messages.error(request, f"{names[channel]} ещё не подключён.")
-    elif action == "unlink":
+def _send_test(request, link):
+    name = CHANNEL_NAMES[link.channel]
+    try:
+        messengers.send_test(link)
+    except messengers.RecipientGone:
+        link.enabled = False
+        link.save(update_fields=["enabled"])
+        messages.error(
+            request,
+            f"{name} не принимает наши сообщения: похоже, бот или сообщество "
+            "заблокированы. Выдайте новую ссылку и подключите заново.",
+        )
+    except messengers.MessengerError:
+        messages.error(
+            request, "Не удалось отправить проверочное сообщение. Попробуйте позже."
+        )
+    else:
+        messages.success(request, "Проверочное сообщение отправлено.")
+
+
+def _row_action(request, link, action):
+    name = CHANNEL_NAMES[link.channel]
+    if action == "delete":
         link.delete()
-        messages.success(request, f"{names[channel]} отключён от кабинета.")
-    elif action in {"on", "off"}:
+        messages.success(
+            request,
+            "Номер удалён из списка." if link.shop_id else f"{name} отключён.",
+        )
+    elif action == "renew":
+        messengers.new_invitation(link)
+        messages.success(
+            request, "Выдана новая ссылка-приглашение, прежняя больше не работает."
+        )
+    elif not link.is_linked:
+        messages.error(request, f"{name} по этой ссылке ещё не подключён.")
+    elif action == "test":
+        _send_test(request, link)
+    else:
         link.enabled = action == "on"
         link.save(update_fields=["enabled"])
         state = "включены" if link.enabled else "выключены"
-        messages.success(request, f"Уведомления в {names[channel]} {state}.")
-    else:
+        messages.success(request, f"Уведомления в {name} {state}.")
+
+
+def _notification_post(request, shop):
+    action = request.POST.get("action")
+    if shop and action == "add":
+        form = ShopNumberForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, next(iter(form.errors.values()))[0])
+            return
         try:
-            messengers.send_test(link)
-        except messengers.RecipientGone:
-            link.enabled = False
-            link.save(update_fields=["enabled"])
-            messages.error(
-                request,
-                f"{names[channel]} не принимает наши сообщения: похоже, бот или "
-                "сообщество заблокированы. Подключите канал заново.",
+            messengers.add_shop_number(
+                shop, form.cleaned_data["channel"], form.cleaned_data["phone"]
             )
-        except messengers.MessengerError:
-            messages.error(
-                request, "Не удалось отправить проверочное сообщение. Попробуйте позже."
-            )
+        except ValueError as error:
+            messages.error(request, str(error))
         else:
-            messages.success(request, "Проверочное сообщение отправлено.")
+            messages.success(
+                request, "Номер добавлен. Отправьте человеку ссылку-приглашение."
+            )
+        return
+    if action not in ROW_ACTIONS:
+        return
+    if shop:
+        link = MessengerLink.objects.filter(
+            shop=shop, pk=request.POST.get("link") or 0
+        ).first()
+    else:
+        link = MessengerLink.objects.filter(
+            user=request.user, channel=request.POST.get("channel")
+        ).first()
+    if link is not None:
+        _row_action(request, link, action)
 
 
-def _notification_settings_page(request, *, shop=None):
-    if request.method == "POST":
-        _notification_post(request)
-        return redirect(request.path)
-    if request.method != "GET":
-        return HttpResponseNotAllowed(["GET", "POST"])
+def _shop_channels(shop):
+    channels = []
+    for channel, label in MessengerLink.CHANNELS:
+        available = messengers.channel_enabled(channel)
+        numbers = []
+        for link in MessengerLink.objects.filter(shop=shop, channel=channel):
+            if available:
+                messengers.ensure_code(link)
+            numbers.append(
+                {
+                    "link": link,
+                    "url": messengers.connect_url(link)
+                    if available and not link.is_linked
+                    else "",
+                }
+            )
+        channels.append(
+            {
+                "id": channel,
+                "label": label,
+                "available": available,
+                "numbers": numbers,
+                "form": ShopNumberForm(
+                    initial={"channel": channel}, auto_id=f"id_{channel}_%s"
+                ),
+            }
+        )
+    return channels
+
+
+def _personal_channels(user):
     channels = []
     for channel, label in MessengerLink.CHANNELS:
         link = None
         if messengers.channel_enabled(channel):
-            link = MessengerLink.objects.filter(
-                user=request.user, channel=channel
-            ).first()
-            if link is None or not link.is_linked:
-                link = messengers.link_with_code(request.user, channel)
+            link = messengers.link_with_code(user, channel)
         channels.append(
             {
                 "id": channel,
@@ -219,11 +280,22 @@ def _notification_settings_page(request, *, shop=None):
                 else "",
             }
         )
-    return render(
-        request,
-        "market/notification_settings.html",
-        {"shop": shop, "channels": channels},
-    )
+    return channels
+
+
+def _notification_settings_page(request, *, shop=None):
+    if request.method == "POST":
+        _notification_post(request, shop)
+        return redirect(request.path)
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET", "POST"])
+    context = {"shop": shop, "lifetime_days": messengers.CODE_LIFETIME.days}
+    if shop:
+        context["channels"] = _shop_channels(shop)
+    else:
+        context["channels"] = _personal_channels(request.user)
+        context["watched_shops"] = Shop.objects.filter(notify_admins=True).count()
+    return render(request, "market/notification_settings.html", context)
 
 
 @login_required
@@ -237,6 +309,23 @@ def operator_settings(request):
     if not request.user.is_superuser:
         raise PermissionDenied
     return _notification_settings_page(request)
+
+
+@login_required
+@require_POST
+def operator_notify_shops(request):
+    """Save the «notify about Romeo deliveries» ticks of the shops on one list page."""
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    shown = [int(pk) for pk in request.POST.getlist("shown") if pk.isdigit()]
+    ticked = {int(pk) for pk in request.POST.getlist("notify") if pk.isdigit()}
+    Shop.objects.filter(pk__in=shown).update(notify_admins=False)
+    Shop.objects.filter(pk__in=ticked.intersection(shown)).update(notify_admins=True)
+    messages.success(request, "Уведомления о доставке Ромео сохранены.")
+    back = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(back, {request.get_host()}):
+        back = reverse("market:operator")
+    return redirect(back + "#shops")
 
 
 @login_required

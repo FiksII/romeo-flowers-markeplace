@@ -97,3 +97,12 @@ def latest_new_order(shop):
     from market.orders import new_orders
 
     return new_orders(shop).order_by("-pk").values_list("pk", flat=True).first() or 0
+
+
+@register.filter
+def phone(value):
+    """+79991234567 → +7 (999) 123-45-67."""
+    digits = "".join(character for character in str(value or "") if character.isdigit())
+    if len(digits) != 11:
+        return value
+    return f"+{digits[0]} ({digits[1:4]}) {digits[4:7]}-{digits[7:9]}-{digits[9:]}"

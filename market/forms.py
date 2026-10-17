@@ -11,11 +11,13 @@ from django.db.models import Count, Q
 from oscar.core.loading import get_model
 
 from market.addresses import decode_address
+from market.auth_adapter import RussianPhoneField
 from market.bouquet_options import SIZES, TAGS
 from market.models import (
     Flower,
     Listing,
     Membership,
+    MessengerLink,
     Settlement,
     Shop,
     ShopOrder,
@@ -35,6 +37,25 @@ WEEKDAYS = [
 ]
 SHORT_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 UNLIMITED_CLASS = "market-flowers-unlimited"
+
+
+class ShopNumberForm(forms.Form):
+    """A number on the shop's notification list (a label for the invitation link)."""
+
+    channel = forms.ChoiceField(
+        choices=MessengerLink.CHANNELS, widget=forms.HiddenInput
+    )
+    phone = RussianPhoneField(
+        label="Номер телефона",
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "+7(***)***-**-**",
+                "inputmode": "tel",
+                "autocomplete": "off",
+                "data-recipient-phone": "",
+            }
+        ),
+    )
 
 
 class ContactAuthenticationForm(AuthenticationForm):

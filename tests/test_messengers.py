@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from market import messengers
-from market.models import MessengerLink, MessengerMessage
+from market.models import MessengerLink, MessengerMessage, Shop
 from market.payments import record_online_payment
 from tests.test_payments import order_part
 
@@ -44,7 +44,17 @@ def admin(db):
     )
 
 
-def linked(user, channel, chat_id):
+def number(shop, channel, chat_id, phone="+79990000001"):
+    return MessengerLink.objects.create(
+        shop=shop,
+        channel=channel,
+        phone=phone,
+        chat_id=chat_id,
+        linked_at=timezone.now(),
+    )
+
+
+def personal(user, channel, chat_id):
     return MessengerLink.objects.create(
         user=user, channel=channel, chat_id=chat_id, linked_at=timezone.now()
     )
@@ -61,37 +71,73 @@ def texts(bot):
     ]
 
 
-def test_cash_order_notifies_shop_people_and_superadmins(
-    bot, owner, shop, listing, stranger, admin, django_capture_on_commit_callbacks
+def test_shop_numbers_get_the_order_of_their_shop_only(
+    bot, owner, shop, other_shop, listing, django_capture_on_commit_callbacks
 ):
-    linked(owner, "telegram", "1001")
-    linked(admin, "vk", "2002")
-    linked(stranger, "telegram", "3003")
+    number(shop, "telegram", "1001", "+79990000001")
+    number(shop, "telegram", "1002", "+79990000002")
+    number(shop, "vk", "2001", "+79990000001")
+    number(other_shop, "telegram", "3003")
     with django_capture_on_commit_callbacks(execute=True):
         part = order_part(owner, shop, listing, "delivery", payment="cash")
     sent = texts(bot)
     assert sorted((method, chat) for method, chat, _ in sent) == [
-        ("messages.send", "2002"),
+        ("messages.send", "2001"),
         ("sendMessage", "1001"),
+        ("sendMessage", "1002"),
     ]
-    by_chat = {chat: text for _, chat, text in sent}
-    shop_text, admin_text = by_chat["1001"], by_chat["2002"]
-    assert f"Новый заказ № {part.order.number}" in shop_text
-    assert "Нежность × 1" in shop_text and shop.name in shop_text
-    assert f"https://flowers.test/partner/{shop.slug}/orders/{part.pk}/" in shop_text
-    # Buyer prices are for the superadmin; the shop sees what it collects.
+    text = sent[0][2]
+    assert f"Новый заказ № {part.order.number}" in text
+    assert "Нежность × 1" in text and shop.name in text
+    assert f"https://flowers.test/partner/{shop.slug}/orders/{part.pk}/" in text
     # Romeo's courier collects the cash, so the shop sees its own part only.
-    assert "Вам 2 500 ₽" in shop_text and "Сумма заказа" not in shop_text
-    assert "Сумма заказа" in admin_text
+    assert "Вам 2\xa0500 ₽" in text and "Сумма заказа" not in text
     # No personal data of the buyer leaves the site.
-    assert part.contact_phone not in shop_text and part.contact_name not in shop_text
+    assert part.contact_phone not in text and part.contact_name not in text
     assert set(MessengerMessage.objects.values_list("status", flat=True)) == {"sent"}
+
+
+def test_superadmins_get_romeo_deliveries_of_ticked_shops(
+    bot, owner, shop, listing, admin, django_capture_on_commit_callbacks
+):
+    personal(admin, "vk", "9009")
+    with django_capture_on_commit_callbacks(execute=True):
+        order_part(owner, shop, listing, "delivery", payment="cash")
+    assert bot.calls == []  # the shop is not ticked
+
+    Shop.objects.filter(pk=shop.pk).update(notify_admins=True)
+    shop.refresh_from_db()
+    with django_capture_on_commit_callbacks(execute=True):
+        order_part(owner, shop, listing, "pickup", payment="cash")
+    assert bot.calls == []  # pickup is not a Romeo delivery
+
+    with django_capture_on_commit_callbacks(execute=True):
+        part = order_part(owner, shop, listing, "delivery", payment="cash")
+    assert [(chat, "Сумма заказа" in text) for _, chat, text in texts(bot)] == [
+        ("9009", True)
+    ]
+    # The shop's own delivery is not Romeo's business.
+    part.delivery_owner = "partner"
+    assert not messengers.admin_wants(part)
+
+
+def test_a_chat_on_both_lists_gets_one_message(
+    bot, owner, shop, listing, admin, django_capture_on_commit_callbacks
+):
+    Shop.objects.filter(pk=shop.pk).update(notify_admins=True)
+    shop.refresh_from_db()
+    personal(admin, "telegram", "1001")
+    number(shop, "telegram", "1001")
+    with django_capture_on_commit_callbacks(execute=True):
+        order_part(owner, shop, listing, "delivery", payment="cash")
+    assert len(bot.calls) == 1
+    assert "Сумма заказа" in bot.calls[0][1]["text"]
 
 
 def test_online_order_is_announced_once_after_payment(
     bot, owner, shop, listing, django_capture_on_commit_callbacks
 ):
-    linked(owner, "telegram", "1001")
+    number(shop, "telegram", "1001")
     with django_capture_on_commit_callbacks(execute=True):
         part = order_part(owner, shop, listing, "delivery", payment="online")
     assert bot.calls == []
@@ -105,21 +151,21 @@ def test_online_order_is_announced_once_after_payment(
     assert len(bot.calls) == 1
 
 
-def test_disabled_link_and_unconfigured_channel_get_nothing(
-    bot, settings, owner, shop, listing, admin, django_capture_on_commit_callbacks
+def test_disabled_number_and_unconfigured_channel_get_nothing(
+    bot, settings, owner, shop, listing, django_capture_on_commit_callbacks
 ):
-    link = linked(owner, "telegram", "1001")
+    link = number(shop, "telegram", "1001")
     link.enabled = False
     link.save()
-    linked(admin, "vk", "2002")
+    number(shop, "vk", "2002")
     settings.VK_GROUP_TOKEN = ""
     with django_capture_on_commit_callbacks(execute=True):
         order_part(owner, shop, listing, payment="cash")
     assert bot.calls == []
 
 
-def test_blocked_bot_disables_the_link(bot, owner, shop, listing):
-    link = linked(owner, "telegram", "1001")
+def test_blocked_bot_disables_the_number(bot, owner, shop, listing):
+    link = number(shop, "telegram", "1001")
     bot.answer = {"ok": False, "error_code": 403, "description": "bot was blocked"}
     order_part(owner, shop, listing, payment="cash")
     message = MessengerMessage.objects.get()
@@ -129,7 +175,7 @@ def test_blocked_bot_disables_the_link(bot, owner, shop, listing):
 
 
 def test_temporary_errors_are_retried_by_the_timer(bot, owner, shop, listing):
-    linked(owner, "telegram", "1001")
+    number(shop, "telegram", "1001")
     bot.answer = {"ok": False, "error_code": 429, "description": "Too Many Requests"}
     order_part(owner, shop, listing, payment="cash")
     message = MessengerMessage.objects.get()
@@ -145,7 +191,7 @@ def test_temporary_errors_are_retried_by_the_timer(bot, owner, shop, listing):
 
 
 def test_message_fails_after_the_last_attempt(bot, owner, shop, listing):
-    linked(owner, "telegram", "1001")
+    number(shop, "telegram", "1001")
     bot.answer = {"ok": False, "error_code": 500, "description": "Internal"}
     order_part(owner, shop, listing, payment="cash")
     message = MessengerMessage.objects.get()
@@ -178,20 +224,18 @@ def tg_update(text, chat_id=555, username="flower_seller"):
     }
 
 
-def test_telegram_start_with_code_links_the_chat(bot, client, owner, shop):
-    link = messengers.link_with_code(owner, "telegram")
+def test_telegram_invitation_links_the_number(bot, client, shop):
+    link = messengers.add_shop_number(shop, "telegram", "+79991112233")
     assert messengers.connect_url(link) == (
         f"https://t.me/romeo_test_bot?start={link.code}"
     )
+    code = link.code
     assert (
-        telegram_post(client, tg_update(f"/start {link.code}"), "wrong").status_code
-        == 403
+        telegram_post(client, tg_update(f"/start {code}"), "wrong").status_code == 403
     )
-    response = telegram_post(client, tg_update(f"/start {link.code}"))
-    assert response.status_code == 200
-    answer = response.json()
+    answer = telegram_post(client, tg_update(f"/start {code}")).json()
     assert answer["method"] == "sendMessage" and answer["chat_id"] == 555
-    assert "Готово" in answer["text"] and shop.name in answer["text"]
+    assert "Готово" in answer["text"] and f"«{shop.name}»" in answer["text"]
     link.refresh_from_db()
     assert (link.chat_id, link.title, link.code, link.enabled) == (
         "555",
@@ -199,33 +243,44 @@ def test_telegram_start_with_code_links_the_chat(bot, client, owner, shop):
         None,
         True,
     )
-    # The code works once.
-    again = telegram_post(client, tg_update(f"/start {link.code or 'ABCDEFGH'}"))
-    assert "Код не подошёл" in again.json()["text"]
-    assert "Чтобы получать" in telegram_post(client, tg_update("привет")).json()["text"]
+    # The invitation works once.
+    again = telegram_post(client, tg_update(f"/start {code}", chat_id=777))
+    assert "Ссылка не подошла" in again.json()["text"]
+    assert (
+        "ссылку-приглашение"
+        in telegram_post(client, tg_update("привет")).json()["text"]
+    )
     telegram_post(client, tg_update("/stop"))
     link.refresh_from_db()
     assert not link.enabled
 
 
-def test_telegram_ignores_expired_codes_and_group_chats(bot, client, owner):
-    link = messengers.link_with_code(owner, "telegram")
+def test_old_or_replaced_invitation_does_not_link(bot, client, shop):
+    link = messengers.add_shop_number(shop, "telegram", "+79991112233")
     MessengerLink.objects.filter(pk=link.pk).update(
-        code_created_at=timezone.now() - timedelta(hours=1)
+        code_created_at=timezone.now() - timedelta(days=8)
     )
     assert (
-        "Код не подошёл" in telegram_post(client, tg_update(link.code)).json()["text"]
+        "Ссылка не подошла"
+        in telegram_post(client, tg_update(link.code)).json()["text"]
+    )
+    link.refresh_from_db()
+    assert link.chat_id == ""
+    old = link.code
+    assert messengers.ensure_code(link).code != old
+
+    replaced = link.code
+    messengers.new_invitation(link)
+    assert (
+        "Ссылка не подошла"
+        in telegram_post(client, tg_update(f"/start {replaced}")).json()["text"]
     )
     group = tg_update(link.code)
     group["message"]["chat"]["type"] = "group"
     assert telegram_post(client, group).json() == {}
-    link.refresh_from_db()
-    assert link.chat_id == ""
-    # An expired code is replaced when the settings page asks for one.
-    assert messengers.link_with_code(owner, "telegram").code != link.code
 
 
-def test_telegram_webhook_is_closed_without_a_bot(client, owner):
+def test_telegram_webhook_is_closed_without_a_bot(client):
     assert telegram_post(client, tg_update("/start X"), "").status_code == 403
 
 
@@ -257,14 +312,14 @@ def test_vk_confirmation_and_secret(bot, client):
     assert vk_post(client, wrong).status_code == 403
 
 
-def test_vk_link_by_ref_or_text_code(bot, client, owner, admin):
-    link = messengers.link_with_code(owner, "vk")
+def test_vk_link_by_ref_or_text_code(bot, client, shop, admin):
+    link = messengers.add_shop_number(shop, "vk", "+79991112233")
     assert messengers.connect_url(link) == f"https://vk.me/club42?ref={link.code}"
     assert vk_post(client, vk_message("Начать", ref=link.code)).content == b"ok"
     link.refresh_from_db()
     assert (link.chat_id, link.title) == ("777", "Анна Цветкова")
     reply = bot.calls[-1][1]
-    assert reply["peer_id"] == "777" and "Готово" in reply["message"]
+    assert reply["peer_id"] == "777" and shop.name in reply["message"]
 
     admin_link = messengers.link_with_code(admin, "vk")
     vk_post(
@@ -273,7 +328,7 @@ def test_vk_link_by_ref_or_text_code(bot, client, owner, admin):
     )
     admin_link.refresh_from_db()
     assert admin_link.chat_id == "888"
-    assert "всех магазинов" in bot.calls[-1][1]["message"]
+    assert "доставкой Ромео" in bot.calls[-1][1]["message"]
 
     # A repeated event is not processed twice.
     calls = len(bot.calls)
@@ -298,62 +353,129 @@ def settings_url(shop):
     return f"/partner/{shop.slug}/settings/"
 
 
-@pytest.mark.parametrize("role", ["partner", "admin"])
-def test_settings_without_configured_channels(client, owner, shop, role):
-    user = owner
-    url = settings_url(shop)
-    if role == "admin":
-        user = get_user_model().objects.create_superuser(
-            "settings-admin", "settings@example.com", "long-password"
-        )
-        url = "/operator/settings/"
-    client.force_login(user)
-    response = client.get(url)
-    assert response.status_code == 200
-    html = response.content.decode()
-    assert "Telegram" in html and "ВК" in html
-    assert html.count("Канал ещё не подключён") == 2
-    assert "t.me/" not in html and not MessengerLink.objects.exists()
-    assert client.post(url, {"channel": "telegram", "action": "on"}).status_code == 302
-
-
-def test_settings_connect_toggle_test_and_unlink(bot, client, owner, stranger, shop):
+def test_shop_settings_without_configured_channels(client, owner, shop):
     client.force_login(owner)
     html = client.get(settings_url(shop)).content.decode()
-    tg = MessengerLink.objects.get(user=owner, channel="telegram")
-    vk = MessengerLink.objects.get(user=owner, channel="vk")
-    assert f"https://t.me/romeo_test_bot?start={tg.code}" in html
-    assert f"https://vk.me/club42?ref={vk.code}" in html
-    # Reloading the page keeps the code the person may already have sent.
-    client.get(settings_url(shop))
-    assert MessengerLink.objects.get(pk=tg.pk).code == tg.code
-
-    messengers.confirm_link("telegram", tg.code, "1001", "@seller")
-    other = linked(stranger, "telegram", "3003")
-    html = client.get(settings_url(shop)).content.decode()
-    assert "@seller" in html and "Уведомления включены" in html
-
-    client.post(settings_url(shop), {"channel": "telegram", "action": "off"})
-    tg.refresh_from_db()
-    assert not tg.enabled
-    client.post(settings_url(shop), {"channel": "telegram", "action": "on"})
-    tg.refresh_from_db()
-    assert tg.enabled
-
-    response = client.post(
-        settings_url(shop), {"channel": "telegram", "action": "test"}, follow=True
+    assert html.count("Канал ещё не подключён") == 2
+    client.post(
+        settings_url(shop),
+        {"action": "add", "channel": "telegram", "phone": "8 (999) 111-22-33"},
     )
+    link = MessengerLink.objects.get(shop=shop)
+    assert (link.channel, link.phone, link.user_id) == (
+        "telegram",
+        "+79991112233",
+        None,
+    )
+    html = client.get(settings_url(shop)).content.decode()
+    assert "+7 (999) 111-22-33" in html and "t.me/" not in html
+    assert "Ссылка появится" in html
+
+
+def test_shop_number_list_per_channel(bot, client, owner, stranger, shop, other_shop):
+    client.force_login(owner)
+    url = settings_url(shop)
+    for channel, phone in [
+        ("telegram", "+79990000001"),
+        ("telegram", "+79990000002"),
+        ("vk", "+79990000001"),
+        ("vk", "+79990000003"),
+    ]:
+        client.post(url, {"action": "add", "channel": channel, "phone": phone})
+    response = client.post(
+        url, {"action": "add", "channel": "vk", "phone": "+79990000003"}, follow=True
+    )
+    assert "уже есть в списке" in response.content.decode()
+    response = client.post(
+        url, {"action": "add", "channel": "vk", "phone": "12345"}, follow=True
+    )
+    assert "Введите телефон полностью" in response.content.decode()
+    assert MessengerLink.objects.filter(shop=shop).count() == 4
+
+    html = client.get(url).content.decode()
+    tg = MessengerLink.objects.filter(shop=shop, channel="telegram")
+    for link in tg:
+        assert f"https://t.me/romeo_test_bot?start={link.code}" in html
+    first = tg.get(phone="+79990000001")
+    messengers.confirm_link("telegram", first.code, "1001", "@seller")
+    html = client.get(url).content.decode()
+    assert "@seller" in html and "Ждёт подключения" in html
+
+    client.post(url, {"action": "off", "link": first.pk})
+    first.refresh_from_db()
+    assert not first.enabled
+    client.post(url, {"action": "on", "link": first.pk})
+    first.refresh_from_db()
+    assert first.enabled
+    response = client.post(url, {"action": "test", "link": first.pk}, follow=True)
     assert "Проверочное сообщение отправлено" in response.content.decode()
     assert bot.calls[-1][1]["chat_id"] == "1001"
 
-    bot.answer = {"ok": False, "error_code": 403, "description": "Forbidden"}
-    response = client.post(
-        settings_url(shop), {"channel": "telegram", "action": "test"}, follow=True
-    )
-    assert "заблокированы" in response.content.decode()
+    client.post(url, {"action": "renew", "link": first.pk})
+    first.refresh_from_db()
+    assert first.chat_id == "" and first.code
+
+    # Another shop's rows cannot be touched from this page or by a stranger.
+    foreign = messengers.add_shop_number(other_shop, "telegram", "+79995556677")
+    client.post(url, {"action": "delete", "link": foreign.pk})
+    assert MessengerLink.objects.filter(pk=foreign.pk).exists()
+    client.force_login(stranger)
+    assert client.get(url).status_code == 404
+
+    client.force_login(owner)
+    client.post(url, {"action": "delete", "link": first.pk})
+    assert not MessengerLink.objects.filter(pk=first.pk).exists()
+
+
+def test_shop_list_is_limited(bot, shop):
+    for index in range(messengers.MAX_SHOP_NUMBERS):
+        messengers.add_shop_number(shop, "vk", f"+7999000{index:04d}")
+    with pytest.raises(ValueError):
+        messengers.add_shop_number(shop, "vk", "+79998887766")
+
+
+def test_operator_personal_channel(bot, client, admin):
+    client.force_login(admin)
+    html = client.get("/operator/settings/").content.decode()
+    tg = MessengerLink.objects.get(user=admin, channel="telegram")
+    assert f"https://t.me/romeo_test_bot?start={tg.code}" in html
+    assert "отмечено: 0" in html
+    # Reloading the page keeps the code the person may already have sent.
+    client.get("/operator/settings/")
+    assert MessengerLink.objects.get(pk=tg.pk).code == tg.code
+    messengers.confirm_link("telegram", tg.code, "1001", "@boss")
+    client.post("/operator/settings/", {"channel": "telegram", "action": "off"})
     tg.refresh_from_db()
     assert not tg.enabled
-
-    client.post(settings_url(shop), {"channel": "telegram", "action": "unlink"})
+    client.post("/operator/settings/", {"channel": "telegram", "action": "delete"})
     assert not MessengerLink.objects.filter(pk=tg.pk).exists()
-    assert MessengerLink.objects.filter(pk=other.pk, enabled=True).exists()
+
+
+def test_operator_ticks_shops_for_romeo_delivery(
+    client, admin, owner, shop, other_shop
+):
+    client.force_login(admin)
+    html = client.get("/operator/").content.decode()
+    assert 'name="notify"' in html and "Уведомлять о доставке" in html
+    response = client.post(
+        "/operator/notify-shops/",
+        {
+            "shown": [shop.pk, other_shop.pk],
+            "notify": [shop.pk],
+            "next": "/operator/?q=",
+        },
+    )
+    assert response.status_code == 302 and response["Location"] == "/operator/?q=#shops"
+    assert list(Shop.objects.filter(notify_admins=True)) == [shop]
+    client.post(
+        "/operator/notify-shops/", {"shown": [shop.pk], "next": "https://evil.test/"}
+    )
+    shop.refresh_from_db()
+    assert not shop.notify_admins
+    client.force_login(owner)
+    assert (
+        client.post(
+            "/operator/notify-shops/", {"shown": [shop.pk], "notify": [shop.pk]}
+        ).status_code
+        == 403
+    )

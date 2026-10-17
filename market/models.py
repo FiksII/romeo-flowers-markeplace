@@ -111,6 +111,10 @@ class Shop(models.Model):
     inn = models.CharField("ИНН", max_length=12, blank=True)
     bank_account = models.CharField("Расчётный счёт", max_length=20, blank=True)
     bank_bik = models.CharField("БИК", max_length=9, blank=True)
+    # Superadmins get messenger notifications of this shop's Romeo deliveries.
+    notify_admins = models.BooleanField(
+        "Уведомлять супер администраторов о доставке Ромео", default=False
+    )
     markup_percent = models.DecimalField(
         "Наценка Ромео, % к цене магазина",
         max_digits=6,
@@ -763,10 +767,12 @@ class CustomerPhone(models.Model):
 
 
 class MessengerLink(models.Model):
-    """A person's Telegram chat or VK dialog that receives order notifications.
+    """A Telegram chat or VK dialog that receives order notifications.
 
-    The row appears with a one-time ``code``; the person sends it to the bot (or the VK
-    community), which fills ``chat_id`` in."""
+    It belongs to a shop (one of the numbers on its Settings page) or to a superadmin
+    personally. The row starts with an invitation ``code``; whoever opens the link with
+    it in the bot (or the VK community) fills ``chat_id`` in. The number is a label for
+    the shop: messengers do not let a bot write to a phone number."""
 
     TELEGRAM, VK = "telegram", "vk"
     CHANNELS = [(TELEGRAM, "Telegram"), (VK, "ВК")]
@@ -774,8 +780,18 @@ class MessengerLink(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="messenger_links",
     )
+    shop = models.ForeignKey(
+        Shop,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="messenger_links",
+    )
+    phone = models.CharField(max_length=16, blank=True)
     channel = models.CharField(max_length=10, choices=CHANNELS)
     chat_id = models.CharField(max_length=32, blank=True)
     title = models.CharField(max_length=100, blank=True)
@@ -783,13 +799,27 @@ class MessengerLink(models.Model):
     code = models.CharField(max_length=12, unique=True, null=True, blank=True)
     code_created_at = models.DateTimeField(null=True, blank=True)
     linked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "channel"], name="market_messenger_link_channel"
-            )
+                fields=["user", "channel"],
+                condition=models.Q(user__isnull=False),
+                name="market_messenger_link_channel",
+            ),
+            models.UniqueConstraint(
+                fields=["shop", "channel", "phone"],
+                condition=models.Q(shop__isnull=False),
+                name="market_messenger_link_shop_phone",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(user__isnull=False, shop__isnull=True)
+                | models.Q(user__isnull=True, shop__isnull=False),
+                name="market_messenger_link_owner",
+            ),
         ]
+        ordering = ["created_at", "pk"]
         verbose_name = "Привязка мессенджера"
         verbose_name_plural = "Привязки мессенджеров"
 
