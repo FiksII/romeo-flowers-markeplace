@@ -178,3 +178,16 @@ def test_invalid_history_options_do_not_write(options):
     with pytest.raises(CommandError):
         seed(**options)
     assert not Shop.objects.exists()
+
+
+@override_settings(MARKET_DEMO=True)
+def test_seeded_orders_and_history_do_not_say_demo():
+    from market.models import AuditEntry
+
+    seed(weeks=1, orders_per_day=2, end_date="2026-09-01")
+    assert ShopOrder.objects.exists()
+    assert not ShopOrder.objects.filter(instructions__icontains="демо").exists()
+    assert not AuditEntry.objects.filter(action__icontains="демо").exists()
+    assert AuditEntry.objects.filter(
+        action="Профиль и история магазина заполнены"
+    ).exists()

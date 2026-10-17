@@ -221,7 +221,7 @@ class Command(BaseCommand):
             AuditEntry.objects.get_or_create(
                 shop=shop,
                 actor=operator,
-                action="Демо: профиль и история магазина заполнены",
+                action="Профиль и история магазина заполнены",
             )
             shops.append(shop)
         DateException.objects.get_or_create(
@@ -273,7 +273,6 @@ class Command(BaseCommand):
             {
                 "name": buyer.get_full_name() or buyer.username,
                 "phone": "+70000000000",
-                "instructions": "Демонстрационный заказ: не собирать и не доставлять.",
             },
             now=placed,
         )
