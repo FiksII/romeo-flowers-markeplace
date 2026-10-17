@@ -7,13 +7,19 @@ import hashlib
 import hmac
 import json
 import logging
+import ssl
 from decimal import Decimal
+from functools import cache
+from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+# T-Bank's API certificate is issued by the Russian Trusted Root CA, which the usual
+# Linux and Python trust stores do not include. It is trusted for these calls only.
+RUSSIAN_ROOT_CA = Path(__file__).with_name("certs") / "russian_trusted_root_ca.pem"
 
 
 class TbankError(Exception):
@@ -51,6 +57,13 @@ def notification_is_genuine(data):
     return hmac.compare_digest(str(data.get("Token", "")), make_token(data))
 
 
+@cache
+def ssl_context():
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=RUSSIAN_ROOT_CA)
+    return context
+
+
 def call(method, params):
     """POST a signed request and return the bank's answer; raise TbankError on failure."""
     body = {"TerminalKey": settings.TBANK_TERMINAL_KEY, **params}
@@ -62,7 +75,7 @@ def call(method, params):
         method="POST",
     )
     try:
-        with urlopen(request, timeout=15) as response:
+        with urlopen(request, timeout=15, context=ssl_context()) as response:
             result = json.load(response)
     except (URLError, TimeoutError, OSError, ValueError) as error:
         logger.warning("T-Bank %s failed: %s", method, type(error).__name__)

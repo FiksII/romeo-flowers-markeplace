@@ -1,5 +1,6 @@
 import io
 import json
+import ssl
 from decimal import Decimal
 
 import pytest
@@ -109,7 +110,7 @@ def test_token_matches_the_documentation_example():
 def test_call_signs_the_request_without_sending_the_password(monkeypatch):
     sent = {}
 
-    def urlopen(request, timeout):
+    def urlopen(request, timeout, context):
         sent["url"] = request.full_url
         sent["body"] = json.loads(request.data)
         return io.BytesIO(json.dumps({"Success": True, "Status": "NEW"}).encode())
@@ -128,7 +129,7 @@ def test_call_raises_on_refusal(monkeypatch):
     monkeypatch.setattr(
         tbank,
         "urlopen",
-        lambda request, timeout: io.BytesIO(
+        lambda request, timeout, context: io.BytesIO(
             json.dumps(
                 {"Success": False, "ErrorCode": "9", "Message": "Ошибка"}
             ).encode()
@@ -340,3 +341,16 @@ def test_a_declined_link_is_not_offered_again(bank, owner, shop, listing):
     assert first.status == "REJECTED"
     assert second.order_ref == f"{order.number}-2"
     assert second.payment_url != first.payment_url
+
+
+def test_bank_calls_trust_the_russian_root_ca():
+    context = tbank.ssl_context()
+    names = [
+        value
+        for cert in context.get_ca_certs()
+        for field in cert["subject"]
+        for key, value in field
+        if key == "commonName"
+    ]
+    assert "Russian Trusted Root CA" in names
+    assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
