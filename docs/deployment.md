@@ -4,7 +4,7 @@
 
 ## Текущая версия
 
-- Релиз: `/srv/romeo-marketplace/releases/20261016-090618-payments`; фактическая ссылка `/srv/romeo-marketplace/current` проверена при выкладке. Собран из Git-коммита `202e797` ветки `feat/payments` через `git archive` (без локальных патчей); `.env`, `media` и `.venv` — символические ссылки на общие каталоги, как в прежних релизах.
+- Релиз: `/srv/romeo-marketplace/releases/20261017-191855-messengers` (коммит `71688da`; прежняя запись: `20261016-090618-payments`); фактическая ссылка `/srv/romeo-marketplace/current` проверена при выкладке. Собран из Git-коммита `202e797` ветки `feat/payments` через `git archive` (без локальных патчей); `.env`, `media` и `.venv` — символические ссылки на общие каталоги, как в прежних релизах.
 - Python 3.13.15, Django 5.2, Gunicorn, PostgreSQL 18. Отдельные пользователь Linux и роль/база PostgreSQL: `romeo-marketplace` и `romeo_marketplace` соответственно. У рабочей роли нет прав суперпользователя и создания баз.
 - `romeo-marketplace.service` включена и слушает только `127.0.0.1:8002`. Caddy обслуживает HTTPS и статику; фотографии товаров выдаются из Beget S3 по подписанным ссылкам. `romeo-reservations.timer` каждую минуту освобождает истёкшие резервы.
 - Служебный сокет Gunicorn находится в `/run/romeo-marketplace/gunicorn.ctl`; каталог создаёт systemd с владельцем приложения и правами `0750`. Защита `ProtectSystem=strict` сохранена.
@@ -13,6 +13,24 @@
 - Начальные пароли генератора заменены случайными до публикации. Закрытая копия доступов на сервере: `/srv/romeo-marketplace/shared/preview-access.json`, права `0600`. Локальный файл для владельца: `.superpowers/deploy/server-access.md`; он исключён из Git. Не копировать эти файлы в публичные документы.
 
 Старая служба `romeo-shop.service` остановлена и отключена. Старые исходники `/srv/romeo-flowers` и база `romeo_flowers` сохранены. Посторонние службы не менялись.
+
+## Уведомления в Telegram и ВК — 17 октября 2026 года
+
+Релиз `/srv/romeo-marketplace/releases/20261017-191855-messengers` (коммит `71688da`).
+В «Настройках» кабинетов подключаются уведомления о новых заказах в Telegram и ВК
+(миграция 0016). В `runtime.env` добавлен `SITE_URL=https://flowers.aestory.space`;
+ключей бота и сообщества пока нет, поэтому оба канала показаны как «Канал ещё не
+подключён», а вебхуки `/messengers/telegram/webhook/` и `/messengers/vk/callback/`
+отвечают 403. Юнит `romeo-reservations.service` обновлён из `deploy/`: вторым шагом он
+запускает `send_notifications`. На релизе прошли 408 тестов. Резервная копия (база,
+`runtime.env`, прежний юнит): `/srv/backups/romeo-marketplace-before-messengers-20261017-191855`.
+Для отката верните `current` на `20261017-131337-tbank-form`, юнит — из резервной
+копии, затем `systemctl daemon-reload` и перезапуск службы.
+
+Чтобы включить каналы: дописать в `runtime.env` `TELEGRAM_BOT_TOKEN`,
+`TELEGRAM_BOT_USERNAME`, `VK_GROUP_ID`, `VK_GROUP_TOKEN`, `VK_CONFIRMATION_CODE`,
+перезапустить `romeo-marketplace.service` и выполнить от пользователя приложения
+`manage.py setup_messengers --settings=romeo_market.preview_settings`.
 
 ## Полная платёжная форма Т-Банка — 17 октября 2026 года
 
