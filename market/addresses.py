@@ -173,7 +173,7 @@ def suggest_addresses(query):
     if provider == "osm" and not settings.OSM_ADDRESS_SEARCH:
         return []
     digest = hashlib.sha256(query.casefold().encode()).hexdigest()
-    cache_key = f"address:v2:{provider}:{digest}"
+    cache_key = f"address:v3:{provider}:{digest}"
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -189,14 +189,19 @@ def suggest_addresses(query):
         region = (data.get("region_kladr_id") or "")[:2]
         value = item.get("value")
         full_value = item.get("unrestricted_value")
-        if (
-            region not in {"77", "50"}
-            or not data.get("house")
-            or not isinstance(value, str)
-            or not value
-            or not isinstance(full_value, str)
-            or not 1 <= len(full_value) <= 300
-        ):
+        if region not in {"77", "50"} or not isinstance(value, str) or not value:
+            continue
+        if not data.get("house"):
+            # Cities and streets are navigation suggestions, never order addresses.
+            results.append(
+                {
+                    "value": value[:300],
+                    "refine": True,
+                    "level": "street" if data.get("street") else "city",
+                }
+            )
+            continue
+        if not isinstance(full_value, str) or not 1 <= len(full_value) <= 300:
             continue
         selection = {
             "query": full_value,

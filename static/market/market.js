@@ -65,6 +65,11 @@ document.querySelectorAll("[data-address-form]").forEach((form) => {
     if (city) city.value = "";
     close();
     input.focus();
+    if (row.refine) {
+      input.value = row.value.replace(/[,\s]+$/, "") + ", ";
+      status.textContent = row.level === "street" ? "Улица выбрана. Введите номер дома." : "Город выбран. Начните вводить улицу.";
+      return;
+    }
     if (row.selection_token) {
       resolving = true;
       controller = new AbortController();
