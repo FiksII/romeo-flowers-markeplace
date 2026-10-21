@@ -20,12 +20,7 @@
       <p class="field-help">Реквизиты проверяет администратор перед первой выплатой.</p>
     </section>
     <section class="form-card">
-      <h2>Зона доставки</h2>
-      <p class="field-help">Выберите на панели слева инструмент «многоугольник» или «прямоугольник», отметьте углы зоны и замкните её на первой точке. Нижние кнопки панели меняют углы, двигают зону и стирают её. Покупатель увидит доставку, только если его адрес внутри зоны.</p>
-      {% include 'market/partials/field.html' with field=form.delivery_zone %}
-      <div class="shop-map shop-map-tall" data-shop-map="zone" data-lat="{{ shop.latitude|unlocalize_money }}" data-lon="{{ shop.longitude|unlocalize_money }}" role="application" aria-label="Карта зоны доставки"></div>
-      <p class="field-help zone-status" data-zone-status role="status">{% if shop.delivery_zone %}Зона задана.{% else %}Зона ещё не нарисована.{% endif %}</p>
-      <noscript><p class="notice error">Для рисования зоны нужен JavaScript.</p></noscript>
+      {% include 'market/partials/delivery_zone_editor.html' %}
       <div class="two-fields">
         {% include 'market/partials/field.html' with field=form.minimum_order %}
       </div>

@@ -66,49 +66,156 @@ document.querySelectorAll('[data-shop-map="location"]').forEach((element) => {
 });
 
 document.querySelectorAll('[data-shop-map="zone"]').forEach((element) => {
-  if (!window.L || !L.PM) return;
+  const editor = element.closest("[data-zone-editor]") || element.closest("form");
   const form = element.closest("form");
-  const field = form.querySelector('[name="delivery_zone"]');
-  const status = form.querySelector("[data-zone-status]");
-  const { map } = startMap(element);
+  const field = editor.querySelector('[name="delivery_zone"]');
+  const status = editor.querySelector("[data-zone-status]");
+  if (!window.L || !L.PM) {
+    if (status) status.textContent = "Карта не загрузилась. Обновите страницу, чтобы настроить зону.";
+    return;
+  }
+  const state = startMap(element), { map } = state;
+  let marker = state.marker;
+  const zones = L.featureGroup().addTo(map);
+  const pending = new Set();
+  let areas = [], version = "";
+  const picker = editor.querySelector("[data-area-picker]");
+  const list = picker?.querySelector("[data-area-list]");
+  const selected = picker?.querySelector("[data-area-selected]");
+  const loading = picker?.querySelector("[data-area-loading]");
+  const search = picker?.querySelector("[data-area-search]");
+  const region = picker?.querySelector("[data-area-region]");
+  const areaLayers = (id) => zones.getLayers().filter((layer) => layer.feature?.properties?.area_id === id);
+  const normal = (text) => text.toLocaleLowerCase("ru").replaceAll("ё", "е");
+  const syncChoices = () => {
+    list?.querySelectorAll("input[data-area-id]").forEach((input) => {
+      input.checked = areaLayers(input.dataset.areaId).length > 0;
+      input.disabled = pending.has(input.dataset.areaId);
+    });
+    if (!selected) return;
+    selected.replaceChildren();
+    const seen = new Set();
+    zones.eachLayer((layer) => {
+      const props = layer.feature?.properties || {};
+      const id = props.area_id;
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = (props.name || "Территория") + " ×";
+      button.setAttribute("aria-label", "Удалить: " + (props.name || "территория"));
+      button.addEventListener("click", () => { areaLayers(id).forEach((row) => zones.removeLayer(row)); sync(); });
+      selected.append(button);
+    });
+  };
+  const sync = () => {
+    const data = zones.toGeoJSON(6);
+    field.value = data.features.length ? JSON.stringify(data) : "";
+    if (status) status.textContent = data.features.length ? `Контуров: ${data.features.length}. Не забудьте сохранить.` : "Зона ещё не нарисована. Выберите территорию или нарисуйте контур.";
+    syncChoices();
+  };
+  const adopt = (layer, properties = {}) => {
+    layer.feature = { type: "Feature", properties, geometry: layer.toGeoJSON().geometry };
+    layer.setStyle(ZONE_STYLE);
+    zones.addLayer(layer);
+    if (properties.name) {
+      const label = document.createElement("span");
+      label.textContent = properties.name;
+      layer.bindTooltip(label);
+    }
+    ["pm:edit", "pm:dragend", "pm:vertexadded", "pm:vertexremoved", "pm:markerdragend"].forEach((name) => layer.on(name, sync));
+    layer.on("pm:remove", () => { zones.removeLayer(layer); sync(); });
+  };
+  const addFeature = (feature) => {
+    L.geoJSON(feature).eachLayer((layer) => adopt(layer, feature.properties || {}));
+  };
   map.pm.setLang("ru");
-  map.pm.setGlobalOptions({ pathOptions: ZONE_STYLE, templineStyle: ZONE_STYLE, hintlineStyle: { ...ZONE_STYLE, dashArray: [5, 5] } });
+  map.pm.setGlobalOptions({ pathOptions: ZONE_STYLE, templineStyle: ZONE_STYLE, hintlineStyle: { ...ZONE_STYLE, dashArray: [5, 5] }, allowSelfIntersection: false });
   map.pm.addControls({
-    position: "topleft",
-    drawMarker: false, drawCircleMarker: false, drawPolyline: false, drawText: false,
+    position: "topleft", drawMarker: false, drawCircleMarker: false, drawPolyline: false, drawText: false,
     drawCircle: false, drawRectangle: true, drawPolygon: true,
     editMode: true, dragMode: true, cutPolygon: false, rotateMode: false, removalMode: true,
   });
-  let zone = null;
-  const points = () => zone.getLatLngs()[0].map((point) => [Number(point.lat.toFixed(6)), Number(point.lng.toFixed(6))]);
-  const sync = () => {
-    if (!zone) {
-      field.value = "";
-      if (status) status.textContent = "Зона ещё не нарисована.";
-      return;
-    }
-    field.value = JSON.stringify(points());
-    if (status) status.textContent = `Зона задана: ${zone.getLatLngs()[0].length} точек. Не забудьте сохранить.`;
-  };
-  const adopt = (layer) => {
-    if (zone && zone !== layer) map.removeLayer(zone);
-    zone = layer;
-    zone.setStyle(ZONE_STYLE);
-    ["pm:edit", "pm:dragend", "pm:vertexadded", "pm:vertexremoved", "pm:markerdragend"].forEach((name) => zone.on(name, sync));
-    zone.on("pm:remove", () => { zone = null; sync(); });
-    sync();
-  };
-  map.on("pm:create", (event) => { if (event.shape === "Polygon" || event.shape === "Rectangle") adopt(event.layer); });
-  map.on("pm:remove", (event) => { if (event.layer === zone) { zone = null; sync(); } });
-
+  map.on("pm:create", (event) => {
+    if (event.shape === "Polygon" || event.shape === "Rectangle") { adopt(event.layer); sync(); }
+  });
+  map.on("pm:remove", (event) => { zones.removeLayer(event.layer); sync(); });
+  form?.addEventListener("address:selected", (event) => {
+    const point = [parseFloat(event.detail.latitude), parseFloat(event.detail.longitude)];
+    if (!point.every(Number.isFinite)) return;
+    if (marker) marker.setLatLng(point);
+    else marker = L.marker(point, { keyboard: false, title: "Магазин" }).addTo(map);
+    map.setView(point, 12);
+  });
   try {
     const saved = JSON.parse(field.value || "[]");
-    if (Array.isArray(saved) && saved.length >= 3) {
-      adopt(L.polygon(saved, ZONE_STYLE).addTo(map));
-      map.fitBounds(zone.getBounds(), { padding: [24, 24] });
-      status && (status.textContent = `Зона задана: ${saved.length} точек.`);
-    }
+    if (Array.isArray(saved) && saved.length >= 3) adopt(L.polygon(saved, ZONE_STYLE));
+    else if (saved?.type === "FeatureCollection") saved.features.forEach(addFeature);
+    if (zones.getLayers().length) map.fitBounds(zones.getBounds(), { padding: [24, 24] });
+    syncChoices();
+    if (!zones.getLayers().length && status) status.textContent = "Зона ещё не нарисована. Выберите территорию или нарисуйте контур.";
   } catch (error) {
-    field.value = "";
+    if (status) status.textContent = "Не удалось показать сохранённую зону. Нарисуйте её заново.";
   }
+  const toggle = async (area, checked, input) => {
+    if (!checked) { areaLayers(area.id).forEach((layer) => zones.removeLayer(layer)); sync(); return; }
+    if (areaLayers(area.id).length || pending.has(area.id)) return;
+    pending.add(area.id);
+    input.disabled = true;
+    if (loading) loading.textContent = "Загрузка границ: " + area.name;
+    try {
+      const url = new URL(area.id + ".geojson?v=" + encodeURIComponent(version), new URL(picker.dataset.indexUrl, document.baseURI));
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Area unavailable");
+      const feature = await response.json();
+      feature.properties = { area_id: area.id, name: area.name };
+      addFeature(feature);
+      sync();
+      map.fitBounds(zones.getBounds(), { padding: [24, 24] });
+      if (loading) loading.textContent = "Территория добавлена. Границы можно изменить на карте.";
+    } catch (error) {
+      input.checked = false;
+      if (loading) loading.textContent = "Не удалось загрузить границы. Попробуйте выбрать территорию ещё раз или нарисуйте её на карте.";
+    } finally {
+      pending.delete(area.id);
+      input.disabled = false;
+      syncChoices();
+    }
+  };
+  const render = () => {
+    if (!list) return;
+    list.replaceChildren();
+    const query = normal(search.value.trim());
+    const matches = areas.filter((area) => (!region.value || region.value === area.kind) && normal(area.name + " " + (area.aliases || "")).includes(query));
+    matches.forEach((area) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.dataset.areaId = area.id;
+      input.checked = areaLayers(area.id).length > 0;
+      input.disabled = pending.has(area.id);
+      input.addEventListener("change", () => toggle(area, input.checked, input));
+      const text = document.createElement("span");
+      text.textContent = area.name;
+      label.append(input, text);
+      list.append(label);
+    });
+    if (!matches.length) list.textContent = "Территории не найдены. Можно нарисовать свою зону на карте.";
+  };
+  search?.addEventListener("input", render);
+  region?.addEventListener("change", render);
+  if (picker) fetch(picker.dataset.indexUrl).then((response) => {
+    if (!response.ok) throw new Error("Index unavailable");
+    return response.json();
+  }).then((data) => {
+    areas = data.areas; version = data.version;
+    render();
+    loading.textContent = `Территорий: ${areas.length}. Выберите несколько или нарисуйте свою зону.`;
+  }).catch(() => { loading.textContent = "Список территорий недоступен. Нарисуйте зону на карте или обновите страницу."; });
+  form?.addEventListener("submit", (event) => {
+    if (pending.size) {
+      event.preventDefault();
+      if (status) status.textContent = "Дождитесь загрузки выбранных территорий.";
+    }
+  });
 });

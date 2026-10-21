@@ -1,5 +1,6 @@
 {% extends 'market/base.html' %}
 {% block title %}{{ heading }} — Ромео{% endblock %}
+{% block map_assets %}{% if form.delivery_zone %}{% include 'market/partials/map_assets.html' with geoman=True %}{% endif %}{% endblock %}
 {% block content %}
 <section class="shell section-space {% if not operator_form %}narrow-section{% endif %}">
   {% if operator_form %}<a class="back-link" href="{% url 'market:operator' %}#shops">← Все магазины</a>
@@ -8,7 +9,7 @@
   {% if operator_form and shop %}{% include 'market/partials/partner_nav.html' %}{% endif %}
   <form method="post" enctype="multipart/form-data" class="form-card {% if operator_form %}operator-shop-form{% endif %}" {% if address_form %}data-address-form{% endif %} {% if product_form %}data-product-form{% endif %}>
     {% csrf_token %}{% include 'market/partials/form_fields.html' %}
-    {% if operator_form %}<p class="field-help">Активный магазин показывается на витрине. Статус «Приостановлен» скрывает магазин от покупателей; заказы и история сохраняются. Расписание, зона доставки и букеты настраиваются в кабинете магазина.</p>{% endif %}
+    {% if operator_form %}<p class="field-help">Активный магазин показывается на витрине. Статус «Приостановлен» скрывает магазин от покупателей; заказы и история сохраняются. Расписание и букеты настраиваются в кабинете магазина.</p>{% endif %}
     <button class="button button-primary">{{ button }}</button>
   </form>
 </section>

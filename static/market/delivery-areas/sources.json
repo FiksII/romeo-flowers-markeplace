@@ -1,0 +1,1612 @@
+{
+  "downloaded": "2026-10-21",
+  "license": "ODbL-1.0",
+  "copyright": "OpenStreetMap contributors",
+  "source_regions": [
+    51490,
+    102269
+  ],
+  "simplification_degrees": 5e-05,
+  "areas": [
+    {
+      "id": "osm-181345",
+      "osm_url": "https://www.openstreetmap.org/relation/181345",
+      "name": "городской округ Красногорск",
+      "version": 125,
+      "osm_timestamp": "2025-11-24T16:09:35Z",
+      "points": 1147
+    },
+    {
+      "id": "osm-181346",
+      "osm_url": "https://www.openstreetmap.org/relation/181346",
+      "name": "Одинцовский городской округ",
+      "version": 170,
+      "osm_timestamp": "2026-03-13T16:58:39Z",
+      "points": 2584
+    },
+    {
+      "id": "osm-189473",
+      "osm_url": "https://www.openstreetmap.org/relation/189473",
+      "name": "городской округ Жуковский",
+      "version": 43,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 197
+    },
+    {
+      "id": "osm-181355",
+      "osm_url": "https://www.openstreetmap.org/relation/181355",
+      "name": "городской округ Краснознаменск",
+      "version": 41,
+      "osm_timestamp": "2025-07-07T21:50:56Z",
+      "points": 110
+    },
+    {
+      "id": "osm-181356",
+      "osm_url": "https://www.openstreetmap.org/relation/181356",
+      "name": "городской округ Коломна",
+      "version": 74,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 1991
+    },
+    {
+      "id": "osm-179588",
+      "osm_url": "https://www.openstreetmap.org/relation/179588",
+      "name": "городской округ Щёлково",
+      "version": 88,
+      "osm_timestamp": "2026-09-08T09:31:34Z",
+      "points": 1863
+    },
+    {
+      "id": "osm-1026234",
+      "osm_url": "https://www.openstreetmap.org/relation/1026234",
+      "name": "муниципальный округ Серебряные Пруды",
+      "version": 38,
+      "osm_timestamp": "2025-11-15T09:25:54Z",
+      "points": 1256
+    },
+    {
+      "id": "osm-1026233",
+      "osm_url": "https://www.openstreetmap.org/relation/1026233",
+      "name": "городской округ Воскресенск",
+      "version": 46,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 1013
+    },
+    {
+      "id": "osm-178922",
+      "osm_url": "https://www.openstreetmap.org/relation/178922",
+      "name": "Рузский муниципальный округ",
+      "version": 56,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 2060
+    },
+    {
+      "id": "osm-178921",
+      "osm_url": "https://www.openstreetmap.org/relation/178921",
+      "name": "Волоколамский муниципальный округ",
+      "version": 58,
+      "osm_timestamp": "2026-04-18T00:18:14Z",
+      "points": 2232
+    },
+    {
+      "id": "osm-184002",
+      "osm_url": "https://www.openstreetmap.org/relation/184002",
+      "name": "городской округ Люберцы",
+      "version": 83,
+      "osm_timestamp": "2026-08-14T12:09:00Z",
+      "points": 709
+    },
+    {
+      "id": "osm-184001",
+      "osm_url": "https://www.openstreetmap.org/relation/184001",
+      "name": "городской округ Домодедово",
+      "version": 51,
+      "osm_timestamp": "2026-06-08T00:00:55Z",
+      "points": 1626
+    },
+    {
+      "id": "osm-179629",
+      "osm_url": "https://www.openstreetmap.org/relation/179629",
+      "name": "Богородский городской округ",
+      "version": 69,
+      "osm_timestamp": "2025-06-09T17:49:14Z",
+      "points": 1439
+    },
+    {
+      "id": "osm-179494",
+      "osm_url": "https://www.openstreetmap.org/relation/179494",
+      "name": "Пушкинский городской округ",
+      "version": 68,
+      "osm_timestamp": "2026-04-18T00:11:22Z",
+      "points": 1217
+    },
+    {
+      "id": "osm-179640",
+      "osm_url": "https://www.openstreetmap.org/relation/179640",
+      "name": "Орехово-Зуевский городской округ",
+      "version": 61,
+      "osm_timestamp": "2025-05-27T16:00:20Z",
+      "points": 1272
+    },
+    {
+      "id": "osm-1028612",
+      "osm_url": "https://www.openstreetmap.org/relation/1028612",
+      "name": "городской округ Восход",
+      "version": 27,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 52
+    },
+    {
+      "id": "osm-180621",
+      "osm_url": "https://www.openstreetmap.org/relation/180621",
+      "name": "Раменский муниципальный округ",
+      "version": 82,
+      "osm_timestamp": "2026-07-13T21:19:10Z",
+      "points": 1913
+    },
+    {
+      "id": "osm-184751",
+      "osm_url": "https://www.openstreetmap.org/relation/184751",
+      "name": "городской округ Молодёжный",
+      "version": 26,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 11
+    },
+    {
+      "id": "osm-184746",
+      "osm_url": "https://www.openstreetmap.org/relation/184746",
+      "name": "городской округ Лосино-Петровский",
+      "version": 36,
+      "osm_timestamp": "2025-01-03T07:11:26Z",
+      "points": 540
+    },
+    {
+      "id": "osm-179639",
+      "osm_url": "https://www.openstreetmap.org/relation/179639",
+      "name": "Павлово-Посадский городской округ",
+      "version": 40,
+      "osm_timestamp": "2024-01-01T17:54:41Z",
+      "points": 440
+    },
+    {
+      "id": "osm-184744",
+      "osm_url": "https://www.openstreetmap.org/relation/184744",
+      "name": "Наро-Фоминский городской округ",
+      "version": 68,
+      "osm_timestamp": "2024-07-03T09:14:14Z",
+      "points": 2101
+    },
+    {
+      "id": "osm-181165",
+      "osm_url": "https://www.openstreetmap.org/relation/181165",
+      "name": "муниципальный округ Чехов",
+      "version": 48,
+      "osm_timestamp": "2026-08-05T15:12:20Z",
+      "points": 1161
+    },
+    {
+      "id": "osm-184745",
+      "osm_url": "https://www.openstreetmap.org/relation/184745",
+      "name": "городской округ Дубна",
+      "version": 35,
+      "osm_timestamp": "2024-08-17T16:27:12Z",
+      "points": 185
+    },
+    {
+      "id": "osm-184664",
+      "osm_url": "https://www.openstreetmap.org/relation/184664",
+      "name": "городской округ Кашира",
+      "version": 36,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 827
+    },
+    {
+      "id": "osm-184665",
+      "osm_url": "https://www.openstreetmap.org/relation/184665",
+      "name": "муниципальный округ Зарайск",
+      "version": 47,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 1154
+    },
+    {
+      "id": "osm-184667",
+      "osm_url": "https://www.openstreetmap.org/relation/184667",
+      "name": "муниципальный округ Луховицы",
+      "version": 49,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 905
+    },
+    {
+      "id": "osm-186462",
+      "osm_url": "https://www.openstreetmap.org/relation/186462",
+      "name": "городской округ Черноголовка",
+      "version": 35,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 455
+    },
+    {
+      "id": "osm-186463",
+      "osm_url": "https://www.openstreetmap.org/relation/186463",
+      "name": "городской округ Ступино",
+      "version": 99,
+      "osm_timestamp": "2026-06-08T00:00:55Z",
+      "points": 1412
+    },
+    {
+      "id": "osm-184071",
+      "osm_url": "https://www.openstreetmap.org/relation/184071",
+      "name": "городской округ Клин",
+      "version": 50,
+      "osm_timestamp": "2025-06-18T21:18:52Z",
+      "points": 1699
+    },
+    {
+      "id": "osm-184072",
+      "osm_url": "https://www.openstreetmap.org/relation/184072",
+      "name": "муниципальный округ Истра",
+      "version": 85,
+      "osm_timestamp": "2025-11-06T14:11:30Z",
+      "points": 1897
+    },
+    {
+      "id": "osm-1703082",
+      "osm_url": "https://www.openstreetmap.org/relation/1703082",
+      "name": "городской округ Долгопрудный",
+      "version": 36,
+      "osm_timestamp": "2026-05-25T22:00:11Z",
+      "points": 252
+    },
+    {
+      "id": "osm-184073",
+      "osm_url": "https://www.openstreetmap.org/relation/184073",
+      "name": "муниципальный округ Лотошино",
+      "version": 46,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 1209
+    },
+    {
+      "id": "osm-173763",
+      "osm_url": "https://www.openstreetmap.org/relation/173763",
+      "name": "Дмитровский муниципальный округ",
+      "version": 63,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 3360
+    },
+    {
+      "id": "osm-184074",
+      "osm_url": "https://www.openstreetmap.org/relation/184074",
+      "name": "муниципальный округ Шаховская",
+      "version": 34,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 2238
+    },
+    {
+      "id": "osm-1703084",
+      "osm_url": "https://www.openstreetmap.org/relation/1703084",
+      "name": "городской округ Звёздный городок",
+      "version": 25,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 27
+    },
+    {
+      "id": "osm-184075",
+      "osm_url": "https://www.openstreetmap.org/relation/184075",
+      "name": "Можайский муниципальный округ",
+      "version": 49,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 2430
+    },
+    {
+      "id": "osm-181290",
+      "osm_url": "https://www.openstreetmap.org/relation/181290",
+      "name": "Ленинский городской округ",
+      "version": 81,
+      "osm_timestamp": "2024-12-06T10:48:00Z",
+      "points": 625
+    },
+    {
+      "id": "osm-181189",
+      "osm_url": "https://www.openstreetmap.org/relation/181189",
+      "name": "городской округ Подольск",
+      "version": 75,
+      "osm_timestamp": "2026-09-16T19:01:21Z",
+      "points": 1216
+    },
+    {
+      "id": "osm-1028434",
+      "osm_url": "https://www.openstreetmap.org/relation/1028434",
+      "name": "городской округ Котельники",
+      "version": 29,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 84
+    },
+    {
+      "id": "osm-974560",
+      "osm_url": "https://www.openstreetmap.org/relation/974560",
+      "name": "городской округ Фрязино",
+      "version": 32,
+      "osm_timestamp": "2026-09-08T09:31:34Z",
+      "points": 165
+    },
+    {
+      "id": "osm-1703085",
+      "osm_url": "https://www.openstreetmap.org/relation/1703085",
+      "name": "городской округ Бронницы",
+      "version": 22,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 243
+    },
+    {
+      "id": "osm-180416",
+      "osm_url": "https://www.openstreetmap.org/relation/180416",
+      "name": "муниципальный округ Шатура",
+      "version": 79,
+      "osm_timestamp": "2025-06-10T02:44:58Z",
+      "points": 1444
+    },
+    {
+      "id": "osm-1703097",
+      "osm_url": "https://www.openstreetmap.org/relation/1703097",
+      "name": "городской округ Электросталь",
+      "version": 26,
+      "osm_timestamp": "2024-01-29T18:21:21Z",
+      "points": 186
+    },
+    {
+      "id": "osm-1644065",
+      "osm_url": "https://www.openstreetmap.org/relation/1644065",
+      "name": "городской округ Власиха",
+      "version": 29,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 64
+    },
+    {
+      "id": "osm-184106",
+      "osm_url": "https://www.openstreetmap.org/relation/184106",
+      "name": "городской округ Реутов",
+      "version": 30,
+      "osm_timestamp": "2024-07-10T07:51:08Z",
+      "points": 98
+    },
+    {
+      "id": "osm-173406",
+      "osm_url": "https://www.openstreetmap.org/relation/173406",
+      "name": "городской округ Мытищи",
+      "version": 95,
+      "osm_timestamp": "2026-05-25T22:00:11Z",
+      "points": 787
+    },
+    {
+      "id": "osm-180838",
+      "osm_url": "https://www.openstreetmap.org/relation/180838",
+      "name": "городской округ Солнечногорск",
+      "version": 87,
+      "osm_timestamp": "2024-09-13T14:23:24Z",
+      "points": 2155
+    },
+    {
+      "id": "osm-184108",
+      "osm_url": "https://www.openstreetmap.org/relation/184108",
+      "name": "городской округ Балашиха",
+      "version": 75,
+      "osm_timestamp": "2026-05-30T02:08:04Z",
+      "points": 658
+    },
+    {
+      "id": "osm-1703094",
+      "osm_url": "https://www.openstreetmap.org/relation/1703094",
+      "name": "городской округ Химки",
+      "version": 43,
+      "osm_timestamp": "2026-06-29T07:37:45Z",
+      "points": 1366
+    },
+    {
+      "id": "osm-171929",
+      "osm_url": "https://www.openstreetmap.org/relation/171929",
+      "name": "Талдомский городской округ",
+      "version": 53,
+      "osm_timestamp": "2024-08-17T13:54:28Z",
+      "points": 684
+    },
+    {
+      "id": "osm-1703092",
+      "osm_url": "https://www.openstreetmap.org/relation/1703092",
+      "name": "городской округ Лыткарино",
+      "version": 22,
+      "osm_timestamp": "2026-05-01T06:19:43Z",
+      "points": 115
+    },
+    {
+      "id": "osm-184684",
+      "osm_url": "https://www.openstreetmap.org/relation/184684",
+      "name": "муниципальный округ Егорьевск",
+      "version": 49,
+      "osm_timestamp": "2025-03-20T16:48:35Z",
+      "points": 1426
+    },
+    {
+      "id": "osm-1703091",
+      "osm_url": "https://www.openstreetmap.org/relation/1703091",
+      "name": "городской округ Лобня",
+      "version": 30,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 265
+    },
+    {
+      "id": "osm-1703090",
+      "osm_url": "https://www.openstreetmap.org/relation/1703090",
+      "name": "городской округ Королёв",
+      "version": 33,
+      "osm_timestamp": "2024-05-15T15:26:37Z",
+      "points": 395
+    },
+    {
+      "id": "osm-171922",
+      "osm_url": "https://www.openstreetmap.org/relation/171922",
+      "name": "Сергиево-Посадский городской округ",
+      "version": 72,
+      "osm_timestamp": "2023-09-16T23:08:41Z",
+      "points": 1820
+    },
+    {
+      "id": "osm-184621",
+      "osm_url": "https://www.openstreetmap.org/relation/184621",
+      "name": "городской округ Серпухов",
+      "version": 44,
+      "osm_timestamp": "2025-07-16T15:47:30Z",
+      "points": 1044
+    },
+    {
+      "id": "osm-2162196",
+      "osm_url": "https://www.openstreetmap.org/relation/2162196",
+      "name": "Центральный административный округ",
+      "version": 135,
+      "osm_timestamp": "2026-10-18T17:35:59Z",
+      "points": 272
+    },
+    {
+      "id": "osm-1257484",
+      "osm_url": "https://www.openstreetmap.org/relation/1257484",
+      "name": "район Арбат",
+      "version": 66,
+      "osm_timestamp": "2026-04-06T19:38:24Z",
+      "points": 49
+    },
+    {
+      "id": "osm-2162195",
+      "osm_url": "https://www.openstreetmap.org/relation/2162195",
+      "name": "Басманный район",
+      "version": 107,
+      "osm_timestamp": "2026-07-13T08:46:22Z",
+      "points": 105
+    },
+    {
+      "id": "osm-1255942",
+      "osm_url": "https://www.openstreetmap.org/relation/1255942",
+      "name": "район Замоскворечье",
+      "version": 72,
+      "osm_timestamp": "2026-02-16T08:37:02Z",
+      "points": 51
+    },
+    {
+      "id": "osm-1257218",
+      "osm_url": "https://www.openstreetmap.org/relation/1257218",
+      "name": "Красносельский район",
+      "version": 96,
+      "osm_timestamp": "2026-07-13T08:46:22Z",
+      "points": 75
+    },
+    {
+      "id": "osm-364001",
+      "osm_url": "https://www.openstreetmap.org/relation/364001",
+      "name": "Мещанский район",
+      "version": 112,
+      "osm_timestamp": "2026-05-25T19:31:13Z",
+      "points": 84
+    },
+    {
+      "id": "osm-1275551",
+      "osm_url": "https://www.openstreetmap.org/relation/1275551",
+      "name": "Пресненский район",
+      "version": 79,
+      "osm_timestamp": "2026-09-14T01:08:07Z",
+      "points": 100
+    },
+    {
+      "id": "osm-1275608",
+      "osm_url": "https://www.openstreetmap.org/relation/1275608",
+      "name": "Таганский район",
+      "version": 86,
+      "osm_timestamp": "2026-10-18T17:35:59Z",
+      "points": 84
+    },
+    {
+      "id": "osm-1257786",
+      "osm_url": "https://www.openstreetmap.org/relation/1257786",
+      "name": "Тверской район",
+      "version": 151,
+      "osm_timestamp": "2026-09-14T01:08:07Z",
+      "points": 105
+    },
+    {
+      "id": "osm-1255987",
+      "osm_url": "https://www.openstreetmap.org/relation/1255987",
+      "name": "район Хамовники",
+      "version": 53,
+      "osm_timestamp": "2026-06-08T10:42:17Z",
+      "points": 57
+    },
+    {
+      "id": "osm-1275627",
+      "osm_url": "https://www.openstreetmap.org/relation/1275627",
+      "name": "район Якиманка",
+      "version": 63,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 83
+    },
+    {
+      "id": "osm-162903",
+      "osm_url": "https://www.openstreetmap.org/relation/162903",
+      "name": "Северный административный округ",
+      "version": 85,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 487
+    },
+    {
+      "id": "osm-446079",
+      "osm_url": "https://www.openstreetmap.org/relation/446079",
+      "name": "район Аэропорт",
+      "version": 48,
+      "osm_timestamp": "2025-01-07T21:50:23Z",
+      "points": 31
+    },
+    {
+      "id": "osm-445298",
+      "osm_url": "https://www.openstreetmap.org/relation/445298",
+      "name": "район Беговой",
+      "version": 40,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 38
+    },
+    {
+      "id": "osm-446082",
+      "osm_url": "https://www.openstreetmap.org/relation/446082",
+      "name": "Бескудниковский район",
+      "version": 48,
+      "osm_timestamp": "2026-05-19T18:51:58Z",
+      "points": 56
+    },
+    {
+      "id": "osm-446078",
+      "osm_url": "https://www.openstreetmap.org/relation/446078",
+      "name": "Войковский район",
+      "version": 59,
+      "osm_timestamp": "2026-06-17T09:57:26Z",
+      "points": 64
+    },
+    {
+      "id": "osm-445285",
+      "osm_url": "https://www.openstreetmap.org/relation/445285",
+      "name": "район Восточное Дегунино",
+      "version": 40,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 65
+    },
+    {
+      "id": "osm-445297",
+      "osm_url": "https://www.openstreetmap.org/relation/445297",
+      "name": "Головинский район",
+      "version": 51,
+      "osm_timestamp": "2026-07-04T10:38:47Z",
+      "points": 48
+    },
+    {
+      "id": "osm-445278",
+      "osm_url": "https://www.openstreetmap.org/relation/445278",
+      "name": "Дмитровский район",
+      "version": 46,
+      "osm_timestamp": "2026-05-19T18:51:58Z",
+      "points": 56
+    },
+    {
+      "id": "osm-445275",
+      "osm_url": "https://www.openstreetmap.org/relation/445275",
+      "name": "район Западное Дегунино",
+      "version": 47,
+      "osm_timestamp": "2026-06-29T07:37:45Z",
+      "points": 50
+    },
+    {
+      "id": "osm-445277",
+      "osm_url": "https://www.openstreetmap.org/relation/445277",
+      "name": "район Коптево",
+      "version": 49,
+      "osm_timestamp": "2026-07-11T04:57:13Z",
+      "points": 72
+    },
+    {
+      "id": "osm-445273",
+      "osm_url": "https://www.openstreetmap.org/relation/445273",
+      "name": "район Левобережный",
+      "version": 49,
+      "osm_timestamp": "2026-05-19T12:16:29Z",
+      "points": 74
+    },
+    {
+      "id": "osm-445283",
+      "osm_url": "https://www.openstreetmap.org/relation/445283",
+      "name": "Молжаниновский район",
+      "version": 38,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 254
+    },
+    {
+      "id": "osm-445281",
+      "osm_url": "https://www.openstreetmap.org/relation/445281",
+      "name": "Савёловский район",
+      "version": 47,
+      "osm_timestamp": "2025-01-07T21:50:23Z",
+      "points": 26
+    },
+    {
+      "id": "osm-445280",
+      "osm_url": "https://www.openstreetmap.org/relation/445280",
+      "name": "район Сокол",
+      "version": 48,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 29
+    },
+    {
+      "id": "osm-445276",
+      "osm_url": "https://www.openstreetmap.org/relation/445276",
+      "name": "Тимирязевский район",
+      "version": 45,
+      "osm_timestamp": "2026-07-11T04:57:13Z",
+      "points": 74
+    },
+    {
+      "id": "osm-445274",
+      "osm_url": "https://www.openstreetmap.org/relation/445274",
+      "name": "район Ховрино",
+      "version": 49,
+      "osm_timestamp": "2026-06-29T07:37:45Z",
+      "points": 30
+    },
+    {
+      "id": "osm-445299",
+      "osm_url": "https://www.openstreetmap.org/relation/445299",
+      "name": "Хорошёвский район",
+      "version": 52,
+      "osm_timestamp": "2024-04-15T18:02:14Z",
+      "points": 60
+    },
+    {
+      "id": "osm-1252558",
+      "osm_url": "https://www.openstreetmap.org/relation/1252558",
+      "name": "Северо-Восточный административный округ",
+      "version": 102,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 327
+    },
+    {
+      "id": "osm-1250526",
+      "osm_url": "https://www.openstreetmap.org/relation/1250526",
+      "name": "Алексеевский район",
+      "version": 41,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 53
+    },
+    {
+      "id": "osm-446083",
+      "osm_url": "https://www.openstreetmap.org/relation/446083",
+      "name": "Алтуфьевский район",
+      "version": 34,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 32
+    },
+    {
+      "id": "osm-1252465",
+      "osm_url": "https://www.openstreetmap.org/relation/1252465",
+      "name": "Бабушкинский район",
+      "version": 57,
+      "osm_timestamp": "2026-06-16T14:41:37Z",
+      "points": 92
+    },
+    {
+      "id": "osm-446085",
+      "osm_url": "https://www.openstreetmap.org/relation/446085",
+      "name": "район Бибирево",
+      "version": 35,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 83
+    },
+    {
+      "id": "osm-1252424",
+      "osm_url": "https://www.openstreetmap.org/relation/1252424",
+      "name": "Бутырский район",
+      "version": 46,
+      "osm_timestamp": "2025-12-20T20:36:50Z",
+      "points": 55
+    },
+    {
+      "id": "osm-446084",
+      "osm_url": "https://www.openstreetmap.org/relation/446084",
+      "name": "район Лианозово",
+      "version": 36,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 33
+    },
+    {
+      "id": "osm-1252448",
+      "osm_url": "https://www.openstreetmap.org/relation/1252448",
+      "name": "Лосиноостровский район",
+      "version": 53,
+      "osm_timestamp": "2025-06-15T17:37:24Z",
+      "points": 47
+    },
+    {
+      "id": "osm-1250724",
+      "osm_url": "https://www.openstreetmap.org/relation/1250724",
+      "name": "район Марфино",
+      "version": 54,
+      "osm_timestamp": "2025-05-10T16:11:07Z",
+      "points": 60
+    },
+    {
+      "id": "osm-1252407",
+      "osm_url": "https://www.openstreetmap.org/relation/1252407",
+      "name": "район Марьина Роща",
+      "version": 76,
+      "osm_timestamp": "2026-05-08T13:03:42Z",
+      "points": 50
+    },
+    {
+      "id": "osm-1250619",
+      "osm_url": "https://www.openstreetmap.org/relation/1250619",
+      "name": "Останкинский район",
+      "version": 94,
+      "osm_timestamp": "2026-05-01T00:24:06Z",
+      "points": 84
+    },
+    {
+      "id": "osm-445282",
+      "osm_url": "https://www.openstreetmap.org/relation/445282",
+      "name": "район Отрадное",
+      "version": 45,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 120
+    },
+    {
+      "id": "osm-446272",
+      "osm_url": "https://www.openstreetmap.org/relation/446272",
+      "name": "район Ростокино",
+      "version": 50,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 49
+    },
+    {
+      "id": "osm-1250618",
+      "osm_url": "https://www.openstreetmap.org/relation/1250618",
+      "name": "район Свиблово",
+      "version": 51,
+      "osm_timestamp": "2026-06-16T14:41:37Z",
+      "points": 50
+    },
+    {
+      "id": "osm-446086",
+      "osm_url": "https://www.openstreetmap.org/relation/446086",
+      "name": "район Северное Медведково",
+      "version": 35,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 96
+    },
+    {
+      "id": "osm-445284",
+      "osm_url": "https://www.openstreetmap.org/relation/445284",
+      "name": "район Северный",
+      "version": 37,
+      "osm_timestamp": "2026-05-25T22:00:11Z",
+      "points": 64
+    },
+    {
+      "id": "osm-446087",
+      "osm_url": "https://www.openstreetmap.org/relation/446087",
+      "name": "район Южное Медведково",
+      "version": 36,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 138
+    },
+    {
+      "id": "osm-446271",
+      "osm_url": "https://www.openstreetmap.org/relation/446271",
+      "name": "Ярославский район",
+      "version": 50,
+      "osm_timestamp": "2024-04-15T18:02:14Z",
+      "points": 109
+    },
+    {
+      "id": "osm-1320234",
+      "osm_url": "https://www.openstreetmap.org/relation/1320234",
+      "name": "Восточный административный округ",
+      "version": 86,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 489
+    },
+    {
+      "id": "osm-1319060",
+      "osm_url": "https://www.openstreetmap.org/relation/1319060",
+      "name": "район Богородское",
+      "version": 57,
+      "osm_timestamp": "2025-10-17T10:19:39Z",
+      "points": 84
+    },
+    {
+      "id": "osm-574667",
+      "osm_url": "https://www.openstreetmap.org/relation/574667",
+      "name": "район Вешняки",
+      "version": 44,
+      "osm_timestamp": "2024-09-25T12:34:23Z",
+      "points": 15
+    },
+    {
+      "id": "osm-1255704",
+      "osm_url": "https://www.openstreetmap.org/relation/1255704",
+      "name": "район Восточное Измайлово",
+      "version": 70,
+      "osm_timestamp": "2026-02-18T20:44:45Z",
+      "points": 28
+    },
+    {
+      "id": "osm-1255775",
+      "osm_url": "https://www.openstreetmap.org/relation/1255775",
+      "name": "район Восточный",
+      "version": 28,
+      "osm_timestamp": "2026-01-12T07:26:28Z",
+      "points": 117
+    },
+    {
+      "id": "osm-1319142",
+      "osm_url": "https://www.openstreetmap.org/relation/1319142",
+      "name": "район Гольяново",
+      "version": 49,
+      "osm_timestamp": "2025-10-02T08:19:29Z",
+      "points": 62
+    },
+    {
+      "id": "osm-1319263",
+      "osm_url": "https://www.openstreetmap.org/relation/1319263",
+      "name": "район Ивановское",
+      "version": 75,
+      "osm_timestamp": "2026-07-28T11:04:57Z",
+      "points": 75
+    },
+    {
+      "id": "osm-1319245",
+      "osm_url": "https://www.openstreetmap.org/relation/1319245",
+      "name": "район Измайлово",
+      "version": 70,
+      "osm_timestamp": "2026-02-18T20:44:45Z",
+      "points": 45
+    },
+    {
+      "id": "osm-1255576",
+      "osm_url": "https://www.openstreetmap.org/relation/1255576",
+      "name": "район Косино-Ухтомский",
+      "version": 33,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 131
+    },
+    {
+      "id": "osm-1319078",
+      "osm_url": "https://www.openstreetmap.org/relation/1319078",
+      "name": "район Метрогородок",
+      "version": 53,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 123
+    },
+    {
+      "id": "osm-1298976",
+      "osm_url": "https://www.openstreetmap.org/relation/1298976",
+      "name": "район Новогиреево",
+      "version": 45,
+      "osm_timestamp": "2026-07-28T11:04:57Z",
+      "points": 41
+    },
+    {
+      "id": "osm-1255602",
+      "osm_url": "https://www.openstreetmap.org/relation/1255602",
+      "name": "район Новокосино",
+      "version": 34,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 40
+    },
+    {
+      "id": "osm-1299013",
+      "osm_url": "https://www.openstreetmap.org/relation/1299013",
+      "name": "район Перово",
+      "version": 45,
+      "osm_timestamp": "2026-01-30T05:19:52Z",
+      "points": 64
+    },
+    {
+      "id": "osm-1299106",
+      "osm_url": "https://www.openstreetmap.org/relation/1299106",
+      "name": "район Преображенское",
+      "version": 62,
+      "osm_timestamp": "2026-07-26T22:40:36Z",
+      "points": 73
+    },
+    {
+      "id": "osm-1255680",
+      "osm_url": "https://www.openstreetmap.org/relation/1255680",
+      "name": "район Северное Измайлово",
+      "version": 53,
+      "osm_timestamp": "2026-01-12T07:26:28Z",
+      "points": 30
+    },
+    {
+      "id": "osm-1299031",
+      "osm_url": "https://www.openstreetmap.org/relation/1299031",
+      "name": "район Соколиная Гора",
+      "version": 56,
+      "osm_timestamp": "2026-07-26T22:40:36Z",
+      "points": 73
+    },
+    {
+      "id": "osm-364551",
+      "osm_url": "https://www.openstreetmap.org/relation/364551",
+      "name": "район Сокольники",
+      "version": 48,
+      "osm_timestamp": "2026-05-18T06:31:15Z",
+      "points": 98
+    },
+    {
+      "id": "osm-1278703",
+      "osm_url": "https://www.openstreetmap.org/relation/1278703",
+      "name": "Юго-Восточный административный округ",
+      "version": 92,
+      "osm_timestamp": "2026-10-18T17:35:59Z",
+      "points": 411
+    },
+    {
+      "id": "osm-548619",
+      "osm_url": "https://www.openstreetmap.org/relation/548619",
+      "name": "район Выхино-Жулебино",
+      "version": 64,
+      "osm_timestamp": "2025-05-15T23:01:33Z",
+      "points": 92
+    },
+    {
+      "id": "osm-455208",
+      "osm_url": "https://www.openstreetmap.org/relation/455208",
+      "name": "район Капотня",
+      "version": 47,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 55
+    },
+    {
+      "id": "osm-444812",
+      "osm_url": "https://www.openstreetmap.org/relation/444812",
+      "name": "район Кузьминки",
+      "version": 71,
+      "osm_timestamp": "2026-05-25T09:11:36Z",
+      "points": 72
+    },
+    {
+      "id": "osm-1278064",
+      "osm_url": "https://www.openstreetmap.org/relation/1278064",
+      "name": "район Лефортово",
+      "version": 68,
+      "osm_timestamp": "2024-11-26T20:01:10Z",
+      "points": 89
+    },
+    {
+      "id": "osm-455203",
+      "osm_url": "https://www.openstreetmap.org/relation/455203",
+      "name": "район Люблино",
+      "version": 58,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 118
+    },
+    {
+      "id": "osm-455222",
+      "osm_url": "https://www.openstreetmap.org/relation/455222",
+      "name": "район Марьино",
+      "version": 48,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 44
+    },
+    {
+      "id": "osm-1255577",
+      "osm_url": "https://www.openstreetmap.org/relation/1255577",
+      "name": "район Некрасовка",
+      "version": 51,
+      "osm_timestamp": "2026-08-14T12:09:00Z",
+      "points": 168
+    },
+    {
+      "id": "osm-1278046",
+      "osm_url": "https://www.openstreetmap.org/relation/1278046",
+      "name": "Нижегородский район",
+      "version": 64,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 75
+    },
+    {
+      "id": "osm-455451",
+      "osm_url": "https://www.openstreetmap.org/relation/455451",
+      "name": "район Печатники",
+      "version": 58,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 76
+    },
+    {
+      "id": "osm-1255563",
+      "osm_url": "https://www.openstreetmap.org/relation/1255563",
+      "name": "Рязанский район",
+      "version": 61,
+      "osm_timestamp": "2026-05-25T09:11:36Z",
+      "points": 34
+    },
+    {
+      "id": "osm-455184",
+      "osm_url": "https://www.openstreetmap.org/relation/455184",
+      "name": "район Текстильщики",
+      "version": 55,
+      "osm_timestamp": "2026-05-03T03:27:58Z",
+      "points": 47
+    },
+    {
+      "id": "osm-1278096",
+      "osm_url": "https://www.openstreetmap.org/relation/1278096",
+      "name": "Южнопортовый район",
+      "version": 53,
+      "osm_timestamp": "2026-10-18T17:35:59Z",
+      "points": 41
+    },
+    {
+      "id": "osm-1282181",
+      "osm_url": "https://www.openstreetmap.org/relation/1282181",
+      "name": "Южный административный округ",
+      "version": 114,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 448
+    },
+    {
+      "id": "osm-950639",
+      "osm_url": "https://www.openstreetmap.org/relation/950639",
+      "name": "район Бирюлёво Восточное",
+      "version": 64,
+      "osm_timestamp": "2026-06-17T08:10:41Z",
+      "points": 169
+    },
+    {
+      "id": "osm-950658",
+      "osm_url": "https://www.openstreetmap.org/relation/950658",
+      "name": "район Бирюлёво Западное",
+      "version": 47,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 49
+    },
+    {
+      "id": "osm-531287",
+      "osm_url": "https://www.openstreetmap.org/relation/531287",
+      "name": "район Братеево",
+      "version": 46,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 86
+    },
+    {
+      "id": "osm-1281209",
+      "osm_url": "https://www.openstreetmap.org/relation/1281209",
+      "name": "Даниловский район",
+      "version": 79,
+      "osm_timestamp": "2025-09-06T10:05:13Z",
+      "points": 54
+    },
+    {
+      "id": "osm-444908",
+      "osm_url": "https://www.openstreetmap.org/relation/444908",
+      "name": "Донской район",
+      "version": 84,
+      "osm_timestamp": "2025-09-06T10:05:13Z",
+      "points": 76
+    },
+    {
+      "id": "osm-531264",
+      "osm_url": "https://www.openstreetmap.org/relation/531264",
+      "name": "район Зябликово",
+      "version": 58,
+      "osm_timestamp": "2025-07-09T10:35:36Z",
+      "points": 78
+    },
+    {
+      "id": "osm-455528",
+      "osm_url": "https://www.openstreetmap.org/relation/455528",
+      "name": "район Москворечье-Сабурово",
+      "version": 74,
+      "osm_timestamp": "2026-10-11T07:36:54Z",
+      "points": 111
+    },
+    {
+      "id": "osm-535655",
+      "osm_url": "https://www.openstreetmap.org/relation/535655",
+      "name": "район Нагатино-Садовники",
+      "version": 40,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 40
+    },
+    {
+      "id": "osm-455460",
+      "osm_url": "https://www.openstreetmap.org/relation/455460",
+      "name": "район Нагатинский Затон",
+      "version": 35,
+      "osm_timestamp": "2026-10-11T07:36:54Z",
+      "points": 44
+    },
+    {
+      "id": "osm-535662",
+      "osm_url": "https://www.openstreetmap.org/relation/535662",
+      "name": "Нагорный район",
+      "version": 47,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 78
+    },
+    {
+      "id": "osm-455539",
+      "osm_url": "https://www.openstreetmap.org/relation/455539",
+      "name": "район Орехово-Борисово Северное",
+      "version": 70,
+      "osm_timestamp": "2026-09-04T12:38:54Z",
+      "points": 125
+    },
+    {
+      "id": "osm-456807",
+      "osm_url": "https://www.openstreetmap.org/relation/456807",
+      "name": "район Орехово-Борисово Южное",
+      "version": 72,
+      "osm_timestamp": "2026-10-10T08:06:35Z",
+      "points": 148
+    },
+    {
+      "id": "osm-950641",
+      "osm_url": "https://www.openstreetmap.org/relation/950641",
+      "name": "район Царицыно",
+      "version": 62,
+      "osm_timestamp": "2025-05-25T18:49:45Z",
+      "points": 64
+    },
+    {
+      "id": "osm-535680",
+      "osm_url": "https://www.openstreetmap.org/relation/535680",
+      "name": "район Чертаново Северное",
+      "version": 51,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 96
+    },
+    {
+      "id": "osm-951305",
+      "osm_url": "https://www.openstreetmap.org/relation/951305",
+      "name": "район Чертаново Центральное",
+      "version": 49,
+      "osm_timestamp": "2025-05-31T12:53:28Z",
+      "points": 117
+    },
+    {
+      "id": "osm-950664",
+      "osm_url": "https://www.openstreetmap.org/relation/950664",
+      "name": "район Чертаново Южное",
+      "version": 46,
+      "osm_timestamp": "2025-05-31T12:53:28Z",
+      "points": 91
+    },
+    {
+      "id": "osm-1304596",
+      "osm_url": "https://www.openstreetmap.org/relation/1304596",
+      "name": "Юго-Западный административный округ",
+      "version": 85,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 618
+    },
+    {
+      "id": "osm-1281220",
+      "osm_url": "https://www.openstreetmap.org/relation/1281220",
+      "name": "Академический район",
+      "version": 45,
+      "osm_timestamp": "2024-04-15T18:02:14Z",
+      "points": 18
+    },
+    {
+      "id": "osm-1281648",
+      "osm_url": "https://www.openstreetmap.org/relation/1281648",
+      "name": "Гагаринский район",
+      "version": 49,
+      "osm_timestamp": "2025-09-12T18:15:39Z",
+      "points": 16
+    },
+    {
+      "id": "osm-1292286",
+      "osm_url": "https://www.openstreetmap.org/relation/1292286",
+      "name": "район Зюзино",
+      "version": 32,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 38
+    },
+    {
+      "id": "osm-952191",
+      "osm_url": "https://www.openstreetmap.org/relation/952191",
+      "name": "район Коньково",
+      "version": 63,
+      "osm_timestamp": "2024-12-02T10:29:10Z",
+      "points": 48
+    },
+    {
+      "id": "osm-1292211",
+      "osm_url": "https://www.openstreetmap.org/relation/1292211",
+      "name": "район Котловка",
+      "version": 37,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 90
+    },
+    {
+      "id": "osm-1281702",
+      "osm_url": "https://www.openstreetmap.org/relation/1281702",
+      "name": "Ломоносовский район",
+      "version": 42,
+      "osm_timestamp": "2025-09-12T18:15:39Z",
+      "points": 27
+    },
+    {
+      "id": "osm-1292499",
+      "osm_url": "https://www.openstreetmap.org/relation/1292499",
+      "name": "Обручевский район",
+      "version": 49,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 44
+    },
+    {
+      "id": "osm-1257455",
+      "osm_url": "https://www.openstreetmap.org/relation/1257455",
+      "name": "район Северное Бутово",
+      "version": 32,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 124
+    },
+    {
+      "id": "osm-951336",
+      "osm_url": "https://www.openstreetmap.org/relation/951336",
+      "name": "район Тёплый Стан",
+      "version": 51,
+      "osm_timestamp": "2024-12-02T10:29:10Z",
+      "points": 42
+    },
+    {
+      "id": "osm-1281263",
+      "osm_url": "https://www.openstreetmap.org/relation/1281263",
+      "name": "район Черёмушки",
+      "version": 35,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 19
+    },
+    {
+      "id": "osm-1257403",
+      "osm_url": "https://www.openstreetmap.org/relation/1257403",
+      "name": "район Южное Бутово",
+      "version": 47,
+      "osm_timestamp": "2024-10-14T18:55:26Z",
+      "points": 254
+    },
+    {
+      "id": "osm-951334",
+      "osm_url": "https://www.openstreetmap.org/relation/951334",
+      "name": "район Ясенево",
+      "version": 67,
+      "osm_timestamp": "2024-06-13T18:15:03Z",
+      "points": 223
+    },
+    {
+      "id": "osm-226149",
+      "osm_url": "https://www.openstreetmap.org/relation/226149",
+      "name": "Западный административный округ",
+      "version": 192,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 1654
+    },
+    {
+      "id": "osm-446114",
+      "osm_url": "https://www.openstreetmap.org/relation/446114",
+      "name": "район Дорогомилово",
+      "version": 33,
+      "osm_timestamp": "2026-03-20T13:38:14Z",
+      "points": 55
+    },
+    {
+      "id": "osm-240229",
+      "osm_url": "https://www.openstreetmap.org/relation/240229",
+      "name": "район Крылатское",
+      "version": 62,
+      "osm_timestamp": "2025-10-14T20:28:18Z",
+      "points": 63
+    },
+    {
+      "id": "osm-226927",
+      "osm_url": "https://www.openstreetmap.org/relation/226927",
+      "name": "район Кунцево",
+      "version": 98,
+      "osm_timestamp": "2025-10-02T14:25:06Z",
+      "points": 1137
+    },
+    {
+      "id": "osm-1257472",
+      "osm_url": "https://www.openstreetmap.org/relation/1257472",
+      "name": "Можайский район",
+      "version": 93,
+      "osm_timestamp": "2025-06-05T20:44:41Z",
+      "points": 282
+    },
+    {
+      "id": "osm-446117",
+      "osm_url": "https://www.openstreetmap.org/relation/446117",
+      "name": "район Ново-Переделкино",
+      "version": 44,
+      "osm_timestamp": "2026-10-14T19:58:54Z",
+      "points": 183
+    },
+    {
+      "id": "osm-1292749",
+      "osm_url": "https://www.openstreetmap.org/relation/1292749",
+      "name": "район Очаково-Матвеевское",
+      "version": 36,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 212
+    },
+    {
+      "id": "osm-1292679",
+      "osm_url": "https://www.openstreetmap.org/relation/1292679",
+      "name": "район Проспект Вернадского",
+      "version": 44,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 133
+    },
+    {
+      "id": "osm-446115",
+      "osm_url": "https://www.openstreetmap.org/relation/446115",
+      "name": "район Раменки",
+      "version": 40,
+      "osm_timestamp": "2026-06-08T10:42:17Z",
+      "points": 100
+    },
+    {
+      "id": "osm-446116",
+      "osm_url": "https://www.openstreetmap.org/relation/446116",
+      "name": "район Солнцево",
+      "version": 36,
+      "osm_timestamp": "2026-02-28T17:51:32Z",
+      "points": 140
+    },
+    {
+      "id": "osm-1292731",
+      "osm_url": "https://www.openstreetmap.org/relation/1292731",
+      "name": "район Тропарёво-Никулино",
+      "version": 49,
+      "osm_timestamp": "2026-10-10T08:42:28Z",
+      "points": 100
+    },
+    {
+      "id": "osm-446112",
+      "osm_url": "https://www.openstreetmap.org/relation/446112",
+      "name": "район Филёвский Парк",
+      "version": 47,
+      "osm_timestamp": "2025-10-14T20:28:18Z",
+      "points": 96
+    },
+    {
+      "id": "osm-446111",
+      "osm_url": "https://www.openstreetmap.org/relation/446111",
+      "name": "район Фили-Давыдково",
+      "version": 33,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 149
+    },
+    {
+      "id": "osm-446092",
+      "osm_url": "https://www.openstreetmap.org/relation/446092",
+      "name": "Северо-Западный административный округ",
+      "version": 109,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 666
+    },
+    {
+      "id": "osm-442741",
+      "osm_url": "https://www.openstreetmap.org/relation/442741",
+      "name": "район Куркино",
+      "version": 40,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 152
+    },
+    {
+      "id": "osm-442733",
+      "osm_url": "https://www.openstreetmap.org/relation/442733",
+      "name": "район Митино",
+      "version": 63,
+      "osm_timestamp": "2025-11-24T16:09:35Z",
+      "points": 321
+    },
+    {
+      "id": "osm-446081",
+      "osm_url": "https://www.openstreetmap.org/relation/446081",
+      "name": "район Покровское-Стрешнево",
+      "version": 52,
+      "osm_timestamp": "2025-10-09T04:41:19Z",
+      "points": 123
+    },
+    {
+      "id": "osm-445279",
+      "osm_url": "https://www.openstreetmap.org/relation/445279",
+      "name": "район Северное Тушино",
+      "version": 38,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 50
+    },
+    {
+      "id": "osm-434560",
+      "osm_url": "https://www.openstreetmap.org/relation/434560",
+      "name": "район Строгино",
+      "version": 46,
+      "osm_timestamp": "2025-07-08T11:22:21Z",
+      "points": 100
+    },
+    {
+      "id": "osm-428431",
+      "osm_url": "https://www.openstreetmap.org/relation/428431",
+      "name": "район Хорошёво-Мнёвники",
+      "version": 65,
+      "osm_timestamp": "2025-05-20T12:26:33Z",
+      "points": 125
+    },
+    {
+      "id": "osm-431464",
+      "osm_url": "https://www.openstreetmap.org/relation/431464",
+      "name": "район Щукино",
+      "version": 71,
+      "osm_timestamp": "2025-05-20T12:26:33Z",
+      "points": 48
+    },
+    {
+      "id": "osm-446080",
+      "osm_url": "https://www.openstreetmap.org/relation/446080",
+      "name": "район Южное Тушино",
+      "version": 29,
+      "osm_timestamp": "2023-09-16T23:04:43Z",
+      "points": 82
+    },
+    {
+      "id": "osm-1320358",
+      "osm_url": "https://www.openstreetmap.org/relation/1320358",
+      "name": "Зеленоградский административный округ",
+      "version": 26,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 474
+    },
+    {
+      "id": "osm-1320371",
+      "osm_url": "https://www.openstreetmap.org/relation/1320371",
+      "name": "район Крюково",
+      "version": 46,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 252
+    },
+    {
+      "id": "osm-1320566",
+      "osm_url": "https://www.openstreetmap.org/relation/1320566",
+      "name": "район Матушкино",
+      "version": 47,
+      "osm_timestamp": "2025-06-01T10:40:28Z",
+      "points": 125
+    },
+    {
+      "id": "osm-1320570",
+      "osm_url": "https://www.openstreetmap.org/relation/1320570",
+      "name": "район Савёлки",
+      "version": 52,
+      "osm_timestamp": "2025-06-01T10:40:28Z",
+      "points": 224
+    },
+    {
+      "id": "osm-1320510",
+      "osm_url": "https://www.openstreetmap.org/relation/1320510",
+      "name": "район Силино",
+      "version": 42,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 176
+    },
+    {
+      "id": "osm-1320424",
+      "osm_url": "https://www.openstreetmap.org/relation/1320424",
+      "name": "район Старое Крюково",
+      "version": 42,
+      "osm_timestamp": "2024-10-26T03:29:15Z",
+      "points": 129
+    },
+    {
+      "id": "osm-2263058",
+      "osm_url": "https://www.openstreetmap.org/relation/2263058",
+      "name": "Новомосковский административный округ",
+      "version": 73,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 1157
+    },
+    {
+      "id": "osm-1703095",
+      "osm_url": "https://www.openstreetmap.org/relation/1703095",
+      "name": "район Щербинка",
+      "version": 45,
+      "osm_timestamp": "2026-09-16T19:01:21Z",
+      "points": 499
+    },
+    {
+      "id": "osm-380708",
+      "osm_url": "https://www.openstreetmap.org/relation/380708",
+      "name": "район Внуково",
+      "version": 49,
+      "osm_timestamp": "2026-10-09T20:10:11Z",
+      "points": 292
+    },
+    {
+      "id": "osm-380704",
+      "osm_url": "https://www.openstreetmap.org/relation/380704",
+      "name": "район Коммунарка",
+      "version": 46,
+      "osm_timestamp": "2026-09-16T19:01:21Z",
+      "points": 396
+    },
+    {
+      "id": "osm-380705",
+      "osm_url": "https://www.openstreetmap.org/relation/380705",
+      "name": "Филимонковский район",
+      "version": 45,
+      "osm_timestamp": "2026-10-09T16:39:20Z",
+      "points": 212
+    },
+    {
+      "id": "osm-2263059",
+      "osm_url": "https://www.openstreetmap.org/relation/2263059",
+      "name": "Троицкий административный округ",
+      "version": 51,
+      "osm_timestamp": "2026-10-08T20:25:35Z",
+      "points": 1142
+    },
+    {
+      "id": "osm-1703093",
+      "osm_url": "https://www.openstreetmap.org/relation/1703093",
+      "name": "район Троицк",
+      "version": 36,
+      "osm_timestamp": "2026-09-16T19:01:21Z",
+      "points": 386
+    },
+    {
+      "id": "osm-2092922",
+      "osm_url": "https://www.openstreetmap.org/relation/2092922",
+      "name": "район Вороново",
+      "version": 26,
+      "osm_timestamp": "2026-10-09T20:10:11Z",
+      "points": 712
+    },
+    {
+      "id": "osm-1693596",
+      "osm_url": "https://www.openstreetmap.org/relation/1693596",
+      "name": "район Бекасово",
+      "version": 33,
+      "osm_timestamp": "2026-10-09T20:10:11Z",
+      "points": 337
+    },
+    {
+      "id": "osm-2092925",
+      "osm_url": "https://www.openstreetmap.org/relation/2092925",
+      "name": "Краснопахорский район",
+      "version": 28,
+      "osm_timestamp": "2026-10-09T16:21:53Z",
+      "points": 555
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+.delivery-zone-editor {grid-column:1 / -1; min-width:0; width:100%}
+.delivery-zone-editor input[type="search"], .delivery-zone-editor select {width:100%; margin:8px 0 12px}
+.delivery-area-list {max-height:260px; overflow:auto; border:1px solid var(--line, #dce2db); border-radius:12px; margin:8px 0 16px; padding:8px}
+.delivery-area-list label {display:flex; align-items:center; gap:10px; padding:9px; cursor:pointer; font-weight:400}
+.delivery-area-list input {width:18px; height:18px; flex:0 0 18px}
+.delivery-area-list label:hover {background:#f0f4ef; border-radius:8px}
+.delivery-area-selected {display:flex; flex-wrap:wrap; gap:8px; margin:12px 0}
+.delivery-area-selected button {border:1px solid #bac8bb; border-radius:20px; background:#edf3ed; color:#304b39; padding:7px 12px; cursor:pointer}
+.delivery-zone-editor .shop-map {width:100%; min-height:420px}
+.delivery-zone-editor .errorlist:empty {display:none}
+@media(max-width:600px) {.delivery-zone-editor .shop-map {min-height:360px}}

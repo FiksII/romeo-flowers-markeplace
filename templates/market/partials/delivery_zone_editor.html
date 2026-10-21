@@ -1,0 +1,21 @@
+{% load static market_tags %}
+<section class="delivery-zone-editor" data-zone-editor>
+  <h2>Зона доставки</h2>
+  <p class="field-help">Выберите готовые территории или нарисуйте зону на карте. Каждый контур можно изменить, переместить или удалить. Зона доставки обязательна.</p>
+  {{ form.delivery_zone }}
+  <div class="errorlist" role="alert">{{ form.delivery_zone.errors }}</div>
+  <div data-area-picker data-index-url="{% static 'market/delivery-areas/index.json' %}">
+    <label for="area-search">Найти район или округ</label>
+    <input id="area-search" type="search" data-area-search placeholder="Балашиха, Химки, СВАО…" autocomplete="off">
+    <label for="area-region">Территории</label>
+    <select id="area-region" data-area-region><option value="">Все территории</option><option value="Округа Москвы">Округа Москвы</option><option value="Районы Москвы">Районы Москвы</option><option value="Московская область">Московская область</option></select>
+    <p class="field-help" data-area-loading role="status">Загрузка списка территорий…</p>
+    <div class="delivery-area-list" data-area-list></div>
+    <div class="delivery-area-selected" data-area-selected aria-label="Выбранные территории"></div>
+  </div>
+  <div class="shop-map shop-map-tall" data-shop-map="zone" data-lat="{{ form.instance.latitude|unlocalize_money }}" data-lon="{{ form.instance.longitude|unlocalize_money }}" role="application" aria-label="Карта зоны доставки"></div>
+  <p class="field-help zone-status" data-zone-status role="status">{% if form.delivery_zone.value %}Зона задана.{% else %}Зона ещё не нарисована.{% endif %}</p>
+  <p class="field-help">Для своей зоны выберите «многоугольник» или «прямоугольник» на панели слева. Отметьте углы и замкните контур. Доставка доступна только внутри сохранённых контуров.</p>
+  <p class="field-help">Границы © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">участники OpenStreetMap, ODbL</a>. Это начальные контуры: уточните свою зону перед сохранением.</p>
+  <noscript><p class="notice error">Для выбора территорий и рисования зоны нужен JavaScript.</p></noscript>
+</section>

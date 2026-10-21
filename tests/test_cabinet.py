@@ -42,7 +42,7 @@ def info_post(shop, **extra):
         "address": shop.address,
         "phone": "",
         "pickup_enabled": "on",
-        "delivery_enabled": "on",
+        "delivery_zone": json.dumps(shop.delivery_zone),
         "prep_minutes": "60",
         "pickup_instructions": "",
         **extra,
@@ -304,21 +304,15 @@ def test_basket_accepts_any_quantity_of_an_always_in_stock_bouquet(client, owner
 # --- information, schedule ------------------------------------------------------------
 
 
-def test_own_delivery_needs_delivery_switched_on(client, owner, shop):
+def test_own_delivery_does_not_need_a_separate_delivery_switch(client, owner, shop):
     client.force_login(owner)
     response = client.post(
         f"/partner/{shop.slug}/info/",
         info_post(shop, own_delivery="on", delivery_enabled=""),
     )
-    assert response.status_code == 200
-    shop.refresh_from_db()
-    assert not shop.own_delivery
-    response = client.post(
-        f"/partner/{shop.slug}/info/", info_post(shop, own_delivery="on")
-    )
     assert response.status_code == 302
     shop.refresh_from_db()
-    assert shop.own_delivery
+    assert shop.own_delivery and shop.delivery_enabled
 
 
 def test_info_page_does_not_touch_moderation_or_requisites(client, owner, shop):
@@ -511,14 +505,16 @@ def test_invalid_zones_are_rejected(client, owner, shop, zone):
     assert shop.delivery_zone == old
 
 
-def test_zone_can_be_cleared(client, owner, shop):
+def test_last_zone_cannot_be_cleared(client, owner, shop):
+    previous = shop.delivery_zone
     client.force_login(owner)
     response = client.post(
         f"/partner/{shop.slug}/payout/", payout_post(shop, delivery_zone="")
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
+    assert "delivery_zone" in response.context["form"].errors
     shop.refresh_from_db()
-    assert shop.delivery_zone == []
+    assert shop.delivery_zone == previous
 
 
 def test_zone_geometry():
@@ -660,7 +656,7 @@ def test_administrator_edits_commission_and_delivery_fee(client, shop):
         "settlement": shop.settlement_id,
         "address": shop.address,
         "phone": "",
-        "delivery_enabled": "on",
+        "delivery_zone": json.dumps(shop.delivery_zone),
         "pickup_enabled": "on",
         "delivery_settlements": [shop.settlement_id],
         "minimum_order": "0",
