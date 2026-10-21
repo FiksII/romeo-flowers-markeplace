@@ -291,10 +291,8 @@ def test_resolve_shares_search_rate_limit(dadata, client):
     assert response.status_code == 429
 
 
-@pytest.mark.parametrize(
-    "overrides", [{"house": None}, {"region_kladr_id": "1600000000000"}]
-)
-def test_dadata_suggests_only_houses_in_launch_regions(dadata, overrides):
+@pytest.mark.parametrize("overrides", [{"region_kladr_id": "1600000000000"}])
+def test_dadata_suggests_only_addresses_in_launch_regions(dadata, overrides):
     from market.addresses import suggest_addresses
 
     fake, _ = dadata
@@ -387,3 +385,34 @@ def test_cabinet_maps_receive_yandex_config_with_escaped_public_key(
     assert config["yandexTilesKey"] == "public-key</script>"
     assert config["yandexLogo"] == "/static/vendor/yandex-tiles/yandex-logo.svg"
     assert "public-key</script>" not in html
+
+
+@pytest.mark.parametrize("street", [None, "Ленина"])
+def test_partial_dadata_addresses_are_offered_for_further_typing(
+    dadata, monkeypatch, client, street
+):
+    import io
+    import json
+
+    from market import addresses
+
+    value = "Московская обл, г Одинцово" + (", ул Ленина" if street else "")
+    item = suggestion(region="50", house=None)
+    item.update(value=value, unrestricted_value=value)
+    item["data"].update(city="Одинцово", street=street)
+    queries = []
+
+    def search(request, timeout):
+        queries.append(json.loads(request.data)["query"])
+        return io.BytesIO(json.dumps({"suggestions": [item]}).encode())
+
+    monkeypatch.setattr(addresses, "urlopen", search)
+    query = "Одинцово, Лени" if street else "Оди"
+    response = client.get("/addresses/", {"q": query})
+    rows = response.json()["results"]
+    assert len(rows) == 1
+    assert rows[0]["value"] == value
+    assert rows[0]["refine"] is True
+    assert rows[0]["level"] == ("street" if street else "city")
+    assert not {"token", "selection_token", "latitude", "longitude"} & rows[0].keys()
+    assert queries == [query]
