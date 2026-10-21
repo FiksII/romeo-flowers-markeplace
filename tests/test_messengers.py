@@ -287,6 +287,11 @@ def test_telegram_album_and_long_caption_keep_payment_and_order_link(
 def test_rejected_photo_falls_back_to_order_text(
     bot, owner, shop, listing, monkeypatch
 ):
+    from io import BytesIO
+
+    monkeypatch.setattr(
+        messengers, "urlopen", lambda *a, **kw: BytesIO(b"invalid image")
+    )
     listing.photo = "listings/bouquet.jpg"
     listing.save()
     number(shop, "telegram", "1001")
@@ -308,6 +313,44 @@ def test_rejected_photo_falls_back_to_order_text(
     assert "Получить с покупателя" in bot.calls[-1][1]["text"]
 
 
+def test_rejected_photo_url_uploads_jpeg_instead_of_losing_photo(
+    bot, owner, shop, listing, monkeypatch
+):
+    from io import BytesIO
+
+    from PIL import Image
+
+    image = BytesIO()
+    Image.new("RGB", (40, 40), "red").save(image, format="PNG")
+    raw = image.getvalue()
+    monkeypatch.setattr(messengers, "urlopen", lambda *a, **kw: BytesIO(raw))
+    listing.photo = "listings/bouquet.png"
+    listing.save()
+    number(shop, "telegram", "1001")
+    order_part(owner, shop, listing)
+    original = messengers._post_json
+    attempts = []
+
+    def reject_url(url, params, timeout=10):
+        attempts.append(params)
+        if url.endswith("/sendPhoto") and isinstance(params.get("photo"), str):
+            return {
+                "ok": False,
+                "error_code": 400,
+                "description": "failed to get HTTP URL content",
+            }
+        return original(url, params, timeout)
+
+    monkeypatch.setattr(messengers, "_post_json", reject_url)
+    assert messengers.deliver(MessengerMessage.objects.get().pk) == "sent"
+    assert len(attempts) == 2
+    upload = attempts[1]["photo"]
+    assert isinstance(upload, tuple) and upload[2] == "image/jpeg"
+    assert Image.open(BytesIO(upload[1])).format == "JPEG"
+    assert "Получить с покупателя" in attempts[1]["caption"]
+    assert bot.calls[0][0].endswith("/sendPhoto")
+
+
 def test_photo_throttling_retries_without_text_fallback(bot, owner, shop, listing):
     listing.photo = "listings/bouquet.jpg"
     listing.save()
@@ -323,12 +366,158 @@ def test_photo_throttling_retries_without_text_fallback(bot, owner, shop, listin
     assert messengers.deliver(message.pk) == "sent"
 
 
+def test_album_url_rejection_uploads_all_photos(bot, monkeypatch):
+    from io import BytesIO
+
+    from PIL import Image
+
+    raw = BytesIO()
+    Image.new("RGBA", (40, 40), (255, 0, 0, 0)).save(raw, "PNG")
+    monkeypatch.setattr(messengers, "urlopen", lambda *a, **kw: BytesIO(raw.getvalue()))
+    original = messengers._post_json
+
+    def reject_urls(url, params, timeout=10):
+        if json.loads(params["media"])[0]["media"].startswith("https:"):
+            return {
+                "ok": False,
+                "error_code": 400,
+                "description": "failed to get HTTP URL content",
+            }
+        return original(url, params, timeout)
+
+    monkeypatch.setattr(messengers, "_post_json", reject_urls)
+    link = MessengerLink(channel="telegram", chat_id="1001")
+    messengers.send(
+        link,
+        "Заказ",
+        photos=["https://flowers.test/a.png", "https://flowers.test/b.png"],
+    )
+    assert len(bot.calls) == 1 and bot.calls[0][0].endswith("/sendMediaGroup")
+    params = bot.calls[0][1]
+    media = json.loads(params["media"])
+    assert [item["media"] for item in media] == ["attach://photo0", "attach://photo1"]
+    assert media[0]["caption"] == "Заказ"
+    for key in ("photo0", "photo1"):
+        image = Image.open(BytesIO(params[key][1]))
+        assert image.format == "JPEG" and image.getpixel((0, 0)) == (255, 255, 255)
+
+
+def test_multipart_photo_is_encoded_as_file_with_caption(monkeypatch):
+    from email import policy
+    from email.parser import BytesParser
+    from io import BytesIO
+
+    requests = []
+
+    def capture(request, timeout=10):
+        requests.append(request)
+        return BytesIO(b'{"ok": true}')
+
+    monkeypatch.setattr(messengers, "urlopen", capture)
+    result = messengers._post_json(
+        "https://api.telegram.test/sendPhoto",
+        {
+            "chat_id": "1001",
+            "caption": "Букет",
+            "photo": ("bouquet.jpg", b"jpeg-data", "image/jpeg"),
+        },
+    )
+    assert result == {"ok": True}
+    request = requests[0]
+    message = BytesParser(policy=policy.default).parsebytes(
+        ("Content-Type: " + request.get_header("Content-type") + "\r\n\r\n").encode()
+        + request.data
+    )
+    parts = {
+        item.get_param("name", header="content-disposition"): item
+        for item in message.iter_parts()
+    }
+    assert parts["photo"].get_filename() == "bouquet.jpg"
+    assert parts["photo"].get_content_type() == "image/jpeg"
+    assert parts["photo"].get_payload(decode=True) == b"jpeg-data"
+    assert parts["caption"].get_payload(decode=True).decode() == "Букет"
+
+
+def test_photo_download_failure_keeps_notification_pending(
+    bot, owner, shop, listing, monkeypatch
+):
+    from urllib.error import URLError
+
+    def unavailable(*args, **kwargs):
+        raise URLError("temporary failure")
+
+    monkeypatch.setattr(messengers, "urlopen", unavailable)
+    listing.photo = "listings/bouquet.png"
+    listing.save()
+    link = number(shop, "telegram", "1001")
+    order_part(owner, shop, listing)
+    bot.answer = {
+        "ok": False,
+        "error_code": 400,
+        "description": "failed to get HTTP URL content",
+    }
+    assert messengers.deliver(MessengerMessage.objects.get().pk) == "pending"
+    assert len(bot.calls) == 1 and bot.calls[0][0].endswith("/sendPhoto")
+    link.refresh_from_db()
+    assert link.enabled
+
+
 def test_deleted_bouquet_still_sends_order_text(bot, owner, shop, listing):
     number(shop, "telegram", "1001")
     order_part(owner, shop, listing)
     listing.delete()
     assert messengers.deliver(MessengerMessage.objects.get().pk) == "sent"
     assert bot.calls[0][0].endswith("/sendMessage")
+
+
+def test_missing_photo_file_still_sends_order_text(
+    bot, owner, shop, listing, monkeypatch
+):
+    from urllib.error import HTTPError
+
+    def missing(*args, **kwargs):
+        raise HTTPError("https://flowers.test/missing.png", 404, "Not Found", {}, None)
+
+    monkeypatch.setattr(messengers, "urlopen", missing)
+    original = messengers._post_json
+
+    def reject_photo(url, params, timeout=10):
+        if url.endswith("/sendPhoto"):
+            return {
+                "ok": False,
+                "error_code": 400,
+                "description": "failed to get HTTP URL content",
+            }
+        return original(url, params, timeout)
+
+    monkeypatch.setattr(messengers, "_post_json", reject_photo)
+    listing.photo = "listings/missing.png"
+    listing.save()
+    number(shop, "telegram", "1001")
+    order_part(owner, shop, listing)
+    assert messengers.deliver(MessengerMessage.objects.get().pk) == "sent"
+    assert bot.calls[0][0].endswith("/sendMessage")
+
+
+def test_large_pixel_dimensions_are_rejected_before_loading(monkeypatch):
+    from io import BytesIO
+
+    class LargeImage:
+        width, height = 16000, 10000
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def load(self):
+            pytest.fail("Image decoded before checking its pixel count")
+
+    monkeypatch.setattr(messengers, "urlopen", lambda *a, **kw: BytesIO(b"image"))
+    monkeypatch.setattr(messengers.Image, "open", lambda *a, **kw: LargeImage())
+    with pytest.raises(messengers.TelegramMediaError, match="pixels"):
+        messengers._photo_upload("https://flowers.test/large.png")
 
 
 def test_partner_delivery_does_not_request_cash(owner, shop, listing):

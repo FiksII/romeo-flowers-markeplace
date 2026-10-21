@@ -18,6 +18,8 @@ import re
 import secrets
 import threading
 from datetime import timedelta
+from io import BytesIO
+from math import ceil
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urljoin, urlsplit
 from urllib.request import Request, urlopen
@@ -28,6 +30,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
+from PIL import Image, ImageOps
+from urllib3.filepost import encode_multipart_formdata
 
 from market.models import MessengerLink, MessengerMessage
 from market.templatetags.market_tags import romeo_payment_instruction, rub
@@ -83,7 +87,12 @@ def vk_callback_secret():
 
 
 def _post_json(url, params, timeout=10):
-    request = Request(url, data=urlencode(params).encode(), method="POST")
+    headers = {}
+    if any(isinstance(value, tuple) for value in params.values()):
+        body, headers["Content-Type"] = encode_multipart_formdata(params)
+    else:
+        body = urlencode(params).encode()
+    request = Request(url, data=body, headers=headers, method="POST")
     try:
         with urlopen(request, timeout=timeout) as response:
             return json.load(response)
@@ -130,6 +139,58 @@ def vk_call(method, **params):
     return result.get("response")
 
 
+def _photo_upload(photo):
+    """Load a trusted listing URL ourselves when Telegram cannot fetch it."""
+    try:
+        with urlopen(photo, timeout=15) as response:
+            data = response.read(10 * 1024 * 1024 + 1)
+    except HTTPError as error:
+        if error.code in {400, 401, 403, 404, 410}:
+            raise TelegramMediaError("Bouquet photo is unavailable") from None
+        raise MessengerError("Could not load the bouquet photo") from None
+    except (URLError, TimeoutError, OSError):
+        raise MessengerError("Could not load the bouquet photo") from None
+    if len(data) > 10 * 1024 * 1024:
+        raise TelegramMediaError("Bouquet photo is too large")
+    try:
+        with Image.open(BytesIO(data)) as source:
+            if source.width * source.height > 25_000_000:
+                raise TelegramMediaError("Bouquet photo has too many pixels")
+            image = ImageOps.exif_transpose(source)
+            image.thumbnail((2000, 2000))
+            # A white background preserves transparent PNGs and Telegram's 20:1 limit.
+            width = max(image.width, ceil(image.height / 20))
+            height = max(image.height, ceil(image.width / 20))
+            canvas = Image.new("RGB", (width, height), "white")
+            rgba = image.convert("RGBA")
+            canvas.paste(
+                rgba, ((width - image.width) // 2, (height - image.height) // 2), rgba
+            )
+            output = BytesIO()
+            canvas.save(output, format="JPEG", quality=85)
+    except (OSError, ValueError, Image.DecompressionBombError):
+        raise TelegramMediaError("Bouquet photo cannot be decoded") from None
+    return ("bouquet.jpg", output.getvalue(), "image/jpeg")
+
+
+def _telegram_photos(link, photos, caption, upload=False):
+    if len(photos) == 1:
+        return telegram_call(
+            "sendPhoto",
+            chat_id=link.chat_id,
+            photo=_photo_upload(photos[0]) if upload else photos[0],
+            caption=caption,
+        )
+    media, files = [], {}
+    for index, photo in enumerate(photos):
+        key = f"photo{index}"
+        if upload:
+            files[key] = _photo_upload(photo)
+        media.append({"type": "photo", "media": f"attach://{key}" if upload else photo})
+    media[0]["caption"] = caption
+    return telegram_call("sendMediaGroup", chat_id=link.chat_id, media=media, **files)
+
+
 def send(link, text, photos=(), caption=None):
     if link.channel == MessengerLink.TELEGRAM:
         if not telegram_enabled():
@@ -137,17 +198,11 @@ def send(link, text, photos=(), caption=None):
         if photos:
             try:
                 caption = caption if caption is not None else text
-                if len(photos) == 1:
-                    telegram_call(
-                        "sendPhoto",
-                        chat_id=link.chat_id,
-                        photo=photos[0],
-                        caption=caption,
-                    )
-                else:
-                    media = [{"type": "photo", "media": photo} for photo in photos]
-                    media[0]["caption"] = caption
-                    telegram_call("sendMediaGroup", chat_id=link.chat_id, media=media)
+                try:
+                    _telegram_photos(link, photos, caption)
+                except TelegramMediaError:
+                    logger.info("Telegram rejected photo URLs; uploading image files")
+                    _telegram_photos(link, photos, caption, upload=True)
                 return
             except TelegramMediaError:
                 logger.warning("Order photos rejected; sending text notification")
