@@ -30,7 +30,7 @@ from django.utils import timezone
 from django.utils.crypto import salted_hmac
 
 from market.models import MessengerLink, MessengerMessage
-from market.templatetags.market_tags import rub
+from market.templatetags.market_tags import romeo_payment_instruction, rub
 
 logger = logging.getLogger(__name__)
 
@@ -376,7 +376,10 @@ def _order_url(part):
 
 
 def order_text(part, for_admin=False, compact=False):
-    lines = [f"Новый заказ № {part.order.number}", part.shop.name]
+    lines = [
+        f"Новый заказ № {part.order.number}",
+        part.shop.name[:80] if compact else part.shop.name,
+    ]
     when = "время уточнить у получателя"
     if part.slot_start:
         start, end = (
@@ -394,9 +397,27 @@ def order_text(part, for_admin=False, compact=False):
             f"Букетов: {sum(item.quantity for item in items)}. Полный состав — в заказе."
         )
     if for_admin:
-        lines.append(
-            f"{part.get_payment_method_display()} · {part.get_payment_status_display()}"
-        )
+        name = part.contact_name[:60] if compact else part.contact_name
+        lines.append(f"Получатель: {name} · {part.contact_phone}")
+        if part.method == "delivery":
+            if part.needs_delivery_confirmation:
+                lines.append(
+                    "Уточните у получателя адрес"
+                    + (
+                        " и время доставки."
+                        if not part.slot_start
+                        else ". Интервал доставки уже выбран."
+                    )
+                )
+            elif not compact:
+                lines.append(f"Адрес: {part.address}")
+                if part.address_details:
+                    lines.append(part.address_details)
+                if part.delivery_contact == "no_call":
+                    lines.append("Доставить без звонка получателю.")
+            if not compact and part.instructions:
+                lines.append(f"Комментарий: {part.instructions}")
+        lines.append(romeo_payment_instruction(part))
         lines.append(
             f"Сумма заказа {rub(part.total)}, магазину {rub(part.partner_total)}"
         )
@@ -423,6 +444,13 @@ def order_text(part, for_admin=False, compact=False):
     url = _order_url(part)
     if url:
         lines.append(f"Открыть заказ: {url}")
+        if for_admin and part.can_set_destination:
+            label = (
+                "Уточнить место получения"
+                if part.needs_delivery_confirmation
+                else "Изменить место получения"
+            )
+            lines.append(f"{label}: {url}destination/")
     return "\n".join(lines)
 
 

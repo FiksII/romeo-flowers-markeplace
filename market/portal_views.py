@@ -163,12 +163,23 @@ def operator_orders_page(request):
         .prefetch_related("items__listing")
         .order_by(F("slot_start").asc(nulls_last=True), "created_at", "pk")
     )
+    romeo_parts = [
+        part
+        for part in active
+        if part.method == "delivery" and part.delivery_owner == "platform"
+    ]
+    other_parts = [
+        part
+        for part in active
+        if not (part.method == "delivery" and part.delivery_owner == "platform")
+    ]
     return _orders_page(
         request,
         ShopOrder.objects.order_by("-created_at", "-pk"),
         extra={
-            "new_parts": [part for part in active if part.status == "accepted"],
-            "work_parts": [part for part in active if part.status != "accepted"],
+            "romeo_parts": romeo_parts,
+            "new_parts": [part for part in other_parts if part.status == "accepted"],
+            "work_parts": [part for part in other_parts if part.status != "accepted"],
         },
     )
 
@@ -882,6 +893,28 @@ def partner_live(request, slug):
             "new_orders": fresh["count"],
             "latest_order": fresh["latest"] or 0,
             "payouts": shop.payouts.filter(status="sent").count(),
+        }
+    )
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
+@require_GET
+def operator_live(request):
+    from django.http import JsonResponse
+
+    from market.templatetags.market_tags import romeo_order_summary
+
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    fresh = romeo_order_summary()
+    response = JsonResponse(
+        {
+            "new_orders": fresh["count"],
+            "latest_order": fresh["latest"] or 0,
+            "payouts": 0,
+            "revision": fresh["revision"],
         }
     )
     response["Cache-Control"] = "no-store"

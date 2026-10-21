@@ -506,6 +506,14 @@ ACTIVE_STATUSES = ("accepted", "preparing", "ready", "courier")
 HISTORY_STATUSES = ("completed", "cancelled")
 
 
+def new_romeo_orders():
+    from django.db.models import Q
+
+    return ShopOrder.objects.filter(
+        status="accepted", method="delivery", delivery_owner="platform"
+    ).filter(Q(payment_method="cash") | Q(payment_status="paid"))
+
+
 def new_orders(shop):
     """Parts the shop has not started yet and can start right now."""
     from django.db.models import Q
