@@ -1,8 +1,13 @@
-"""Delivery zones: a closed polygon drawn on the map, stored as ``[[lat, lon], ...]``."""
+"""Delivery zones: legacy latitude/longitude rings or editable GeoJSON collections."""
 
+import json
+from functools import lru_cache
 from math import cos, radians
 
 from django.core.exceptions import ValidationError
+from shapely import get_coordinates
+from shapely.errors import GEOSException
+from shapely.geometry import Point, shape
 
 MIN_POINTS, MAX_POINTS = 3, 100
 # Moscow and Moscow Oblast with a margin; a drawn zone must stay inside this box.
@@ -50,6 +55,9 @@ def validate_zone(zone):
     """An empty zone is allowed (the shop then has no delivery area yet)."""
     if not zone:
         return
+    if isinstance(zone, dict):
+        _clean_collection(zone)
+        return
     if not isinstance(zone, list) or not all(
         isinstance(item, list | tuple) and len(item) == 2 for item in zone
     ):
@@ -75,6 +83,8 @@ def clean_zone(zone):
     """Validate a zone from the map editor and round it to the stored precision."""
     if not zone:
         return []
+    if isinstance(zone, dict):
+        return _clean_collection(zone)
     validate_zone(zone)
     return [[round(lat, 6), round(lon, 6)] for lat, lon in _points(zone)]
 
@@ -84,6 +94,11 @@ def point_in_zone(lat, lon, zone):
     if not zone:
         return False
     lat, lon = float(lat), float(lon)
+    if isinstance(zone, dict):
+        return any(
+            geom.covers(Point(lon, lat))
+            for geom in _collection_shapes(json.dumps(zone, sort_keys=True))
+        )
     points = _points(zone)
     inside = False
     for index, (lat1, lon1) in enumerate(points):
@@ -114,3 +129,70 @@ def circle_zone(lat, lon, radius_km, points=32):
         ]
         for step in range(points)
     ]
+
+
+@lru_cache(maxsize=16)
+def _collection_shapes(serialized):
+    return tuple(
+        shape(feature["geometry"]) for feature in json.loads(serialized)["features"]
+    )
+
+
+def _clean_collection(zone):
+    """Keep disjoint areas and holes; reject invalid geometry before saving."""
+    invalid = "Зона доставки задана неверно. Нарисуйте её заново."
+    if zone.get("type") != "FeatureCollection" or not isinstance(
+        zone.get("features"), list
+    ):
+        raise ValidationError(invalid)
+    if len(zone["features"]) > 300:
+        raise ValidationError("Выберите не более 300 территорий.")
+    features, count = [], 0
+    for feature in zone["features"]:
+        if not isinstance(feature, dict) or feature.get("type") != "Feature":
+            raise ValidationError(invalid)
+        geometry = feature.get("geometry")
+        if not isinstance(geometry, dict) or geometry.get("type") not in {
+            "Polygon",
+            "MultiPolygon",
+        }:
+            raise ValidationError(invalid)
+        try:
+            geom = shape(geometry)
+            coordinates = get_coordinates(geom)
+        except (
+            TypeError,
+            ValueError,
+            KeyError,
+            IndexError,
+            OverflowError,
+            GEOSException,
+        ) as error:
+            raise ValidationError(invalid) from error
+        count += len(coordinates)
+        if count > 100000:
+            raise ValidationError("В зоне слишком много точек. Упростите границы.")
+        if geom.is_empty or not geom.is_valid or geom.area < 1e-8:
+            raise ValidationError(
+                "Границы зоны доставки не должны пересекаться. Нарисуйте зону заново."
+            )
+        if not all(
+            LON_RANGE[0] <= lon <= LON_RANGE[1] and LAT_RANGE[0] <= lat <= LAT_RANGE[1]
+            for lon, lat in coordinates
+        ):
+            raise ValidationError("Зона доставки должна быть в Москве или области.")
+        properties = feature.get("properties") or {}
+        if not isinstance(properties, dict):
+            raise ValidationError(invalid)
+        features.append(
+            {
+                "type": "Feature",
+                "properties": {
+                    key: str(properties[key])[:180]
+                    for key in ("area_id", "name")
+                    if key in properties
+                },
+                "geometry": geometry,
+            }
+        )
+    return {"type": "FeatureCollection", "features": features} if features else []

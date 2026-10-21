@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 import pytest
@@ -19,7 +20,7 @@ def shop_data(shop):
         "settlement": shop.settlement_id,
         "address": shop.address,
         "phone": "",
-        "delivery_enabled": True,
+        "delivery_zone": json.dumps(shop.delivery_zone),
         "pickup_enabled": True,
         "delivery_settlements": [shop.settlement_id],
         "minimum_order": 0,
@@ -65,7 +66,7 @@ def info_post(shop, **hours):
         "address": shop.address,
         "phone": "",
         "pickup_enabled": "on",
-        "delivery_enabled": "on",
+        "delivery_zone": json.dumps(shop.delivery_zone),
         "prep_minutes": "60",
         "pickup_instructions": "",
         **hours,
@@ -120,7 +121,9 @@ def test_new_shop_requires_signed_local_address_and_approval(client, owner, city
         "settlement": city.pk,
         "address": ADDRESS["value"],
         "address_token": encode_address(ADDRESS),
-        "delivery_enabled": "on",
+        "delivery_zone": json.dumps(
+            [[55.7, 37.5], [55.7, 37.8], [55.9, 37.8], [55.9, 37.5]]
+        ),
         "pickup_enabled": "on",
         "delivery_fee": "200",
         "minimum_order": "1500",

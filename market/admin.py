@@ -25,6 +25,7 @@ class HoursInline(admin.TabularInline):
 
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
+    exclude = ["delivery_enabled"]
     list_display = [
         "name",
         "settlement",

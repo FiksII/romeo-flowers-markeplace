@@ -13,6 +13,7 @@ dependencies = [
     "psycopg2-binary>=2.9.12",
     "gunicorn==26.2.0 ; sys_platform != 'win32'",
     "django-allauth>=65.19.7,<66",
+    "shapely>=2.2,<3",
 ]
 
 [dependency-groups]
