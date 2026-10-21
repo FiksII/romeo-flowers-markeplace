@@ -92,14 +92,14 @@ def test_operator_json_includes_shops_and_searches_localized_status(
     result = client.get(url, {"search[value]": "ОЖИДАЕТ ОПЛАТЫ"}).json()
     assert result["recordsTotal"] == 3
     assert result["recordsFiltered"] == 1
-    assert result["data"][0][2] == other_shop.name
+    assert result["data"][0][2] == other_shop.name + "<br>Доставка Ромео"
     assert result["data"][0][4] == "Ожидает оплаты"
     result = client.get(url, {"search[value]": "СОБИРАЕТСЯ"}).json()
     assert result["recordsFiltered"] == 1
     assert "preparing" in result["data"][0][0]
     shop_result = client.get(url, {"search[value]": "ЦВЕТЫ ХИМКИ"}).json()
     assert shop_result["recordsFiltered"] == 2
-    assert all(row[2] == "Цветы Химки" for row in shop_result["data"])
+    assert all(row[2] == "Цветы Химки<br>Доставка Ромео" for row in shop_result["data"])
 
 
 def test_json_sorts_money_numerically_and_orders_by_number(client, owner, shop):
@@ -157,7 +157,7 @@ def test_json_bounds_invalid_parameters_and_escapes_stored_html(
     row = client.get("/operator/orders/data/", {"search[value]": "foreign"}).json()[
         "data"
     ][0]
-    assert row[2] == "&lt;svg onload=&quot;alert(2)&quot;&gt;"
+    assert row[2] == "&lt;svg onload=&quot;alert(2)&quot;&gt;<br>Доставка Ромео"
 
 
 def test_json_paginates_stably_and_ignores_out_of_range_sort_column(

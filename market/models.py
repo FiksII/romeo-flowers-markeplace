@@ -461,6 +461,7 @@ class ShopOrder(models.Model):
         ],
     )
     address_details = models.CharField(max_length=300, blank=True)
+    delivery_point = models.JSONField(default=dict, blank=True)
     contact_name = models.CharField(max_length=100)
     contact_phone = models.CharField(max_length=25)
     customer_name = models.CharField(max_length=150, blank=True, default="")
@@ -551,6 +552,20 @@ class ShopOrder(models.Model):
             "Доставка магазина"
             if self.delivery_owner == "partner"
             else "Доставка Ромео"
+        )
+
+    @property
+    def can_set_destination(self):
+        return self.method == "delivery" and self.status not in {
+            "completed",
+            "cancelled",
+        }
+
+    @property
+    def needs_delivery_confirmation(self):
+        return self.method == "delivery" and (
+            not self.address
+            or (self.delivery_contact == "call" and not self.delivery_point)
         )
 
     @property

@@ -8,9 +8,10 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
+from django.utils import timezone
 from oscar.core.loading import get_model
 
-from market.addresses import decode_address
+from market.addresses import decode_address, encode_address
 from market.auth_adapter import RussianPhoneField
 from market.bouquet_options import SIZES, TAGS
 from market.models import (
@@ -857,6 +858,63 @@ class CheckoutContactForm(forms.Form):
                     data["verified_address"] = address
                 except ValidationError as error:
                     self.add_error("address", error)
+        return data
+
+
+class DeliveryDestinationForm(forms.Form):
+    address = forms.CharField(
+        label="Конечный адрес доставки",
+        max_length=300,
+        widget=forms.TextInput(attrs={"data-address-input": "", "autocomplete": "off"}),
+    )
+    address_token = forms.CharField(required=False, widget=forms.HiddenInput)
+    address_details = forms.CharField(
+        label="Квартира, подъезд, этаж и домофон", max_length=300, required=False
+    )
+    slot_start = forms.DateTimeField(
+        label="Начало согласованного интервала",
+        widget=forms.DateTimeInput(
+            attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
+        ),
+    )
+    slot_end = forms.DateTimeField(
+        label="Конец согласованного интервала",
+        widget=forms.DateTimeInput(
+            attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
+        ),
+    )
+
+    def __init__(self, *args, part, **kwargs):
+        self.part = part
+        initial = {"address": part.address, "address_details": part.address_details}
+        if part.delivery_point:
+            initial["address_token"] = encode_address(part.delivery_point)
+        super().__init__(*args, initial=initial, **kwargs)
+        if part.slot_start and part.slot_end:
+            del self.fields["slot_start"]
+            del self.fields["slot_end"]
+
+    def full_clean(self):
+        with timezone.override(self.part.shop.timezone):
+            super().full_clean()
+
+    def clean(self):
+        data = super().clean()
+        if data.get("address_token"):
+            try:
+                address = decode_address(data["address_token"])
+                if data.get("address") != address["value"]:
+                    raise ValidationError("Выберите точный адрес из подсказок заново.")
+                data["verified_address"] = address
+            except ValidationError as error:
+                self.add_error("address", error)
+        else:
+            self.add_error("address", "Выберите точный адрес из подсказок.")
+        start, end = data.get("slot_start"), data.get("slot_end")
+        if start and start <= timezone.now():
+            self.add_error("slot_start", "Выберите время доставки в будущем.")
+        if start and end and end <= start:
+            self.add_error("slot_end", "Конец интервала должен быть позже начала.")
         return data
 
 
