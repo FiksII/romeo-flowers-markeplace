@@ -94,6 +94,11 @@ urlpatterns = [
         name="partner-order",
     ),
     path(
+        "partner/<slug:slug>/orders/<int:pk>/destination/",
+        portal.delivery_destination,
+        name="delivery-destination",
+    ),
+    path(
         "partner/<slug:slug>/balance/", portal.partner_balance, name="partner-balance"
     ),
     path("partner/<slug:slug>/live/", portal.partner_live, name="partner-live"),

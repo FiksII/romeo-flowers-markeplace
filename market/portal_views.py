@@ -10,12 +10,17 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from oscar.core.loading import get_model
 
 from market import messengers
-from market.access import get_shop_for_user, shops_for_user
+from market.access import (
+    get_shop_for_user,
+    may_set_delivery_destination,
+    shops_for_user,
+)
 from market.forms import (
+    DeliveryDestinationForm,
     ExceptionForm,
     ListingPriceForm,
     OperatorShopForm,
@@ -42,6 +47,7 @@ from market.models import (
 from market.orders import (
     ACTIVE_STATUSES,
     HISTORY_STATUSES,
+    set_delivery_destination,
     transition_shop_order,
 )
 from market.payments import (
@@ -151,7 +157,20 @@ def partner_orders_page(request, slug):
 def operator_orders_page(request):
     if not request.user.is_superuser:
         raise PermissionDenied
-    return _orders_page(request, ShopOrder.objects.order_by("-created_at", "-pk"))
+    active = list(
+        ShopOrder.objects.filter(status__in=ACTIVE_STATUSES)
+        .select_related("order__user__customer_phone", "shop__settlement")
+        .prefetch_related("items__listing")
+        .order_by(F("slot_start").asc(nulls_last=True), "created_at", "pk")
+    )
+    return _orders_page(
+        request,
+        ShopOrder.objects.order_by("-created_at", "-pk"),
+        extra={
+            "new_parts": [part for part in active if part.status == "accepted"],
+            "work_parts": [part for part in active if part.status != "accepted"],
+        },
+    )
 
 
 CHANNEL_NAMES = dict(MessengerLink.CHANNELS)
@@ -588,9 +607,49 @@ def partner_order(request, slug, pk):
         except ValidationError as error:
             messages.error(request, "; ".join(error.messages))
         if request.POST.get("next") == "orders":
+            if request.user.is_superuser:
+                return redirect("market:operator-orders")
             return redirect("market:partner-orders", slug=slug)
         return redirect("market:partner-order", slug=slug, pk=pk)
     return render(request, "market/partner_order.html", {"shop": shop, "part": part})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def delivery_destination(request, slug, pk):
+    shop = get_shop_for_user(request.user, slug)
+    part = get_object_or_404(
+        shop.shop_orders.select_related("order", "shop"),
+        pk=pk,
+        method="delivery",
+        status__in=ACTIVE_STATUSES,
+    )
+    if not may_set_delivery_destination(request.user, part):
+        raise PermissionDenied
+    form = DeliveryDestinationForm(
+        request.POST if request.method == "POST" else None, part=part
+    )
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        try:
+            set_delivery_destination(
+                part,
+                request.user,
+                data["verified_address"],
+                data["address_details"],
+                data.get("slot_start"),
+                data.get("slot_end"),
+            )
+        except ValidationError as error:
+            form.add_error(None, error)
+        else:
+            messages.success(request, "Конечная точка доставки сохранена.")
+            return redirect("market:partner-order", slug=slug, pk=pk)
+    return render(
+        request,
+        "market/delivery_destination.html",
+        {"shop": shop, "part": part, "form": form},
+    )
 
 
 @login_required

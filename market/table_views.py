@@ -148,7 +148,7 @@ def _order_response(request, parts, *, operator=False):
     ]:
         url = reverse("market:partner-order", args=[part.shop.slug, part.pk])
         receiving = (
-            escape(part.shop.name)
+            format_html("{}<br>{}", part.shop.name, part.receiving_label)
             if operator
             else format_html(
                 "{}<br>{}",

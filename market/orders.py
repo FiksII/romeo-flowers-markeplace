@@ -14,12 +14,19 @@ from oscar.core.loading import get_model
 from oscar.core.prices import Price
 
 from market import messengers
-from market.access import shops_for_user
+from market.access import may_set_delivery_destination, shops_for_user
 from market.addresses import validate_address
 from market.availability import available_slots, location_matches
 from market.bouquet_options import line_size
 from market.context import FulfillmentContext
-from market.models import Listing, OnlinePayment, Shop, ShopOrder, ShopOrderItem
+from market.models import (
+    AuditEntry,
+    Listing,
+    OnlinePayment,
+    Shop,
+    ShopOrder,
+    ShopOrderItem,
+)
 from market.payments import record_cash_receipt
 from market.pricing import quote_product
 from market.strategy import MarketplaceStrategy
@@ -443,6 +450,55 @@ def transition_shop_order(part, actor, target):
         else "Processing"
     )
     order.save(update_fields=["status"])
+    return part
+
+
+@transaction.atomic
+def set_delivery_destination(
+    part, actor, address, details, slot_start=None, slot_end=None
+):
+    get_model("order", "Order").objects.select_for_update().get(pk=part.order_id)
+    part = (
+        ShopOrder.objects.select_for_update(of=("self",))
+        .select_related("shop")
+        .get(pk=part.pk)
+    )
+    if not may_set_delivery_destination(actor, part):
+        raise PermissionDenied
+    if not part.can_set_destination:
+        raise ValidationError("Для этого заказа нельзя изменить конечную точку.")
+    validate_address(address)
+    if not location_matches(part.shop, "delivery", FulfillmentContext(address=address)):
+        raise ValidationError("Адрес находится вне зоны доставки магазина.")
+    if not part.slot_start or not part.slot_end:
+        if (
+            not slot_start
+            or not slot_end
+            or slot_start <= timezone.now()
+            or slot_end <= slot_start
+        ):
+            raise ValidationError("Укажите согласованный интервал доставки в будущем.")
+        part.slot_start, part.slot_end = slot_start, slot_end
+    part.delivery_point = {
+        key: str(address[key])
+        for key in ("value", "city", "region", "latitude", "longitude")
+    }
+    part.address = address["value"]
+    part.address_details = details
+    part.save(
+        update_fields=[
+            "address",
+            "address_details",
+            "delivery_point",
+            "slot_start",
+            "slot_end",
+        ]
+    )
+    AuditEntry.objects.create(
+        shop=part.shop,
+        actor=actor,
+        action=f"Конечная точка части заказа #{part.pk} сохранена",
+    )
     return part
 
 

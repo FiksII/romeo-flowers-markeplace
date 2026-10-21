@@ -1,0 +1,21 @@
+{% extends 'market/base.html' %}
+{% block title %}Конечная точка · заказ № {{ part.order.number }} — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space narrow-section">
+  <a class="back-link" href="{% url 'market:partner-order' shop.slug part.pk %}">← Заказ № {{ part.order.number }}</a>
+  <div class="page-heading"><span class="eyebrow">{{ shop.name }} · {{ part.receiving_label }}</span><h1>Конечная точка доставки</h1><p>Заказ № {{ part.order.number }}</p></div>
+  {% if request.user.is_superuser %}{% include 'market/partials/operator_nav.html' %}{% else %}{% include 'market/partials/partner_nav.html' %}{% endif %}
+  <div class="group-card">
+    <p>{{ part.contact_name }}</p>
+    <a class="button button-secondary button-sm" href="tel:{{ part.contact_phone }}">Позвонить получателю · {{ part.contact_phone }}</a>
+    {% if part.needs_delivery_confirmation %}<p class="field-help">Уточните у получателя адрес{% if not part.slot_start %} и время{% endif %}, затем сохраните конечную точку.</p>{% endif %}
+    {% if part.slot_start %}<p>Интервал доставки: {{ part.slot_start|date:'d.m.Y H:i' }}–{{ part.slot_end|date:'H:i' }}.</p>{% endif %}
+  </div>
+  <form method="post" class="form-card" data-address-form>
+    {% csrf_token %}
+    {% include 'market/partials/form_fields.html' %}
+    {% if not part.slot_start %}<p class="field-help">Укажите согласованный с получателем интервал по местному времени магазина.</p>{% endif %}
+    <button class="button button-primary">Сохранить конечную точку</button>
+  </form>
+</section>
+{% endblock %}

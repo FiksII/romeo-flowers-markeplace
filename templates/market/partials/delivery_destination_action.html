@@ -1,0 +1,4 @@
+{% if part.can_set_destination %}{% if request.user.is_superuser or part.delivery_owner == 'partner' %}
+{% if part.needs_delivery_confirmation %}<a class="text-link" href="tel:{{ part.contact_phone }}">Позвонить получателю</a>{% endif %}
+<a class="button button-secondary button-sm" href="{% url 'market:delivery-destination' part.shop.slug part.pk %}">{% if part.needs_delivery_confirmation %}Установить конечную точку{% else %}Изменить конечную точку{% endif %}</a>
+{% endif %}{% endif %}
