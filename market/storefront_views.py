@@ -399,20 +399,33 @@ def _address_response(request, *, resolve=False):
 @require_POST
 @transaction.atomic
 def basket_add(request, pk):
+    wants_json = request.headers.get("Accept") == "application/json"
+
+    def result(message, *, ok=False, product_page=False):
+        if wants_json:
+            response = JsonResponse(
+                {"ok": ok, "message": message, "count": request.basket.num_items},
+                status=200 if ok else 400,
+            )
+            response["Cache-Control"] = "no-store"
+            return response
+        (messages.success if ok else messages.error)(request, message)
+        if product_page:
+            return redirect("market:product", pk=pk)
+        return redirect(safe_next(request))
+
     listing = next(
         (row for row in public_listings(get_context(request)) if row.pk == pk), None
     )
     if listing is None:
-        messages.error(
-            request, "Этот товар недоступен по выбранным условиям получения."
+        return result(
+            "Этот товар недоступен по выбранным условиям получения."
         )
-        return redirect(safe_next(request))
     size = request.POST.get("size") or (
         listing.sizes[0] if not listing.has_size_choice else None
     )
     if size not in listing.sizes:
-        messages.error(request, "Выберите доступный размер букета.")
-        return redirect("market:product", pk=pk)
+        return result("Выберите доступный размер букета.", product_page=True)
     try:
         basket = editable_basket(request)
         quantity = int(request.POST.get("quantity", "1"))
@@ -435,12 +448,11 @@ def basket_add(request, pk):
                 quantity=quantity,
                 options=[{"option": option, "value": dict(SIZES)[size]}],
             )
-        messages.success(request, f"«{listing.product.title}» добавлен в корзину.")
     except (ValueError, TypeError):
-        messages.error(request, "Проверьте количество и наличие товара.")
+        return result("Проверьте количество и наличие товара.")
     except ValidationError as error:
-        messages.error(request, "; ".join(error.messages))
-    return redirect(safe_next(request))
+        return result("; ".join(error.messages))
+    return result(f"«{listing.product.title}» добавлен в корзину.", ok=True)
 
 
 @require_POST
