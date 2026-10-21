@@ -532,11 +532,9 @@ def handle_update(update):
     update_id = update.get("update_id")
     if not isinstance(update_id, int):
         return {}
+    response = _handle(
+        chat["id"], update_id, message if not callback else None, callback
+    )
     if callback:
-        try:
-            messengers.telegram_call(
-                "answerCallbackQuery", callback_query_id=callback.get("id")
-            )
-        except messengers.MessengerError:
-            pass
-    return _handle(chat["id"], update_id, message if not callback else None, callback)
+        messengers.acknowledge_telegram_callback_later(callback.get("id"))
+    return response
