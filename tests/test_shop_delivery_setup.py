@@ -191,9 +191,28 @@ def test_migration_enables_romeo_delivery_without_overwriting_manual_options(sho
         notify_admins=False,
     )
     previous_zone = shop.delivery_zone
-    migration = import_module("market.migrations.0021_enable_shop_delivery")
+    migration = import_module("market.migrations.0022_enable_shop_delivery")
     migration.enable_delivery(apps, connection.schema_editor(atomic=False))
     shop.refresh_from_db()
     assert shop.delivery_enabled
     assert shop.pickup_enabled and not shop.own_delivery and not shop.notify_admins
     assert shop.delivery_zone == previous_zone
+
+
+def test_adding_preset_keeps_city_filter_of_existing_custom_contour(shop):
+    from pathlib import Path
+
+    from market.models import Settlement
+
+    city = Settlement.objects.create(name="Химки", slug="mixed-khimki", region="50")
+    root = Path(__file__).resolve().parents[1] / "static/market/delivery-areas"
+    feature = json.loads((root / "osm-1703094.geojson").read_text(encoding="utf-8"))
+    zone = collection(RING)
+    zone["features"][0]["properties"] = {}
+    zone["features"].append(feature)
+    form = ShopInfoForm(
+        {**shop_data(shop), "delivery_zone": json.dumps(zone)}, instance=shop
+    )
+    assert form.is_valid(), form.errors
+    form.save()
+    assert set(shop.delivery_settlements.all()) == {shop.settlement, city}

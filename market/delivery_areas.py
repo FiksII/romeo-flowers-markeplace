@@ -18,7 +18,7 @@ def area_index():
     }
 
 
-def preset_city_ids(zone, cities):
+def preset_city_ids(zone, cities, custom_city_ids=()):
     """None means a custom/legacy zone; exact addresses always use its geometry."""
     if not isinstance(zone, dict):
         return None
@@ -30,7 +30,7 @@ def preset_city_ids(zone, cities):
     ]
     if not areas:
         return None
-    return [
+    ids = [
         city.pk
         for city in cities
         if any(
@@ -43,3 +43,7 @@ def preset_city_ids(zone, cities):
             for area in areas
         )
     ]
+
+    if len(areas) < len(zone["features"]):
+        ids.extend(custom_city_ids)
+    return ids

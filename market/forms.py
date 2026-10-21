@@ -489,7 +489,14 @@ class ShopDeliveryForm(ShopFormBase):
         zone = data.get("delivery_zone")
         if zone and "delivery_settlements" in self.fields:
             cities = self.fields["delivery_settlements"].queryset
-            ids = preset_city_ids(zone, cities)
+            previous = data.get("delivery_settlements")
+            if not previous:
+                previous = (
+                    self.instance.delivery_settlements.all()
+                    if self.instance.pk
+                    else cities.filter(pk=getattr(data.get("settlement"), "pk", None))
+                )
+            ids = preset_city_ids(zone, cities, previous.values_list("pk", flat=True))
             if ids is not None:
                 data["delivery_settlements"] = cities.filter(pk__in=ids)
             elif not data.get("delivery_settlements"):
