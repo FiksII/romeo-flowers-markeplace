@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 import pytest
@@ -40,7 +41,9 @@ def test_admin_creates_shop_with_selected_owner(client, admin, owner, city):
             "address": ADDRESS["value"],
             "address_token": encode_address(ADDRESS),
             "pickup_enabled": "on",
-            "delivery_enabled": "on",
+            "delivery_zone": json.dumps(
+                [[55.7, 37.5], [55.7, 37.8], [55.9, 37.8], [55.9, 37.5]]
+            ),
             "delivery_settlements": [city.pk],
             "minimum_order": "1500",
             "prep_minutes": "30",

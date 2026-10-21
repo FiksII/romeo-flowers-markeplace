@@ -14,6 +14,7 @@ from oscar.core.loading import get_model
 from market.addresses import decode_address, encode_address
 from market.auth_adapter import RussianPhoneField
 from market.bouquet_options import SIZES, TAGS
+from market.delivery_areas import preset_city_ids
 from market.models import (
     Flower,
     Listing,
@@ -404,10 +405,16 @@ class ShopFormBase(forms.ModelForm):
                 decimal_places=2,
                 initial=self.instance.delivery_fee,
             )
+        if "own_delivery" in self.fields:
+            self.fields[
+                "own_delivery"
+            ].help_text = "Курьер ваш: покупатель платит цену с доставкой, которую вы задаёте для каждого букета. Если галочка снята, доставку выполняет Ромео."
         self.operator = operator
 
     def clean(self):
         data = super().clean()
+        if "own_delivery" in self.fields:
+            self.instance.delivery_enabled = True
         if "address" in self.fields:
             self._clean_address(data)
         for name, lengths in [
@@ -456,6 +463,8 @@ class ShopFormBase(forms.ModelForm):
                     for name in self.Meta.fields
                     if not instance._meta.get_field(name).many_to_many
                 ]
+                if "own_delivery" in self.fields:
+                    fields += ["delivery_enabled"]
                 if "address" in self.fields:
                     fields += ["latitude", "longitude"]
                 if self.operator:
@@ -467,7 +476,40 @@ class ShopFormBase(forms.ModelForm):
         return instance
 
 
-class ShopForm(ShopFormBase):
+class ShopDeliveryForm(ShopFormBase):
+    delivery_zone = forms.JSONField(required=False, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "delivery_settlements" in self.fields:
+            self.fields["delivery_settlements"].widget = forms.MultipleHiddenInput()
+
+    def clean(self):
+        data = super().clean()
+        zone = data.get("delivery_zone")
+        if zone and "delivery_settlements" in self.fields:
+            cities = self.fields["delivery_settlements"].queryset
+            ids = preset_city_ids(zone, cities)
+            if ids is not None:
+                data["delivery_settlements"] = cities.filter(pk__in=ids)
+            elif not data.get("delivery_settlements"):
+                data["delivery_settlements"] = (
+                    self.instance.delivery_settlements.all()
+                    if self.instance.pk
+                    else cities.filter(pk=getattr(data.get("settlement"), "pk", None))
+                )
+        return data
+
+    def clean_delivery_zone(self):
+        zone = clean_zone(self.cleaned_data.get("delivery_zone"))
+        if not zone:
+            raise ValidationError(
+                "Нарисуйте зону доставки на карте или выберите готовую территорию."
+            )
+        return zone
+
+
+class ShopForm(ShopDeliveryForm):
     """The whole profile at once: connecting a shop and the administrator's page."""
 
     class Meta:
@@ -478,9 +520,9 @@ class ShopForm(ShopFormBase):
             "settlement",
             "address",
             "phone",
-            "delivery_enabled",
             "pickup_enabled",
             "own_delivery",
+            "delivery_zone",
             "delivery_settlements",
             "minimum_order",
             "prep_minutes",
@@ -531,7 +573,7 @@ class OperatorShopForm(ShopForm):
             Membership.objects.get_or_create(shop=self.instance, user_id=user_id)
 
 
-class ShopInfoForm(ShopFormBase):
+class ShopInfoForm(ShopDeliveryForm):
     """Cabinet section «Информация о магазине» (the schedule is a separate form)."""
 
     class Meta:
@@ -543,8 +585,9 @@ class ShopInfoForm(ShopFormBase):
             "address",
             "phone",
             "pickup_enabled",
-            "delivery_enabled",
             "own_delivery",
+            "delivery_zone",
+            "delivery_settlements",
             "prep_minutes",
             "pickup_instructions",
         ]
@@ -553,12 +596,11 @@ class ShopInfoForm(ShopFormBase):
             "pickup_instructions": forms.Textarea(attrs={"rows": 3}),
         }
         help_texts = {
-            "delivery_enabled": "Покупатели могут заказать доставку из вашего магазина.",
             "own_delivery": "Курьер ваш: покупатель платит цену с доставкой, которую вы задаёте для каждого букета. Без галочки доставку организует Ромео за отдельную плату.",
         }
 
 
-class ShopPayoutForm(ShopFormBase):
+class ShopPayoutForm(ShopDeliveryForm):
     """Cabinet section «Реквизиты и зона доставки»."""
 
     delivery_zone = forms.JSONField(required=False, widget=forms.HiddenInput)
@@ -578,9 +620,6 @@ class ShopPayoutForm(ShopFormBase):
         help_texts = {
             "delivery_settlements": "Покупатель, выбравший только город, увидит ваш магазин, если город отмечен здесь. Точный адрес проверяется по зоне на карте.",
         }
-
-    def clean_delivery_zone(self):
-        return clean_zone(self.cleaned_data.get("delivery_zone"))
 
 
 def clock_text(minute):

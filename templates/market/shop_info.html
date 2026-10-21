@@ -1,6 +1,6 @@
 {% extends 'market/base.html' %}{% load market_tags %}
 {% block title %}{{ shop.name }} · Информация о магазине — Ромео{% endblock %}
-{% block map_assets %}{% include 'market/partials/map_assets.html' %}{% endblock %}
+{% block map_assets %}{% include 'market/partials/map_assets.html' with geoman=True %}{% endblock %}
 {% block content %}
 <section class="shell section-space">
   <a class="back-link" href="{% url 'market:partner' %}">← Мои магазины</a>
@@ -28,13 +28,13 @@
     <section class="form-card">
       <h2>Получение заказов</h2>
       {% include 'market/partials/field.html' with field=form.pickup_enabled %}
-      {% include 'market/partials/field.html' with field=form.delivery_enabled %}
       {% include 'market/partials/field.html' with field=form.own_delivery %}
       <div class="two-fields">
         {% include 'market/partials/field.html' with field=form.prep_minutes %}
       </div>
       {% include 'market/partials/field.html' with field=form.pickup_instructions %}
     </section>
+    <section class="form-card">{% include 'market/partials/delivery_zone_editor.html' %}{{ form.delivery_settlements }}</section>
     <section class="form-card" id="schedule">
       <h2>Расписание по дням недели</h2>
       <p class="field-help">Оставьте день пустым, если в этот день не работаете. 00:00–24:00 — круглосуточно; если конец раньше начала, интервал переходит на следующие сутки. Подготовка заказа идёт только в рабочие часы.</p>

@@ -140,14 +140,8 @@ class Shop(models.Model):
             ZoneInfo(self.timezone)
         except (ZoneInfoNotFoundError, ValueError):
             raise ValidationError({"timezone": "Укажите действительный часовой пояс."})
-        if not self.delivery_enabled and not self.pickup_enabled:
-            raise ValidationError("Включите доставку или самовывоз.")
-        if self.own_delivery and not self.delivery_enabled:
-            raise ValidationError(
-                {
-                    "own_delivery": "Своя доставка работает только при включённой доставке."
-                }
-            )
+        # Every shop delivers: its own courier when selected, Romeo otherwise.
+        self.delivery_enabled = True
 
     def __str__(self):
         return self.name
