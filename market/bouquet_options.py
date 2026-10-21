@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 
 TAGS = [
     ("march8", "8 марта"),
+    ("feb23", "23 февраля"),
     ("birthday", "На день рождения"),
     ("funeral", "На похороны"),
     ("wedding", "На свадьбу"),

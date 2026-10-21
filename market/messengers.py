@@ -260,6 +260,7 @@ def new_invitation(link, now=None):
     link.chat_id = link.title = ""
     link.code, link.code_created_at = _new_code(), now or timezone.now()
     link.enabled, link.linked_at = True, None
+    link.can_manage_catalogue = False
     link.save()
     return link
 

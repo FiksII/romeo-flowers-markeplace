@@ -29,11 +29,22 @@ def telegram_webhook(request):
     ):
         return HttpResponseForbidden()
     update = _json(request)
+    from market.telegram_catalogue import handle_update
+
+    response = handle_update(update)
+    if response is not None:
+        return JsonResponse(response)
     chat_id, text = messengers.handle_telegram_update(update or {})
     if not chat_id:
         return JsonResponse({})
     # Telegram performs a method returned in the webhook answer: no extra request.
-    return JsonResponse({"method": "sendMessage", "chat_id": chat_id, "text": text})
+    reply = {"method": "sendMessage", "chat_id": chat_id, "text": text}
+    from market.telegram_catalogue import menu_for_chat
+
+    menu = menu_for_chat(chat_id)
+    if menu:
+        reply["reply_markup"] = menu
+    return JsonResponse(reply)
 
 
 @csrf_exempt
