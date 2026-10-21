@@ -24,13 +24,16 @@ class Command(BaseCommand):
                 "setWebhook",
                 url=url,
                 secret_token=messengers.telegram_webhook_secret(),
-                allowed_updates=["message"],
+                allowed_updates=["message", "callback_query"],
+                max_connections=1,
             )
             messengers.telegram_call(
                 "setMyCommands",
                 commands=[
                     {"command": "start", "description": "Подключить уведомления"},
                     {"command": "stop", "description": "Отключить уведомления"},
+                    {"command": "add", "description": "Добавить букет в магазин"},
+                    {"command": "cancel", "description": "Отменить добавление букета"},
                 ],
             )
             self.stdout.write(f"Telegram: вебхук @{me['username']} → {url}")
