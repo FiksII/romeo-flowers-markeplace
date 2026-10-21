@@ -65,7 +65,7 @@ def texts(bot):
         (
             url.rsplit("/", 1)[-1],
             params.get("chat_id") or params.get("peer_id"),
-            params.get("text") or params.get("message"),
+            params.get("text") or params.get("message") or params.get("caption"),
         )
         for url, params in bot.calls
     ]
@@ -145,10 +145,149 @@ def test_online_order_is_announced_once_after_payment(
         record_online_payment(part)
         record_online_payment(part)
     assert len(bot.calls) == 1
-    assert "Онлайн · Оплачен" in bot.calls[0][1]["text"]
+    assert (
+        "Оплачено онлайн. Получать деньги с клиента не нужно."
+        in bot.calls[0][1]["text"]
+    )
     with django_capture_on_commit_callbacks(execute=True):
         messengers.notify_new_part(part)
     assert len(bot.calls) == 1
+
+
+@pytest.mark.parametrize("method", ["pickup", "delivery"])
+@pytest.mark.parametrize("payment", ["cash", "online"])
+@pytest.mark.parametrize("status", ["pending", "paid", "refunded"])
+def test_partner_payment_instructions(owner, shop, listing, method, payment, status):
+    part = order_part(owner, shop, listing, method, payment=payment)
+    part.payment_status = status
+    text = messengers.order_text(part)
+    assert "Наличными при получении" not in text
+    if status == "refunded":
+        assert "Оплата возвращена" in text
+        assert "Получить с покупателя" not in text
+    elif status == "paid":
+        assert "Получать деньги с клиента не нужно" in text
+        assert "Получить с покупателя" not in text
+        assert ("Оплачено онлайн" in text) == (payment == "online")
+    elif method == "pickup" and payment == "cash":
+        assert "Получить с покупателя 3\xa0000 ₽" in text
+    else:
+        assert "Получить с покупателя" not in text
+        assert "Получать деньги с клиента не нужно" in text
+        assert "Оплачено онлайн" not in text
+
+
+def test_telegram_order_contains_bouquet_photo(bot, owner, shop, listing):
+    listing.photo = "listings/bouquet.jpg"
+    listing.save()
+    number(shop, "telegram", "1001")
+    part = order_part(owner, shop, listing)
+    message = MessengerMessage.objects.get()
+    assert messengers.deliver(message.pk) == "sent"
+    url, params = bot.calls[0]
+    assert url.endswith("/sendPhoto")
+    assert params["photo"] == "https://flowers.test/media/listings/bouquet.jpg"
+    assert f"Новый заказ № {part.order.number}" in params["caption"]
+    assert "Получить с покупателя" in params["caption"]
+
+
+def test_telegram_album_and_long_caption_keep_payment_and_order_link(
+    bot, owner, shop, listing
+):
+    from market.models import ShopOrderItem
+
+    listing.photo = "listings/bouquet.jpg"
+    listing.save()
+    number(shop, "telegram", "1001")
+    part = order_part(owner, shop, listing)
+    item = part.items.get()
+    item.title = "Букет " * 40
+    item.save()
+    other = type(listing).objects.get(pk=listing.pk)
+    other.pk = None
+    product = type(listing.product).objects.create(
+        title="Другой букет",
+        product_class=listing.product.product_class,
+    )
+    other.product = product
+    other.photo = "listings/other.jpg"
+    other.save()
+    for _ in range(7):
+        ShopOrderItem.objects.create(
+            part=part,
+            listing=other,
+            title=item.title,
+            quantity=1,
+            unit_price=3000,
+            unit_commission=500,
+            unit_payout=2500,
+            commission_percent=20,
+        )
+    message = MessengerMessage.objects.get()
+    assert messengers.deliver(message.pk) == "sent"
+    url, params = bot.calls[0]
+    assert url.endswith("/sendMediaGroup")
+    media = json.loads(params["media"])
+    assert len(media) == 2
+    caption = media[0]["caption"]
+    assert len(caption.encode("utf-16-le")) // 2 <= 1024
+    assert "Получить с покупателя" in caption
+    assert f"/orders/{part.pk}/" in caption
+
+
+def test_rejected_photo_falls_back_to_order_text(
+    bot, owner, shop, listing, monkeypatch
+):
+    listing.photo = "listings/bouquet.jpg"
+    listing.save()
+    number(shop, "telegram", "1001")
+    order_part(owner, shop, listing)
+    original = messengers._post_json
+
+    def reject_photo(url, params, timeout=10):
+        if url.endswith("/sendPhoto"):
+            return {
+                "ok": False,
+                "error_code": 400,
+                "description": "wrong file identifier/HTTP URL specified",
+            }
+        return original(url, params, timeout)
+
+    monkeypatch.setattr(messengers, "_post_json", reject_photo)
+    assert messengers.deliver(MessengerMessage.objects.get().pk) == "sent"
+    assert bot.calls[-1][0].endswith("/sendMessage")
+    assert "Получить с покупателя" in bot.calls[-1][1]["text"]
+
+
+def test_photo_throttling_retries_without_text_fallback(bot, owner, shop, listing):
+    listing.photo = "listings/bouquet.jpg"
+    listing.save()
+    link = number(shop, "telegram", "1001")
+    order_part(owner, shop, listing)
+    message = MessengerMessage.objects.get()
+    bot.answer = {"ok": False, "error_code": 429, "description": "Too Many Requests"}
+    assert messengers.deliver(message.pk) == "pending"
+    assert len(bot.calls) == 1 and bot.calls[0][0].endswith("/sendPhoto")
+    link.refresh_from_db()
+    assert link.enabled
+    bot.answer = None
+    assert messengers.deliver(message.pk) == "sent"
+
+
+def test_deleted_bouquet_still_sends_order_text(bot, owner, shop, listing):
+    number(shop, "telegram", "1001")
+    order_part(owner, shop, listing)
+    listing.delete()
+    assert messengers.deliver(MessengerMessage.objects.get().pk) == "sent"
+    assert bot.calls[0][0].endswith("/sendMessage")
+
+
+def test_partner_delivery_does_not_request_cash(owner, shop, listing):
+    part = order_part(owner, shop, listing, "delivery")
+    part.delivery_owner = "partner"
+    text = messengers.order_text(part)
+    assert "Получить с покупателя" not in text
+    assert "Получать деньги с клиента не нужно" in text
 
 
 def test_disabled_number_and_unconfigured_channel_get_nothing(
