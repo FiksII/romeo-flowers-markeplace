@@ -807,6 +807,7 @@ class MessengerLink(models.Model):
     chat_id = models.CharField(max_length=32, blank=True)
     title = models.CharField(max_length=100, blank=True)
     enabled = models.BooleanField(default=True)
+    can_manage_catalogue = models.BooleanField("Добавление букетов в Telegram", default=False)
     code = models.CharField(max_length=12, unique=True, null=True, blank=True)
     code_created_at = models.DateTimeField(null=True, blank=True)
     linked_at = models.DateTimeField(null=True, blank=True)
@@ -840,6 +841,20 @@ class MessengerLink(models.Model):
     @property
     def is_linked(self):
         return bool(self.chat_id)
+
+
+class TelegramBouquetDraft(models.Model):
+    """One durable, locked dialogue per private chat; no uploaded files until save."""
+
+    chat_id = models.CharField(max_length=32, unique=True)
+    link = models.ForeignKey(MessengerLink, null=True, on_delete=models.SET_NULL)
+    step = models.CharField(max_length=40, default="shop")
+    data = models.JSONField(default=dict)
+    token = models.CharField(max_length=16, blank=True)
+    revision = models.PositiveIntegerField(default=0)
+    last_update_id = models.BigIntegerField(default=-1)
+    last_response = models.JSONField(default=dict)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class MessengerMessage(models.Model):
