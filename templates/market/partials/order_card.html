@@ -13,6 +13,7 @@
   </li>{% endfor %}</ul>
   {% include 'market/partials/order_contacts.html' %}
   {% if part.instructions %}<p class="notice order-card-note">{{ part.instructions }}</p>{% endif %}
+  {% if operator_orders and part.method == 'delivery' and part.delivery_owner == 'platform' %}<p class="notice">{% romeo_payment_instruction part %}</p>{% endif %}
   <div class="order-card-total"><div><span class="muted">{{ part.get_payment_method_display }} · {{ part.get_payment_status_display }}</span>{% if operator_orders %}<strong>Всего {{ part.total|rub }}</strong>{% elif part.platform_collects %}<strong>Вам {{ part.partner_total|rub }}</strong>{% else %}<strong>Получить с покупателя {{ part.total|rub }}</strong>{% endif %}</div>{% if part.status != 'accepted' %}<span class="status-chip">{{ part.get_status_display }}</span>{% endif %}</div>
   <div class="order-card-actions">
     {% include 'market/partials/delivery_destination_action.html' %}

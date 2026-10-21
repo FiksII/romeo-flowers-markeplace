@@ -32,7 +32,7 @@
       </form>
     </div>{% endfor %}
     {% else %}
-    <p class="field-help">Личные уведомления о заказах с доставкой Ромео из магазинов, отмеченных галочкой в <a class="text-link" href="{% url 'market:operator' %}#shops">списке магазинов</a> (отмечено: {{ watched_shops }}). Заказ с оплатой наличными приходит сразу, онлайн-заказ — после оплаты.</p>
+    <p class="field-help">Личные уведомления о заказах с доставкой Ромео из магазинов, отмеченных галочкой в <a class="text-link" href="{% url 'market:operator' %}#shops">списке магазинов</a> (отмечено: {{ watched_shops }}). По умолчанию отмечены все магазины, включая новые. Заказ с оплатой наличными приходит сразу, онлайн-заказ — после оплаты. В Telegram придут фото букета, данные получателя и ссылка для уточнения места получения.</p>
     {% for channel in channels %}<div class="messenger-channel" data-channel="{{ channel.id }}">
       <div class="messenger-channel-head">
         <strong>{{ channel.label }}</strong>

@@ -96,6 +96,32 @@ def test_shop_cannot_change_romeo_destination(client, owner, stranger, shop, lis
     assert part.address == ""
 
 
+def test_admin_romeo_delivery_board_has_recipient_photo_and_destination(
+    client, stranger, shop, listing
+):
+    part = pending_delivery(stranger, shop, listing, own=False)
+    pickup = order_part(stranger, shop, listing)
+    listing.photo = "listings/bouquet.jpg"
+    listing.save()
+    admin = get_user_model().objects.create_superuser(
+        "delivery-admin", "admin@test.ru", "secret"
+    )
+    client.force_login(admin)
+    response = client.get("/operator/orders/")
+    assert [p.pk for p in response.context["romeo_parts"]] == [part.pk]
+    assert pickup.pk in [p.pk for p in response.context["new_parts"]]
+    assert part.pk not in [p.pk for p in response.context["new_parts"]]
+    html = response.content.decode()
+    assert 'id="romeo-deliveries"' in html
+    assert f'href="tel:{part.contact_phone}"' in html
+    assert destination_url(part) in html and "Установить конечную точку" in html
+    assert "Курьер Ромео: получить с клиента" in html
+    assert "listings/bouquet.jpg" in html
+    assert client.post(destination_url(part), destination_data()).status_code == 302
+    response = client.get("/operator/orders/")
+    assert "Изменить конечную точку" in response.content.decode()
+
+
 def test_other_shop_and_buyer_cannot_change_destination(
     client, owner, stranger, other_shop, shop, listing
 ):

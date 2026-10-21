@@ -101,6 +101,8 @@ def test_superadmins_get_romeo_deliveries_of_ticked_shops(
     bot, owner, shop, listing, admin, django_capture_on_commit_callbacks
 ):
     personal(admin, "vk", "9009")
+    shop.notify_admins = False
+    shop.save(update_fields=["notify_admins"])
     with django_capture_on_commit_callbacks(execute=True):
         order_part(owner, shop, listing, "delivery", payment="cash")
     assert bot.calls == []  # the shop is not ticked
@@ -119,6 +121,53 @@ def test_superadmins_get_romeo_deliveries_of_ticked_shops(
     # The shop's own delivery is not Romeo's business.
     part.delivery_owner = "partner"
     assert not messengers.admin_wants(part)
+
+
+def test_new_shops_enable_romeo_notifications_by_default(shop):
+    assert shop.notify_admins
+
+
+def test_admin_telegram_has_photo_recipient_and_destination_action(
+    bot, owner, shop, listing, admin
+):
+    listing.photo = "listings/bouquet.jpg"
+    listing.save()
+    shop.notify_admins = True
+    shop.save()
+    personal(admin, "telegram", "9009")
+    part = order_part(owner, shop, listing, "delivery")
+    part.address = ""
+    part.delivery_contact = "call"
+    part.save()
+    assert messengers.deliver(MessengerMessage.objects.get().pk) == "sent"
+    url, params = bot.calls[0]
+    assert url.endswith("/sendPhoto")
+    text = params["caption"]
+    assert f"Получатель: {part.contact_name}" in text
+    assert part.contact_phone in text
+    assert "Уточните у получателя адрес" in text
+    assert f"/orders/{part.pk}/destination/" in text
+    assert "Курьер Ромео: получить с клиента" in text
+    assert "Получать деньги с клиента не нужно" not in text
+
+
+@pytest.mark.parametrize("status", ["pending", "paid", "refunded"])
+def test_admin_online_payment_instruction(owner, shop, listing, status):
+    part = order_part(owner, shop, listing, "delivery", payment="online")
+    part.payment_status = status
+    part.address = "Согласованный адрес"
+    part.delivery_point = {"value": part.address}
+    part.instructions = "Открытка: поздравление"
+    text = messengers.order_text(part, for_admin=True)
+    assert part.address in text and part.instructions in text
+    assert "Уточните у получателя адрес" not in text
+    assert "Курьер Ромео: получить с клиента" not in text
+    if status == "paid":
+        assert "Оплачено онлайн. Получать деньги с клиента не нужно." in text
+    elif status == "pending":
+        assert "Ожидается онлайн-оплата" in text and "Оплачено онлайн" not in text
+    else:
+        assert "Оплата возвращена" in text
 
 
 def test_a_chat_on_both_lists_gets_one_message(
