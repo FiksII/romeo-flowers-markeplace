@@ -224,6 +224,33 @@ def tg_update(text, chat_id=555, username="flower_seller"):
     }
 
 
+@pytest.mark.parametrize("recipient", ["shop", "admin"])
+def test_telegram_invitation_links_each_recipient_kind(
+    bot, client, shop, admin, recipient
+):
+    link = (
+        messengers.add_shop_number(shop, "telegram", "+79991112233")
+        if recipient == "shop"
+        else messengers.link_with_code(admin, "telegram")
+    )
+    code = link.code
+
+    response = telegram_post(client, tg_update(f"/start {code}"))
+
+    assert response.status_code == 200
+    assert "Готово" in response.json()["text"]
+    link.refresh_from_db()
+    assert link.chat_id == "555" and link.code is None and link.enabled
+    assert (
+        "Ссылка не подошла"
+        in telegram_post(client, tg_update(f"/start {code}", chat_id=777)).json()[
+            "text"
+        ]
+    )
+    link.refresh_from_db()
+    assert link.chat_id == "555"
+
+
 def test_telegram_invitation_links_the_number(bot, client, shop):
     link = messengers.add_shop_number(shop, "telegram", "+79991112233")
     assert messengers.connect_url(link) == (
