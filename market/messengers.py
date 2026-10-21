@@ -19,7 +19,7 @@ import secrets
 import threading
 from datetime import timedelta
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin, urlsplit
 from urllib.request import Request, urlopen
 
 from django.conf import settings
@@ -50,6 +50,10 @@ class MessengerError(Exception):
 
 class RecipientGone(MessengerError):
     """The person blocked the bot or forbade the community to write; stop sending."""
+
+
+class TelegramMediaError(MessengerError):
+    """Telegram rejected the media; the order can still be delivered as text."""
 
 
 # Channels
@@ -105,6 +109,8 @@ def telegram_call(method, **params):
         text = str(result.get("description", "")) if isinstance(result, dict) else ""
         if code == 403 or "chat not found" in text:
             raise RecipientGone(text[:200] or "forbidden")
+        if code == 400 and method in {"sendPhoto", "sendMediaGroup"}:
+            raise TelegramMediaError("Telegram rejected order photos")
         raise MessengerError(f"{code}: {text}"[:200])
     return result.get("result")
 
@@ -124,10 +130,27 @@ def vk_call(method, **params):
     return result.get("response")
 
 
-def send(link, text):
+def send(link, text, photos=(), caption=None):
     if link.channel == MessengerLink.TELEGRAM:
         if not telegram_enabled():
             raise MessengerError("Telegram is not configured")
+        if photos:
+            try:
+                caption = caption if caption is not None else text
+                if len(photos) == 1:
+                    telegram_call(
+                        "sendPhoto",
+                        chat_id=link.chat_id,
+                        photo=photos[0],
+                        caption=caption,
+                    )
+                else:
+                    media = [{"type": "photo", "media": photo} for photo in photos]
+                    media[0]["caption"] = caption
+                    telegram_call("sendMediaGroup", chat_id=link.chat_id, media=media)
+                return
+            except TelegramMediaError:
+                logger.warning("Order photos rejected; sending text notification")
         telegram_call(
             "sendMessage",
             chat_id=link.chat_id,
@@ -352,7 +375,7 @@ def _order_url(part):
     )
 
 
-def order_text(part, for_admin=False):
+def order_text(part, for_admin=False, compact=False):
     lines = [f"Новый заказ № {part.order.number}", part.shop.name]
     when = "время уточнить у получателя"
     if part.slot_start:
@@ -362,24 +385,66 @@ def order_text(part, for_admin=False):
         )
         when = f"{start:%d.%m}, {start:%H:%M}–{end:%H:%M}"
     lines.append(f"{part.receiving_label} · {when}")
-    for item in part.items.all():
+    items = list(part.items.all())
+    for item in [] if compact else items:
         size = f", {item.size_label}" if item.size_label else ""
         lines.append(f"• {item.title}{size} × {item.quantity}")
-    lines.append(
-        f"{part.get_payment_method_display()} · {part.get_payment_status_display()}"
-    )
+    if compact:
+        lines.append(
+            f"Букетов: {sum(item.quantity for item in items)}. Полный состав — в заказе."
+        )
     if for_admin:
+        lines.append(
+            f"{part.get_payment_method_display()} · {part.get_payment_status_display()}"
+        )
         lines.append(
             f"Сумма заказа {rub(part.total)}, магазину {rub(part.partner_total)}"
         )
-    elif part.platform_collects:
-        lines.append(f"Вам {rub(part.partner_total)}")
     else:
-        lines.append(f"Получить с покупателя {rub(part.total)}")
+        if part.payment_status == "refunded":
+            lines.append(
+                "Оплата возвращена. Не выдавайте заказ без уточнения в кабинете."
+            )
+        elif part.payment_status == "paid":
+            paid = (
+                "Оплачено онлайн"
+                if part.payment_method == "online"
+                else "Оплата получена"
+            )
+            lines.append(f"{paid}. Получать деньги с клиента не нужно.")
+        elif part.method == "pickup" and part.payment_method == "cash":
+            lines.append(f"Получить с покупателя {rub(part.total)}")
+        elif part.payment_method == "online":
+            lines.append("Ожидается онлайн-оплата. Получать деньги с клиента не нужно.")
+        else:
+            lines.append("Получать деньги с клиента не нужно.")
+        if part.platform_collects and part.payment_status != "refunded":
+            lines.append(f"Вам {rub(part.partner_total)}")
     url = _order_url(part)
     if url:
         lines.append(f"Открыть заказ: {url}")
     return "\n".join(lines)
+
+
+def order_photos(part):
+    """Fresh storage URLs (including S3 signatures) for the ordered bouquets."""
+    photos = []
+    for item in part.items.select_related("listing"):
+        listing = item.listing
+        if listing is None or not (listing.photo or listing.seed_image):
+            continue
+        photo = urljoin(settings.SITE_URL + "/", listing.image_url)
+        parsed = urlsplit(photo)
+        # Telegram cannot send the SVG placeholder as a photo.
+        if parsed.scheme not in {"https", "http"} or parsed.path.lower().endswith(
+            ".svg"
+        ):
+            continue
+        if photo not in photos:
+            photos.append(photo)
+        if len(photos) == 10:
+            break
+    return photos
 
 
 def admin_wants(part):
@@ -438,8 +503,8 @@ def deliver(message_id, now=None):
     """Send one pending message; safe to call from several processes at once."""
     with transaction.atomic():
         message = (
-            MessengerMessage.objects.select_for_update(skip_locked=True)
-            .select_related("link")
+            MessengerMessage.objects.select_for_update(skip_locked=True, of=("self",))
+            .select_related("link", "part__shop")
             .filter(pk=message_id, status=MessengerMessage.PENDING)
             .first()
         )
@@ -450,7 +515,17 @@ def deliver(message_id, now=None):
         try:
             if not link.enabled or not link.chat_id:
                 raise RecipientGone("link disabled")
-            send(link, message.text)
+            if message.part_id and link.channel == MessengerLink.TELEGRAM:
+                part = message.part
+                message.text = order_text(part, for_admin=link.user_id is not None)
+                caption = message.text
+                if len(caption.encode("utf-16-le")) // 2 > 1024:
+                    caption = order_text(
+                        part, for_admin=link.user_id is not None, compact=True
+                    )
+                send(link, message.text, photos=order_photos(part), caption=caption)
+            else:
+                send(link, message.text)
         except RecipientGone as error:
             message.status, message.error = MessengerMessage.FAILED, str(error)[:200]
             if link.enabled and link.chat_id:
@@ -463,7 +538,7 @@ def deliver(message_id, now=None):
         else:
             message.status, message.error = MessengerMessage.SENT, ""
             message.sent_at = now or timezone.now()
-        message.save(update_fields=["attempts", "status", "error", "sent_at"])
+        message.save(update_fields=["text", "attempts", "status", "error", "sent_at"])
         return message.status
 
 
