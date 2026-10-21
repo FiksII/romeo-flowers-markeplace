@@ -185,7 +185,7 @@ def operator_orders_page(request):
 
 
 CHANNEL_NAMES = dict(MessengerLink.CHANNELS)
-ROW_ACTIONS = {"on", "off", "test", "renew", "delete"}
+ROW_ACTIONS = {"on", "off", "test", "renew", "delete", "catalogue-on", "catalogue-off"}
 
 
 def _send_test(request, link):
@@ -223,6 +223,15 @@ def _row_action(request, link, action):
         )
     elif not link.is_linked:
         messages.error(request, f"{name} по этой ссылке ещё не подключён.")
+    elif action in {"catalogue-on", "catalogue-off"}:
+        if link.shop_id and link.channel == MessengerLink.TELEGRAM:
+            link.can_manage_catalogue = action == "catalogue-on"
+            link.save(update_fields=["can_manage_catalogue"])
+            AuditEntry.objects.create(
+                shop=link.shop, actor=request.user,
+                action=f"Добавление букетов в Telegram: {'разрешено' if link.can_manage_catalogue else 'запрещено'} · {link.phone}",
+            )
+            messages.success(request, "Право на добавление букетов сохранено.")
     elif action == "test":
         _send_test(request, link)
     else:
