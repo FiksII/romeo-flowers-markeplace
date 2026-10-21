@@ -413,6 +413,19 @@ def reply_later(channel, chat_id, text):
     _in_background(_reply, link, text)
 
 
+def acknowledge_telegram_callback_later(callback_id):
+    """Clear Telegram's button spinner without blocking the updated keyboard."""
+    _in_background(_acknowledge_telegram_callback, callback_id)
+
+
+def _acknowledge_telegram_callback(callback_id):
+    try:
+        telegram_call("answerCallbackQuery", callback_query_id=callback_id)
+    except MessengerError:
+        # These acknowledgements expire quickly; the selection is already saved.
+        logger.debug("Could not acknowledge Telegram button press")
+
+
 def _reply(link, text):
     try:
         send(link, text)

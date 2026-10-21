@@ -537,3 +537,65 @@ def test_expired_message_does_not_block_next_add(dialog):
     dialog.send("/add")
     dialog.send(photo=[{"file_id": "new-photo"}])
     assert "название" in dialog.answer["text"].lower()
+
+
+def test_slow_telegram_ack_does_not_delay_selection(dialog, settings, monkeypatch):
+    from threading import Event
+
+    from market import messengers
+
+    through_category(dialog)
+    settings.MESSENGER_BACKGROUND = True
+    started, release, finished = Event(), Event(), Event()
+
+    def slow_api(method, **params):
+        assert method == "answerCallbackQuery"
+        started.set()
+        release.wait(3)
+        finished.set()
+        return True
+
+    monkeypatch.setattr(messengers, "telegram_call", slow_api)
+    flower = next(
+        b["text"]
+        for row in dialog.answer["reply_markup"]["inline_keyboard"]
+        for b in row
+        if ":toggle:" in b.get("callback_data", "")
+    )
+    try:
+        dialog.click(flower)
+        assert started.wait(1)
+        assert not finished.is_set(), (
+            "Updating the selection waited for Telegram's acknowledgement"
+        )
+        assert any(
+            b["text"] == "✓ " + flower
+            for row in dialog.answer["reply_markup"]["inline_keyboard"]
+            for b in row
+        )
+    finally:
+        release.set()
+        assert finished.wait(2)
+
+
+def test_failed_telegram_ack_keeps_selected_flower(dialog, monkeypatch):
+    from market import messengers
+
+    through_category(dialog)
+
+    def failed_api(*args, **kwargs):
+        raise messengers.MessengerError("Telegram timed out")
+
+    monkeypatch.setattr(messengers, "telegram_call", failed_api)
+    flower = next(
+        b["text"]
+        for row in dialog.answer["reply_markup"]["inline_keyboard"]
+        for b in row
+        if ":toggle:" in b.get("callback_data", "")
+    )
+    dialog.click(flower)
+    assert any(
+        b["text"] == "✓ " + flower
+        for row in dialog.answer["reply_markup"]["inline_keyboard"]
+        for b in row
+    )
