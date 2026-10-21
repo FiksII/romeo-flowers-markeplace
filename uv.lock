@@ -476,6 +476,7 @@ dependencies = [
     { name = "gunicorn", marker = "sys_platform != 'win32'" },
     { name = "pillow" },
     { name = "psycopg2-binary" },
+    { name = "urllib3" },
 ]
 
 [package.dev-dependencies]
@@ -496,6 +497,7 @@ requires-dist = [
     { name = "gunicorn", marker = "sys_platform != 'win32'", specifier = "==26.2.0" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },
+    { name = "urllib3", specifier = ">=2.8,<3" },
 ]
 
 [package.metadata.requires-dev]
