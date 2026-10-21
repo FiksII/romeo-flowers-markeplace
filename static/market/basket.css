@@ -1,0 +1,5 @@
+.basket-flyer{position:fixed;width:64px;height:64px;object-fit:cover;border-radius:16px;z-index:10000;pointer-events:none;box-shadow:0 8px 28px #0003}
+.basket-notice{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:calc(100vw - 32px);width:max-content;padding:14px 22px;border-radius:16px;background:#214b3b;color:#fff;box-shadow:0 8px 32px #0002;z-index:10001;font-size:15px;text-align:center;pointer-events:none}
+.basket-notice[hidden]{display:none}
+.basket-notice-error{background:#843c3c}
+[data-basket-add][aria-busy="true"] button{opacity:.65;cursor:wait}
