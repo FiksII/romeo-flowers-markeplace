@@ -5,6 +5,12 @@
   <div class="page-heading"><span class="eyebrow">{% if shop %}{{ shop.name }}{% else %}Супер-администратор{% endif %}</span><h1>Заказы</h1><p>{% if shop %}Заказы вашего магазина.{% else %}Заказы всех магазинов маркетплейса.{% endif %}</p></div>
   {% if shop %}{% include 'market/partials/partner_nav.html' %}{% else %}{% include 'market/partials/operator_nav.html' %}{% endif %}
   <div data-order-board>
+  {% if operator_orders %}
+  <section class="order-board" aria-labelledby="romeo-deliveries">
+    <div class="section-heading"><h2 id="romeo-deliveries">Доставка Ромео{% if romeo_parts %} <span class="nav-badge">{{ romeo_parts|length }}</span>{% endif %}</h2><span class="muted">Связаться с получателем, согласовать адрес и доставить заказ</span></div>
+    {% if romeo_parts %}<div class="order-cards">{% for part in romeo_parts %}{% include 'market/partials/order_card.html' %}{% endfor %}</div>{% else %}<p class="muted order-empty">Активных доставок Ромео нет.</p>{% endif %}
+  </section>
+  {% endif %}
   <section class="order-board" aria-labelledby="new-orders">
     <div class="section-heading"><h2 id="new-orders">Новые{% if new_parts %} <span class="nav-badge">{{ new_parts|length }}</span>{% endif %}</h2><span class="muted">Ещё не начали собирать</span></div>
     {% if new_parts %}<div class="order-cards">{% for part in new_parts %}{% include 'market/partials/order_card.html' %}{% endfor %}</div>{% else %}<p class="muted order-empty">Новых заказов нет.</p>{% endif %}

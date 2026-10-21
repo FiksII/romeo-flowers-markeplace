@@ -167,7 +167,8 @@ document.addEventListener("submit", event => {
         toast(text, nav.dataset.balanceUrl, "Открыть баланс");
         system(text, nav.dataset.balanceUrl);
       }
-      const changed = next.new_orders !== state.new_orders || next.latest_order !== state.latest_order;
+      const changed = next.new_orders !== state.new_orders || next.latest_order !== state.latest_order
+        || (next.revision !== undefined && next.revision !== state.revision);
       badge(next.new_orders);
       if (!next.new_orders) document.title = baseTitle;
       state = next;

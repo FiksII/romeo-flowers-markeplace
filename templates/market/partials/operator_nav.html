@@ -1,7 +1,8 @@
 {% load market_tags %}{% with current=request.resolver_match.url_name %}
-<nav class="portal-nav" aria-label="Кабинет супер-администратора">
+{% romeo_order_summary as romeo_summary %}
+<nav class="portal-nav" aria-label="Кабинет супер-администратора" data-partner-live="{% url 'market:operator-live' %}" data-orders-url="{% url 'market:operator-orders' %}" data-new-orders="{{ romeo_summary.count }}" data-latest-order="{{ romeo_summary.latest|default:0 }}" data-payouts="0">
   <a href="{% url 'market:operator' %}"{% if current == 'operator' %} aria-current="page"{% endif %}>Дашборд</a>
-  <a href="{% url 'market:operator-orders' %}"{% if current == 'operator-orders' or current == 'partner-order' %} aria-current="page"{% endif %}>Заказы</a>
+  <a href="{% url 'market:operator-orders' %}" data-orders-tab{% if current == 'operator-orders' or current == 'partner-order' %} aria-current="page"{% endif %}>Заказы{% if romeo_summary.count %} <span class="nav-badge" aria-label="Новых заказов: {{ romeo_summary.count }}">{{ romeo_summary.count }}</span>{% endif %}</a>
   <a href="{% url 'market:operator-balances' %}"{% if current == 'operator-balances' %} aria-current="page"{% endif %}>Балансы и выплаты</a>
   <a href="{% url 'market:operator-settings' %}"{% if current == 'operator-settings' %} aria-current="page"{% endif %}>Настройки</a>
 </nav>

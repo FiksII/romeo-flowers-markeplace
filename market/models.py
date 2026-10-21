@@ -113,7 +113,7 @@ class Shop(models.Model):
     bank_bik = models.CharField("БИК", max_length=9, blank=True)
     # Superadmins get messenger notifications of this shop's Romeo deliveries.
     notify_admins = models.BooleanField(
-        "Уведомлять супер администраторов о доставке Ромео", default=False
+        "Уведомлять супер администраторов о доставке Ромео", default=True
     )
     markup_percent = models.DecimalField(
         "Наценка Ромео, % к цене магазина",

@@ -125,6 +125,7 @@ urlpatterns = [
         name="payout-cancel",
     ),
     path("operator/orders/", portal.operator_orders_page, name="operator-orders"),
+    path("operator/live/", portal.operator_live, name="operator-live"),
     path("operator/settings/", portal.operator_settings, name="operator-settings"),
     path(
         "operator/notify-shops/",

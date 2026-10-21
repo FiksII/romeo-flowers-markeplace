@@ -7,6 +7,48 @@ from tests.test_table_views import make_part
 pytestmark = pytest.mark.django_db
 
 
+def test_operator_live_tracks_only_ready_to_work_romeo_deliveries(
+    client, owner, stranger, shop, listing
+):
+    from django.contrib.auth import get_user_model
+
+    client.force_login(owner)
+    assert client.get("/operator/live/").status_code == 403
+    admin = get_user_model().objects.create_superuser(
+        "live-admin", "live@test.ru", "secret"
+    )
+    cash = order_part(stranger, shop, listing, "delivery")
+    order_part(stranger, shop, listing, "delivery", payment="online")
+    order_part(stranger, shop, listing, "pickup")
+    client.force_login(admin)
+    response = client.get("/operator/live/")
+    state = response.json()
+    assert {key: state[key] for key in ("new_orders", "latest_order", "payouts")} == {
+        "new_orders": 1,
+        "latest_order": cash.pk,
+        "payouts": 0,
+    }
+    previous = state["revision"]
+    for status in ("preparing", "courier", "completed"):
+        cash.status = status
+        cash.save(update_fields=["status"])
+        state = client.get("/operator/live/").json()
+        assert state["revision"] != previous
+        previous = state["revision"]
+    cash.status = "courier"
+    cash.save(update_fields=["status"])
+    previous = client.get("/operator/live/").json()["revision"]
+    cash.address = "Новый согласованный адрес"
+    cash.save(update_fields=["address"])
+    assert client.get("/operator/live/").json()["revision"] != previous
+    cash.status = "accepted"
+    cash.save(update_fields=["status"])
+    assert response["Cache-Control"] == "no-store"
+    html = client.get("/operator/orders/").content.decode()
+    assert 'data-partner-live="/operator/live/"' in html
+    assert f'data-latest-order="{cash.pk}"' in html
+
+
 def test_tab_shows_red_count_of_new_orders(client, owner, stranger, shop, listing):
     client.force_login(owner)
     assert "nav-badge" not in client.get(f"/partner/{shop.slug}/").content.decode()
