@@ -16,7 +16,7 @@ function checkout(ownDelivery) {
     querySelector: (key) => nodes[key] ?? {},
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../static/market/market.js'), 'utf8'), {
-    document: { querySelectorAll: () => [], querySelector: (key) => key === '[data-checkout]' ? form : null },
+    document: { querySelectorAll: () => [], querySelector: (key) => key === '[data-checkout]' ? form : null, getElementById: () => null },
     window: { addEventListener: () => {} }, location: { hash: '' },
   });
   return { slot, slotField };

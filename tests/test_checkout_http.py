@@ -18,7 +18,14 @@ pytestmark = pytest.mark.django_db
 def test_recipient_phone_is_normalized(phone):
     from market.forms import CheckoutContactForm
 
-    form = CheckoutContactForm({"name": "Иван", "phone": phone})
+    form = CheckoutContactForm(
+        {
+            "customer_name": "Анна",
+            "customer_phone": "+79997654321",
+            "name": "Иван",
+            "phone": phone,
+        }
+    )
     assert form.is_valid(), form.errors
     assert form.cleaned_data["phone"] == "+79991234567"
 
@@ -50,6 +57,8 @@ def test_checkout_can_clarify_delivery_with_recipient(client, owner, shop, listi
         "/checkout/",
         {
             "basket_id": basket.pk,
+            "customer_name": "Анна",
+            "customer_phone": "+79997654321",
             "name": "Иван",
             "phone": "+79991234567",
             "delivery_contact": "call",
@@ -82,6 +91,8 @@ def test_delivery_call_requires_interval_for_romeo(
         "/checkout/",
         {
             "basket_id": basket.pk,
+            "customer_name": "Анна",
+            "customer_phone": "+79997654321",
             "name": "Иван",
             "phone": "+79991234567",
             "delivery_contact": "call",
@@ -100,6 +111,8 @@ def test_checkout_no_call_accepts_address_in_checkout(client, owner, shop, listi
     basket = client.get("/checkout/").wsgi_request.basket
     data = {
         "basket_id": basket.pk,
+        "customer_name": "Анна",
+        "customer_phone": "+79997654321",
         "name": "Иван",
         "phone": "+79991234567",
         "delivery_contact": "no_call",
@@ -127,6 +140,8 @@ def test_checkout_no_call_requires_address_and_slot(
     basket = client.get("/checkout/").wsgi_request.basket
     data = {
         "basket_id": basket.pk,
+        "customer_name": "Анна",
+        "customer_phone": "+79997654321",
         "name": "Иван",
         "phone": "+79991234567",
         "delivery_contact": "no_call",
@@ -177,6 +192,8 @@ def test_buyer_checkout_http_and_duplicate_post(client, owner, shop, listing):
     basket = response.wsgi_request.basket
     data = {
         "basket_id": basket.pk,
+        "customer_name": "Анна",
+        "customer_phone": "+79997654321",
         "name": "Иван",
         "phone": "+79991234567",
         f"method_{shop.pk}": "pickup",

@@ -1,5 +1,5 @@
 {% load market_tags static %}
-<section class="pay-card" data-tbank-payment data-terminal-key="{{ tbank_terminal_key }}" data-status-url="{% url 'market:order-pay-status' order.number %}"{% if payment_in_progress %} data-pay-watch{% endif %}>
+<section class="pay-card" data-tbank-payment data-status-url="{% url 'market:order-pay-status' order.number %}"{% if payment_in_progress %} data-pay-watch{% endif %}>
   {% csrf_token %}
   <div class="pay-card-head">
     <div>
@@ -16,8 +16,7 @@
     <button class="button button-primary">{% if payment_declined %}Попробовать ещё раз{% else %}Перейти к оплате{% endif %}</button>
   </form>
   <p class="notice error" data-pay-error hidden></p>
-  <div id="paymentContainer" class="pay-frame" data-pay-frame hidden></div>
   {% endif %}
-  <p class="field-help">Оплата проходит в защищённой форме Т-Банка: картой, через СБП или T-Pay. Мы не видим и не храним данные карты.</p>
+  <p class="field-help">Вы перейдёте в защищённую форму Т-Банка и выберете доступный способ оплаты. После оплаты можно вернуться к заказу. Мы не видим и не храним данные карты.</p>
 </section>
-<script src="{% static 'market/payment.js' %}?v=4" defer></script>
+<script src="{% static 'market/payment.js' %}?v=5" defer></script>

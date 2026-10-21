@@ -27,7 +27,7 @@ def _own_order(request, number):
 @login_required
 @require_POST
 def order_pay(request, number):
-    """T-Bank's payment form for this order: its URL for the iframe, or a redirect."""
+    """Start the bank-hosted form: return PaymentURL for JS or redirect without JS."""
     wants_json = "application/json" in request.headers.get("Accept", "")
     order = _own_order(request, number)
     order_url = reverse("market:order", args=[order.number])

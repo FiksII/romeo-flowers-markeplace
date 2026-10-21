@@ -1,15 +1,13 @@
-// T-Bank's full payment form in an iframe on the order page:
-// https://developer.tbank.ru/eacq/intro/developer/setup_js/setup_iframe
-// Without the bank's script the button still works: the server redirects to the form.
+// Bank-hosted payment form: Init on our server, then navigate to its PaymentURL.
+// https://developer.tbank.ru/eacq/scenarios/payments/nonPCI
+// Without JavaScript the POST redirects to the same form.
 (function () {
   const card = document.querySelector("[data-tbank-payment]");
   if (!card) return;
   const csrf = card.querySelector("[name=csrfmiddlewaretoken]").value;
   const form = card.querySelector("[data-pay-form]");
-  const frame = card.querySelector("[data-pay-frame]");
   const errorBox = card.querySelector("[data-pay-error]");
   const DECLINED = ["REJECTED", "AUTH_FAIL", "CANCELED", "DEADLINE_EXPIRED"];
-  let integration = null;
 
   function post(url) {
     return fetch(url, {
@@ -48,47 +46,26 @@
 
   if (card.hasAttribute("data-pay-watch")) watchPayment();
   if (!form) return;
+  const button = form.querySelector("button");
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      button.disabled = false;
+      watchPayment();
+    }
+  });
 
   form.addEventListener("submit", async (event) => {
-    if (!integration) return; // The server redirects to the bank's page instead.
     event.preventDefault();
-    const button = form.querySelector("button");
+    if (button.disabled) return;
     button.disabled = true;
     errorBox.hidden = true;
     try {
       const data = await post(form.action);
-      const payment = await integration.iframe.create("romeo-order-" + Date.now(), {
-        status: {
-          changedCallback: async (status) => {
-            if (status !== "NEW") watchPayment();
-          },
-        },
-      });
-      frame.hidden = false;
-      await payment.mount(frame, data.paymentUrl);
-      form.hidden = true;
-      watchPayment();
+      window.location.assign(data.paymentUrl);
     } catch (error) {
-      frame.hidden = true;
       button.disabled = false;
       errorBox.textContent = (error && error.message) || "Не удалось открыть форму оплаты.";
       errorBox.hidden = false;
     }
   });
-
-  const script = document.createElement("script");
-  script.src = "https://integrationjs.t-static.ru/integration.js";
-  script.async = true;
-  script.onload = () => {
-    PaymentIntegration.init({
-      terminalKey: card.dataset.terminalKey,
-      product: "eacq",
-      features: { iframe: {} },
-    })
-      .then((ready) => {
-        integration = ready;
-      })
-      .catch(() => {});
-  };
-  document.body.appendChild(script);
 })();

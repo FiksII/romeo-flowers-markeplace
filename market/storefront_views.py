@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
@@ -92,19 +93,35 @@ def partner_shops(listings):
     ]
 
 
-# Footer documents. The owner has not provided the texts yet, so the pages say so.
+# Published customer documents and the existing checkout's delivery information.
 LEGAL_PAGES = {
+    "delivery": "Доставка и оплата",
     "privacy": "Политика конфиденциальности",
-    "terms": "Пользовательское соглашение",
+    "offer": "Публичная оферта",
     "requisites": "Реквизиты",
 }
 
 
 @require_safe
 def legal_page(request, page):
-    response = render(request, "market/legal.html", {"title": LEGAL_PAGES[page]})
-    # A placeholder must not end up in search results instead of the document.
-    response["X-Robots-Tag"] = "noindex"
+    if page == "delivery":
+        return render(
+            request,
+            "market/delivery.html",
+            {
+                "title": LEGAL_PAGES[page],
+                "online_payments": settings.MARKET_ONLINE_PAYMENTS,
+                "reservation_minutes": settings.MARKET_RESERVATION_MINUTES,
+            },
+        )
+    template = {
+        "offer": "market/offer.html",
+        "requisites": "market/requisites.html",
+    }.get(page, "market/legal.html")
+    response = render(request, template, {"title": LEGAL_PAGES[page]})
+    # The privacy policy still awaits its text; keep that placeholder out of search.
+    if page == "privacy":
+        response["X-Robots-Tag"] = "noindex"
     return response
 
 
@@ -559,6 +576,10 @@ def checkout(request):
             for group in groups
         ),
         initial={
+            "customer_name": request.user.get_full_name(),
+            "customer_phone": getattr(
+                getattr(request.user, "customer_phone", None), "phone", ""
+            ),
             "name": request.user.first_name or request.user.username,
             "address": address["value"] if address else "",
             "address_token": encode_address(address) if address else "",
@@ -620,8 +641,6 @@ def account_orders(request):
 
 @login_required
 def order_detail(request, number):
-    from django.conf import settings
-
     from market import online_payments
     from market.models import OnlinePayment
 
@@ -650,7 +669,6 @@ def order_detail(request, number):
             "payment": payment,
             "payment_in_progress": bool(payment)
             and payment.status in OnlinePayment.IN_PROGRESS,
-            "tbank_terminal_key": settings.TBANK_TERMINAL_KEY,
             "payment_declined": bool(payment)
             and payment.status
             in ("REJECTED", "AUTH_FAIL", "CANCELED", "DEADLINE_EXPIRED"),

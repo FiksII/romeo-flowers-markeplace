@@ -292,11 +292,13 @@ def test_partner_shops_ignore_the_catalogue_search(client, listing):
     assert shops == ["test-shop"]
 
 
-def test_footer_has_documents_and_hides_contacts_that_are_not_set(client):
+def test_footer_has_documents_and_hides_contacts_that_are_not_set(client, settings):
+    settings.SUPPORT_PHONE = ""
+    settings.SUPPORT_EMAIL = ""
     footer = client.get("/").content.decode().split('<footer class="site-footer">')[1]
     for path, title in (
         ("/privacy/", "Политика конфиденциальности"),
-        ("/terms/", "Пользовательское соглашение"),
+        ("/offer/", "Публичная оферта"),
         ("/requisites/", "Реквизиты"),
     ):
         assert f'<a href="{path}">{title}</a>' in footer
@@ -317,11 +319,7 @@ def test_footer_shows_the_contacts_from_the_settings(client, settings):
 
 @pytest.mark.parametrize(
     "path, title",
-    (
-        ("/privacy/", "Политика конфиденциальности"),
-        ("/terms/", "Пользовательское соглашение"),
-        ("/requisites/", "Реквизиты"),
-    ),
+    (("/privacy/", "Политика конфиденциальности"),),
 )
 def test_legal_pages_are_placeholders_kept_out_of_search(client, path, title):
     response = client.get(path)
