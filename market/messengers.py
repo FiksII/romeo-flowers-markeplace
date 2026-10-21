@@ -216,7 +216,7 @@ def confirm_link(channel, code, chat_id, title, now=None):
     """Attach the chat to the row whose invitation has ``code``; None if unknown."""
     now = now or timezone.now()
     link = (
-        MessengerLink.objects.select_for_update()
+        MessengerLink.objects.select_for_update(of=("self",))
         .select_related("user", "shop")
         .filter(channel=channel, code=code, code_created_at__gte=now - CODE_LIFETIME)
         .first()
