@@ -137,6 +137,7 @@ def start_payment(order, notification_url, return_url, now):
         "Description": f"Заказ № {order.number} — Цветы от Ромео"[:140],
         "PayType": "O",
         "Language": "ru",
+        "DATA": {"OperationInitiatorType": "0"},
         "NotificationURL": notification_url,
         "SuccessURL": return_url,
         "FailURL": return_url,

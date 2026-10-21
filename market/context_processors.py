@@ -43,6 +43,11 @@ def support_contacts():
         "phone": phone,
         "phone_href": "tel:" + re.sub(r"[^\d+]", "", phone) if phone else "",
         "email": settings.SUPPORT_EMAIL.strip(),
+        "operator_name": "ИП Алиева Ольга Игоревна",
+        "operator_address": (
+            "Московская область, Одинцовский городской округ, Звенигород, "
+            "район Восточный, 3-й микрорайон, дом 17"
+        ),
         "telegram": settings.TELEGRAM_URL.strip(),
         "instagram": settings.INSTAGRAM_URL.strip(),
     }

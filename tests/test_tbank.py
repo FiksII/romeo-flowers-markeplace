@@ -139,18 +139,20 @@ def test_call_raises_on_refusal(monkeypatch):
         tbank.call("Init", {})
 
 
-def test_init_sends_the_order_amount_and_widget_flag(bank, owner, shop, listing):
+def test_init_sends_the_order_amount_and_customer_initiator(bank, owner, shop, listing):
     order = online_order(owner, shop, listing)
     payment = online_payments.start_payment(order, now=timezone.now(), **URLS)
     method, params = bank.calls[0]
     assert method == "Init"
     assert params["Amount"] == 250000
     assert params["OrderId"] == f"{order.number}-1"
-    assert "DATA" not in params
+    assert params["DATA"] == {"OperationInitiatorType": "0"}
+    assert params["PayType"] == "O"
+    assert params["SuccessURL"] == params["FailURL"] == URLS["return_url"]
     assert params["NotificationURL"] == URLS["notification_url"]
     assert "Receipt" not in params
     assert payment.payment_url == "https://securepay.tinkoff.ru/pay1"
-    # Pressing another SpeedPay button reuses the same open payment.
+    # Trying again reuses the same open payment.
     assert online_payments.start_payment(order, now=timezone.now(), **URLS) == payment
     assert [method for method, _ in bank.calls] == ["Init", "GetState"]
 
@@ -317,10 +319,24 @@ def test_pay_button_sends_the_customer_to_the_bank_form(
     assert response.url == "https://securepay.tinkoff.ru/pay1"
     status = client.post(f"/account/orders/{order.number}/pay/status/").json()
     assert status == {"status": "NEW", "in_progress": False, "waiting": True}
-    # The page script asks for the URL to show the form in an iframe.
-    framed = client.post(pay_url, HTTP_ACCEPT="application/json")
-    assert framed.json() == {"paymentUrl": "https://securepay.tinkoff.ru/pay1"}
-    assert 'data-terminal-key="TestTerminal"' in page
+    # JavaScript navigates to the same bank-owned URL as the no-JS redirect.
+    started = client.post(pay_url, HTTP_ACCEPT="application/json")
+    assert started.json() == {"paymentUrl": "https://securepay.tinkoff.ru/pay1"}
+    assert "data-pay-frame" not in page
+    assert "TestTerminal" not in page
+
+
+def test_return_from_bank_checks_payment_before_showing_order(
+    bank, owner, shop, listing, client
+):
+    order = online_order(owner, shop, listing)
+    payment = online_payments.start_payment(order, now=timezone.now(), **URLS)
+    bank.state, bank.order_ref = "CONFIRMED", payment.order_ref
+    client.force_login(owner)
+    page = client.get(f"/account/orders/{order.number}/?payment=return")
+    assert page.status_code == 200
+    assert order.shop_orders.get().payment_status == "paid"
+    assert "data-pay-form" not in page.content.decode()
 
 
 def test_declined_payment_offers_another_try(bank, owner, shop, listing, client):

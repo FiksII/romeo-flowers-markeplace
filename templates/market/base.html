@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'storefront/css/romeo.css' %}?v=2">
   {% block report_assets %}{% endblock %}
   {% block map_assets %}{% endblock %}
-  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=22">
+  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=24">
   <link rel="stylesheet" href="{% static 'market/flower-tags.css' %}?v=4">
   <link rel="stylesheet" href="{% static 'market/bouquet-options.css' %}?v=1">
   <script src="{% static 'market/bouquet-options.js' %}?v=1" defer></script>
@@ -67,6 +67,7 @@
     </nav>
     <nav class="footer-col footer-info" aria-label="Покупателям">
       <h2>Покупателям</h2>
+      <a href="{% url 'market:delivery' %}">Доставка и оплата</a>
       <a href="{% url 'market:basket' %}">Корзина</a>
       {% if request.user.is_authenticated %}<a href="{% url 'market:account' %}">Мои заказы</a>{% else %}<a href="{% url 'market:login' %}">Войти</a><a href="{% url 'market:signup' %}">Создать аккаунт</a>{% endif %}
       {% if has_shops %}<a href="{% url 'market:partner' %}">Кабинет магазина</a>{% endif %}
@@ -74,13 +75,15 @@
     </nav>
     {% if contacts.phone or contacts.email %}<section class="footer-col footer-contacts" aria-labelledby="footer-contacts-heading">
       <h2 id="footer-contacts-heading">Контакты</h2>
-      {% if contacts.phone %}<a href="{{ contacts.phone_href }}">{% include "storefront/partials/icon.html" with name="phone" %}<span>{{ contacts.phone }}</span></a>{% endif %}
       {% if contacts.email %}<a href="mailto:{{ contacts.email }}">{% include "storefront/partials/icon.html" with name="mail" %}<span>{{ contacts.email }}</span></a>{% endif %}
+      {% if contacts.phone %}<a href="{{ contacts.phone_href }}">{% include "storefront/partials/icon.html" with name="phone" %}<span>{{ contacts.phone }}</span></a>{% endif %}
+      <p class="footer-operator-name">{{ contacts.operator_name }}</p>
+      <address class="footer-operator-address">{{ contacts.operator_address }}</address>
     </section>{% endif %}
   </div>
   <div class="shell footer-bottom">
     <small>© {% now "Y" %} Цветы от Ромео. Москва и Московская область.</small>
-    <nav class="footer-legal" aria-label="Документы"><a href="{% url 'market:privacy' %}">Политика конфиденциальности</a><a href="{% url 'market:terms' %}">Пользовательское соглашение</a><a href="{% url 'market:requisites' %}">Реквизиты</a></nav>
+    <nav class="footer-legal" aria-label="Документы"><a href="{% url 'market:privacy' %}">Политика конфиденциальности</a><a href="{% url 'market:offer' %}">Публичная оферта</a><a href="{% url 'market:requisites' %}">Реквизиты</a></nav>
   </div>
 </footer>
 <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">

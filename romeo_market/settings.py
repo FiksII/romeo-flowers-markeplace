@@ -169,9 +169,9 @@ ACCOUNT_RATE_LIMITS = {
 }
 SMSPILOT_API_KEY = env("SMSPILOT_API_KEY", default="")
 SMSPILOT_SENDER = env("SMSPILOT_SENDER", default="")
-# Public contacts for the footer. Empty values are not shown: they await the owner's approval.
-SUPPORT_PHONE = env("SUPPORT_PHONE", default="")
-SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="")
+# Public support contacts approved by the owner; environments may override them.
+SUPPORT_PHONE = env("SUPPORT_PHONE", default="+7 (969) 189-22-22")
+SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="info@romeo-flowers.ru")
 TELEGRAM_URL = env("TELEGRAM_URL", default="")
 INSTAGRAM_URL = env("INSTAGRAM_URL", default="")
 # Public address of the site for links in messenger notifications (no trailing slash).

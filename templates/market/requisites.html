@@ -1,0 +1,16 @@
+{% extends 'market/base.html' %}
+{% block title %}Реквизиты — Цветы от Ромео{% endblock %}
+{% block content %}
+<article class="shell section-space customer-information">
+  <a class="back-link" href="{% url 'market:home' %}">← На главную</a>
+  <div class="page-heading"><span class="eyebrow">Документы</span><h1>Реквизиты</h1><p>Сведения об операторе маркетплейса «Цветы от Ромео».</p></div>
+  <section class="group-card"><h2>Оператор «Ромео»</h2>
+    {% include 'market/partials/operator_requisites.html' %}
+    <p>Письменные обращения к оператору можно направить по указанному почтовому адресу или на email поддержки. Для связи по вопросам Маркетплейса также доступен телефон поддержки.</p>
+  </section>
+  <section class="group-card"><h2>Продавцы товаров</h2>
+    <p>Букеты продают самостоятельные магазины-партнёры. Название магазина указано в карточке товара и при оформлении заказа. Доступные сведения о продавце и его контактах размещены на странице магазина; «Ромео» выступает посредником.</p>
+    <p><a class="text-link" href="{% url 'market:home' %}#partners">Магазины-партнёры</a> · <a class="text-link" href="{% url 'market:offer' %}">Публичная оферта</a></p>
+  </section>
+</article>
+{% endblock %}

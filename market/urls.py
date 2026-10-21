@@ -1,5 +1,6 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.views.generic.base import RedirectView
 
 from market import messenger_views
 from market import payment_views as payments
@@ -12,8 +13,14 @@ app_name = "market"
 urlpatterns = [
     path("", views.home, name="home"),
     path("catalogue/", views.catalogue, name="catalogue"),
+    path("delivery/", views.legal_page, {"page": "delivery"}, name="delivery"),
     path("privacy/", views.legal_page, {"page": "privacy"}, name="privacy"),
-    path("terms/", views.legal_page, {"page": "terms"}, name="terms"),
+    path("offer/", views.legal_page, {"page": "offer"}, name="offer"),
+    path(
+        "terms/",
+        RedirectView.as_view(pattern_name="market:offer", permanent=True),
+        name="terms",
+    ),
     path("requisites/", views.legal_page, {"page": "requisites"}, name="requisites"),
     path("products/<int:pk>/", views.product_detail, name="product"),
     path("shops/<slug:slug>/", views.shop_detail, name="shop"),
