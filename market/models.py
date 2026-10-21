@@ -463,6 +463,8 @@ class ShopOrder(models.Model):
     address_details = models.CharField(max_length=300, blank=True)
     contact_name = models.CharField(max_length=100)
     contact_phone = models.CharField(max_length=25)
+    customer_name = models.CharField(max_length=150, blank=True, default="")
+    customer_phone = models.CharField(max_length=25, blank=True, default="")
     instructions = models.TextField(blank=True)
     goods_total = models.DecimalField(max_digits=12, decimal_places=2)
     base_goods_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)

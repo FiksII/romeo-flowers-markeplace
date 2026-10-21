@@ -165,6 +165,8 @@ def test_first_order_saves_email_and_later_checkout_does_not_ask(
         {
             "basket_id": basket.pk,
             "email": "buyer@example.com",
+            "customer_name": "Анна",
+            "customer_phone": "+79997654321",
             "name": "Получатель",
             "phone": "+79991234567",
             f"method_{shop.pk}": "pickup",

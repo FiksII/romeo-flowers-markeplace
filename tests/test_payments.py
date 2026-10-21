@@ -204,6 +204,8 @@ def test_checkout_creates_cash_order_and_rejects_online_until_connected(
     basket = client.get("/checkout/").wsgi_request.basket
     data = {
         "basket_id": basket.pk,
+        "customer_name": "Анна",
+        "customer_phone": "+79997654321",
         "name": "Иван",
         "phone": "+79991234567",
         "delivery_contact": "call",
