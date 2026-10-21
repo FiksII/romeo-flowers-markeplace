@@ -7,7 +7,7 @@
   <div class="group-card">
     <h2>{{ part.get_method_display }}</h2>
     {% include 'market/partials/order_receiving.html' %}
-    <p>{{ part.contact_name }} · {{ part.contact_phone }}</p>
+    {% include 'market/partials/order_contacts.html' %}
     {% if part.instructions %}<p class="notice">{{ part.instructions }}</p>{% endif %}
     {% if request.user.is_superuser %}
     {% for item in part.items.all %}<div class="summary-row"><span>{{ item.title }}{% if item.size_label %} · {{ item.size_label }}{% endif %} × {{ item.quantity }} <span class="field-help">по {{ item.unit_price|rub }}</span></span><strong>{{ item.line_total|rub }}</strong></div>{% endfor %}

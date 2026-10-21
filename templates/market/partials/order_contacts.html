@@ -1,0 +1,8 @@
+{% load market_tags %}
+<p class="field-help">Заказчик</p>
+<div class="order-card-contact">
+  <span>{% if part.customer_name %}{{ part.customer_name }}{% else %}{{ part.order.user.get_full_name|default:'Имя не указано' }}{% endif %}</span>
+  {% if part.customer_phone %}<a class="text-link" href="tel:{{ part.customer_phone }}">{{ part.customer_phone|phone }}</a>{% elif part.order.user.customer_phone.phone %}<a class="text-link" href="tel:{{ part.order.user.customer_phone.phone }}">{{ part.order.user.customer_phone.phone|phone }}</a>{% else %}<span class="muted">Телефон не указан</span>{% endif %}
+</div>
+<p class="field-help">Получатель</p>
+<div class="order-card-contact"><span>{{ part.contact_name }}</span><a class="text-link" href="tel:{{ part.contact_phone }}">{{ part.contact_phone|phone }}</a></div>

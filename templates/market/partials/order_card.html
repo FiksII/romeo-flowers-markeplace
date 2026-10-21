@@ -11,7 +11,7 @@
     <div><strong>{{ item.title }}</strong><span class="muted">{% if item.size_label %}{{ item.size_label }} · {% endif %}{{ item.quantity }} шт.</span></div>
     <span class="money">{{ item.payout_total|rub }}</span>
   </li>{% endfor %}</ul>
-  <div class="order-card-contact"><span>{{ part.contact_name }}</span><a class="text-link" href="tel:{{ part.contact_phone }}">{{ part.contact_phone }}</a></div>
+  {% include 'market/partials/order_contacts.html' %}
   {% if part.instructions %}<p class="notice order-card-note">{{ part.instructions }}</p>{% endif %}
   <div class="order-card-total"><div><span class="muted">{{ part.get_payment_method_display }} · {{ part.get_payment_status_display }}</span>{% if part.platform_collects %}<strong>Вам {{ part.partner_total|rub }}</strong>{% else %}<strong>Получить с покупателя {{ part.total|rub }}</strong>{% endif %}</div>{% if part.status != 'accepted' %}<span class="status-chip">{{ part.get_status_display }}</span>{% endif %}</div>
   <div class="order-card-actions">

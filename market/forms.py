@@ -732,6 +732,24 @@ class ExceptionForm(forms.Form):
 
 
 class CheckoutContactForm(forms.Form):
+    customer_name = forms.CharField(
+        label="Ваше имя",
+        max_length=150,
+        widget=forms.TextInput(attrs={"autocomplete": "name"}),
+    )
+    customer_phone = RussianPhoneField(
+        label="Ваш телефон",
+        max_length=25,
+        widget=forms.TextInput(
+            attrs={
+                "type": "tel",
+                "inputmode": "tel",
+                "autocomplete": "tel",
+                "placeholder": "+7(***)***-**-**",
+                "data-recipient-phone": "",
+            }
+        ),
+    )
     name = forms.CharField(label="Имя получателя", max_length=100)
     phone = forms.RegexField(
         label="Телефон",

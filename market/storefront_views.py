@@ -576,6 +576,10 @@ def checkout(request):
             for group in groups
         ),
         initial={
+            "customer_name": request.user.get_full_name(),
+            "customer_phone": getattr(
+                getattr(request.user, "customer_phone", None), "phone", ""
+            ),
             "name": request.user.first_name or request.user.username,
             "address": address["value"] if address else "",
             "address_token": encode_address(address) if address else "",

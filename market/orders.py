@@ -278,6 +278,13 @@ def place_market_order(
             else f"{shop.settlement.name}, {shop.address}",
             contact_name=contact["name"][:100],
             contact_phone=contact["phone"][:25],
+            customer_name=(contact.get("customer_name") or customer.get_full_name())[
+                :150
+            ],
+            customer_phone=(
+                contact.get("customer_phone")
+                or getattr(getattr(customer, "customer_phone", None), "phone", "")
+            )[:25],
             delivery_contact=delivery_contact if method == "delivery" else "no_call",
             address_details=contact.get("address_details", "")[:300]
             if method == "delivery" and delivery_contact == "no_call"

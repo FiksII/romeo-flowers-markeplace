@@ -128,7 +128,7 @@ def partner_orders_page(request, slug):
     # Orders still to be handled are cards, whatever their date; the rest is history.
     active = list(
         shop.shop_orders.filter(status__in=ACTIVE_STATUSES)
-        .select_related("order", "shop__settlement")
+        .select_related("order__user__customer_phone", "shop__settlement")
         .prefetch_related("items__listing")
         .order_by(F("slot_start").asc(nulls_last=True), "created_at", "pk")
     )
@@ -573,7 +573,9 @@ def exception_remove(request, slug, pk):
 @login_required
 def partner_order(request, slug, pk):
     shop = get_shop_for_user(request.user, slug)
-    part = get_object_or_404(shop.shop_orders.select_related("order"), pk=pk)
+    part = get_object_or_404(
+        shop.shop_orders.select_related("order__user__customer_phone"), pk=pk
+    )
     if request.method == "POST":
         try:
             transition_shop_order(part, request.user, request.POST.get("status"))
