@@ -1,0 +1,9 @@
+{% load market_tags %}{% listing_gallery listing as gallery %}
+<div class="bouquet-gallery" data-bouquet-gallery aria-label="Фотографии букета">
+  {% with main=gallery.0 %}<a class="bouquet-gallery-main" href="{{ main.original }}" target="_blank" rel="noopener" data-gallery-original aria-label="Открыть фото букета в полном размере"><img class="detail-photo" src="{{ main.detail.src }}"{% if main.detail.srcset %} srcset="{{ main.detail.srcset }}" sizes="(max-width: 759px) 100vw, 50vw"{% endif %} alt="{{ listing.product.title }}" width="640" height="800" data-gallery-main></a>{% endwith %}
+  {% if gallery|length > 1 %}
+  <p class="field-help gallery-counter" data-gallery-counter role="status" aria-live="polite">Фото 1 из {{ gallery|length }}</p>
+  <div class="bouquet-gallery-thumbnails" aria-label="Выбрать фотографию">
+    {% for image in gallery %}<a href="{{ image.original }}" class="bouquet-gallery-thumbnail" data-gallery-thumbnail data-src="{{ image.detail.src }}" data-srcset="{{ image.detail.srcset }}" aria-label="Фото {{ forloop.counter }} из {{ gallery|length }}"{% if forloop.first %} aria-current="true"{% endif %}><img src="{{ image.thumb.src }}"{% if image.thumb.srcset %} srcset="{{ image.thumb.srcset }}" sizes="72px"{% endif %} width="72" height="90" alt="{{ listing.product.title }} — фото {{ forloop.counter }}" loading="lazy"></a>{% endfor %}
+  </div>{% endif %}
+</div>

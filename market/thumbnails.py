@@ -20,12 +20,18 @@ def listing_photo(listing, preset):
     original = {"src": listing.image_url, "srcset": ""}
     if not listing.photo:
         return original
+    return image_photo(listing.photo, preset)
+
+
+def image_photo(photo, preset):
+    """Use the same thumbnail presets for every Oscar gallery image."""
+    original = {"src": photo.url, "srcset": ""}
     try:
         images = [
-            get_thumbnail(listing.photo, size, **OPTIONS) for size in PRESETS[preset]
+            get_thumbnail(photo, size, **OPTIONS) for size in PRESETS[preset]
         ]
     except Exception:
-        logger.exception("Could not resize the photo of listing %s", listing.pk)
+        logger.exception("Could not resize bouquet photo %s", photo.name)
         return original
     # sorl returns an image without size when it cannot read the source.
     if not all(image.size for image in images):

@@ -85,6 +85,7 @@ def through_category(dialog):
     if "Выберите магазин" in dialog.answer["text"]:
         dialog.click("Тестовые цветы")
     dialog.send(photo=[{"file_id": "photo-1", "file_size": 300}])
+    dialog.click("Далее")
     dialog.send("Весенний букет")
     dialog.send("Розы и тюльпаны")
     dialog.click("Монобукеты")
@@ -181,6 +182,7 @@ def test_revoked_permission_blocks_publish(dialog, photos):
 def test_back_and_cancel_do_not_publish(dialog):
     dialog.send("/add")
     dialog.send(photo=[{"file_id": "photo-1"}])
+    dialog.click("Далее")
     dialog.send("Первое название")
     dialog.click("Назад")
     dialog.send("Исправленное название")
@@ -389,6 +391,7 @@ def test_switching_shop_reviews_delivery_prices(dialog, photos, other_shop):
         dialog.click("Назад")
     dialog.click(other_shop.name)
     dialog.send(photo=[{"file_id": "photo-2"}])
+    dialog.click("Далее")
     dialog.send("Другой букет")
     dialog.send("Описание")
     dialog.click("Монобукеты")
@@ -411,6 +414,7 @@ def test_week_old_draft_accepts_randomized_update_number(dialog):
     dialog.counter = 5
     dialog.send("/add")
     dialog.send(photo=[{"file_id": "new-photo"}])
+    dialog.click("Далее")
     assert "название" in dialog.answer["text"].lower()
 
 
@@ -421,6 +425,7 @@ def test_replayed_cancel_does_not_cancel_a_new_dialogue(dialog):
     dialog.send("/add")
     telegram_post(dialog.client, cancelled)
     dialog.send(photo=[{"file_id": "photo-1"}])
+    dialog.click("Далее")
     assert "название" in dialog.answer["text"].lower()
 
 
@@ -447,6 +452,7 @@ def test_document_is_previewed_as_document(dialog, photos, bot):
     dialog.send(
         document={"file_id": "file-1", "mime_type": "image/jpeg", "file_size": 300}
     )
+    dialog.click("Далее")
     dialog.send("Букет файлом")
     dialog.click("Пропустить")
     dialog.click("Монобукеты")
@@ -511,6 +517,7 @@ def test_early_delivery_change_preserves_required_steps(dialog, shop):
     shop.own_delivery = True
     shop.save()
     dialog.send(photo=[{"file_id": "photo-1"}])
+    dialog.click("Далее")
     assert "название" in dialog.answer["text"].lower()
 
 
@@ -536,6 +543,7 @@ def test_expired_message_does_not_block_next_add(dialog):
     assert "устарел" in dialog.answer["text"]
     dialog.send("/add")
     dialog.send(photo=[{"file_id": "new-photo"}])
+    dialog.click("Далее")
     assert "название" in dialog.answer["text"].lower()
 
 
@@ -599,3 +607,126 @@ def test_failed_telegram_ack_keeps_selected_flower(dialog, monkeypatch):
         for row in dialog.answer["reply_markup"]["inline_keyboard"]
         for b in row
     )
+
+
+# Multiple bouquet photos stay in the photo step until explicit continuation.
+def test_gallery_accumulates_album_and_separate_photos(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    dialog.send(photo=[{"file_id": "front"}], media_group_id="album-1")
+    assert TelegramBouquetDraft.objects.get().step == "photo"
+    dialog.send(photo=[{"file_id": "side"}], media_group_id="album-1")
+    duplicate = dialog.last_update.copy()
+    telegram_post(dialog.client, duplicate)
+    dialog.send(photo=[{"file_id": "back"}])
+    draft = TelegramBouquetDraft.objects.get()
+    assert [p["file_id"] for p in draft.data["photos"]] == ["front", "side", "back"]
+    dialog.click("Далее")
+    assert TelegramBouquetDraft.objects.get().step == "title"
+
+
+def test_gallery_accepts_out_of_order_album_updates(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    update = tg_update("", dialog.chat)
+    update["update_id"] = 103
+    update["message"].update(photo=[{"file_id": "second"}], media_group_id="a")
+    telegram_post(dialog.client, update)
+    update["update_id"] = 102
+    update["message"]["photo"] = [{"file_id": "first"}]
+    telegram_post(dialog.client, update)
+    draft = TelegramBouquetDraft.objects.get()
+    assert [p["file_id"] for p in draft.data["photos"]] == ["first", "second"]
+    assert draft.last_update_id == 103
+
+
+def test_gallery_requires_photo_before_continue(dialog):
+    dialog.send("/add")
+    assert not any("Далее" in b["text"] for row in dialog.answer["reply_markup"]["inline_keyboard"] for b in row)
+
+
+def test_gallery_limits_album_to_twenty_photos(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    for index in range(21):
+        dialog.send(photo=[{"file_id": f"image-{index}"}])
+    assert len(TelegramBouquetDraft.objects.get().data["photos"]) == 20
+    assert "20" in dialog.answer["text"]
+
+
+def test_gallery_publishes_every_photo(dialog, photos):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    dialog.send(photo=[{"file_id": "one"}])
+    dialog.send(photo=[{"file_id": "two"}])
+    dialog.send(document={"file_id": "three", "file_size": 200})
+    dialog.click("Далее")
+    dialog.send("Галерея букета")
+    dialog.send("Описание")
+    dialog.click("Монобукеты")
+    for _ in range(3):
+        dialog.click("Готово")
+    dialog.send("2500")
+    dialog.send("4")
+    assert "3" in dialog.answer["text"]
+    dialog.click("Опубликовать")
+    listing = Listing.objects.get()
+    assert listing.product.images.count() == 3
+    assert listing.photo.name == listing.product.images.first().original.name
+    assert TelegramBouquetDraft.objects.get().step == "done"
+
+
+def test_gallery_can_clear_photos_before_replacing(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    dialog.send(photo=[{"file_id": "old"}])
+    dialog.click("Очистить фото")
+    assert not TelegramBouquetDraft.objects.get().data.get("photos")
+    dialog.send(photo=[{"file_id": "new"}])
+    assert [p["file_id"] for p in TelegramBouquetDraft.objects.get().data["photos"]] == ["new"]
+
+
+def test_gallery_retry_after_clear_does_not_restore_removed_photo(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    dialog.send(photo=[{"file_id": "old"}])
+    replay = dialog.last_update.copy()
+    dialog.click("Очистить фото")
+    telegram_post(dialog.client, replay)
+    assert not TelegramBouquetDraft.objects.get().data.get("photos")
+
+
+def test_gallery_clear_discards_previously_unseen_old_album_parts(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    dialog.send(photo=[{"file_id": "front"}], media_group_id="old-album")
+    dialog.counter = 103
+    dialog.click("Очистить фото")  # update 104
+    delayed = tg_update("", dialog.chat)
+    delayed["update_id"] = 103
+    delayed["message"].update(photo=[{"file_id": "old-delayed"}], media_group_id="old-album")
+    telegram_post(dialog.client, delayed)
+    assert not TelegramBouquetDraft.objects.get().data.get("photos")
+
+
+def test_gallery_keeps_late_album_parts_after_continuation(dialog):
+    from market.models import TelegramBouquetDraft
+
+    dialog.send("/add")
+    dialog.counter = 102
+    dialog.send(photo=[{"file_id": "second"}], media_group_id="album")  # update 103
+    dialog.click("Далее")  # update 104
+    delayed = tg_update("", dialog.chat)
+    delayed["update_id"] = 102
+    delayed["message"].update(photo=[{"file_id": "first"}], media_group_id="album")
+    telegram_post(dialog.client, delayed)
+    draft = TelegramBouquetDraft.objects.get()
+    assert [p["file_id"] for p in draft.data["photos"]] == ["first", "second"]
+    assert draft.step == "title"

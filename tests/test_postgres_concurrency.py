@@ -161,3 +161,40 @@ def test_product_edit_and_checkout_no_deadlock(owner, shop, listing):
         assert checkout.result(timeout=10)
         assert edit.result(timeout=10)
     assert listing.stockrecord.num_allocated == 1
+
+
+def test_concurrent_gallery_appends_cannot_exceed_twenty(
+    shop, listing, settings, tmp_path
+):
+    from threading import Barrier
+
+    from tests.test_bouquet_photos import photo
+    from tests.test_cabinet import product_data
+
+    require_postgres()
+    settings.MEDIA_ROOT = tmp_path
+    Image = get_model("catalogue", "ProductImage")
+    Image.objects.bulk_create(
+        [
+            Image(
+                product=listing.product, original=f"retained-{i}.png", display_order=i
+            )
+            for i in range(19)
+        ]
+    )
+    listing.photo = "retained-0.png"
+    listing.save(update_fields=["photo"])
+    barrier = Barrier(2)
+
+    def append():
+        barrier.wait(timeout=5)
+        try:
+            save_listing(shop, product_data(photo=photo()), listing)
+            return True
+        except ValidationError:
+            return False
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(lambda _: thread_call(append), range(2)))
+    assert sorted(results) == [False, True]
+    assert Image.objects.filter(product=listing.product).count() == 20

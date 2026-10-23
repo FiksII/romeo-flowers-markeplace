@@ -25,6 +25,7 @@ from market.models import (
     ShopOrder,
     WeeklyHours,
 )
+from market.photos import MAX_PHOTOS, MultiplePhotoField, gallery_items, save_photos
 from market.widgets import FlowerTagSelect
 from market.zones import clean_zone
 
@@ -104,6 +105,8 @@ class ContactAuthenticationForm(AuthenticationForm):
         return super().clean()
 
 
+
+
 class ProductForm(forms.Form):
     title = forms.CharField(label="Название", max_length=255)
     description = forms.CharField(
@@ -152,14 +155,29 @@ class ProductForm(forms.Form):
         required=False,
         help_text="0 — букет распродан и не показывается в каталоге.",
     )
-    photo = forms.ImageField(label="Фото", required=False)
+    photo = MultiplePhotoField(
+        label="Фотографии букета", required=False,
+        help_text="До 20 фотографий JPEG, PNG или WebP, каждая до 5 МБ. Можно выбрать несколько файлов сразу.",
+        widget=MultiplePhotoField.widget(attrs={"accept": "image/jpeg,image/png,image/webp", "data-photo-upload": ""}),
+    )
+    remove_photos = forms.MultipleChoiceField(label="Удалить фотографии", required=False)
+    primary_photo = forms.ChoiceField(label="Главное фото", required=False)
     is_public = forms.BooleanField(
         label="Показывать в каталоге", required=False, initial=True
     )
 
-    def __init__(self, *args, shop=None, **kwargs):
+    def __init__(self, *args, shop=None, listing=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.shop = shop
+        self.listing = listing
+        self.photo_items = gallery_items(listing)
+        choices = [(row["id"], f"Фото {index + 1}") for index, row in enumerate(self.photo_items)]
+        self.fields["remove_photos"].choices = choices
+        upload_value = self.files.getlist("photo") if hasattr(self.files, "getlist") else self.files.get("photo", [])
+        uploads = upload_value if isinstance(upload_value, (list, tuple)) else [upload_value]
+        new_choices = [(f"new:{index}", f"Новое фото {index + 1}") for index in range(min(len(uploads), MAX_PHOTOS))]
+        self.fields["primary_photo"].choices = [("", "Сохранить текущее главное фото"), *choices, ("new", "Первое из новых фото"), *new_choices]
+        self.fields["photo"].widget.attrs["data-photo-count"] = len(choices)
         self.fields["pickup_price"].required = False
         self.fields["pickup_price"].label = "Стандартный — цена самовывозом, ₽"
         self.fields["pickup_price"].widget.attrs["data-size-price"] = "standard"
@@ -233,18 +251,15 @@ class ProductForm(forms.Form):
                     Decimal(first["delivery"]) if first.get("delivery") else None
                 )
 
-    def clean_photo(self):
-        photo = self.cleaned_data.get("photo")
-        if photo and (
-            photo.size > 5 * 1024 * 1024
-            or photo.image.format not in {"JPEG", "PNG", "WEBP"}
-        ):
-            raise ValidationError("Используйте JPEG, PNG или WebP до 5 МБ.")
-        return photo
-
     def clean(self):
         data = super().clean()
         self._clean_sizes(data)
+        photos = data.get("photo", [])
+        remaining = len(self.photo_items) - len(data.get("remove_photos", []))
+        if remaining + len(photos) > MAX_PHOTOS:
+            self.add_error("photo", "Можно сохранить не больше 20 фотографий букета.")
+        if data.get("primary_photo") == "new" and not photos:
+            self.add_error("primary_photo", "Загрузите новое фото или выберите существующее главным.")
         if (
             not data.get("always_in_stock")
             and data.get("stock") is None
@@ -302,6 +317,8 @@ def save_listing(shop, data, listing=None):
             product_id=listing.product_id, partner=shop.partner
         )
         product = Product.objects.select_for_update().get(pk=listing.product_id)
+        listing = Listing.objects.select_for_update().get(pk=listing.pk)
+        listing.product = product
         if product.get_product_class().track_stock != track:
             # Oscar reserves and releases stock only for classes that track it, so the
             # mode cannot change while an order for this bouquet is still open.
@@ -341,8 +358,6 @@ def save_listing(shop, data, listing=None):
     listing.flower_kind = data.get("flower_kind", "")
     if "delivery_price" in data:
         listing.delivery_price = data["delivery_price"]
-    if data.get("photo"):
-        listing.photo = data["photo"]
     listing.full_clean()
     if listing.pk:
         # Romeo's own sale prices are the administrator's; the seller never overwrites them.
@@ -360,6 +375,7 @@ def save_listing(shop, data, listing=None):
         listing.save()
     if "flowers" in data:
         listing.flowers.set(data["flowers"])
+    save_photos(listing, data.get("photo"), data.get("remove_photos", ()), data.get("primary_photo"))
     return listing
 
 
