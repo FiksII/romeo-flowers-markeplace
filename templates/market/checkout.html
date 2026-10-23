@@ -27,7 +27,7 @@
         <div class="field" data-slot-field><label for="slot-{{ group.shop.pk }}" data-slot-label>Интервал получения</label>
           <select id="slot-{{ group.shop.pk }}" name="slot_{{ group.shop.pk }}" data-slot>
             <option value="">Выберите интервал</option>
-            {% for method, slots in group.slot_options.items %}<optgroup label="{% if method == 'delivery' %}Доставка{% else %}Самовывоз{% endif %}" data-slot-method="{{ method }}">{% for slot in slots %}<option value="{{ slot.value }}" {% if group.selected_slot == slot.value %}selected{% endif %}>{{ slot.label }}</option>{% endfor %}</optgroup>{% endfor %}
+            {% for method, slots in group.slot_options.items %}<optgroup label="{% if method == 'delivery' %}Доставка{% else %}Самовывоз{% endif %}" data-slot-method="{{ method }}">{% for slot in slots %}<option value="{{ slot.value }}" {% if group.selected_method == method and group.selected_slot == slot.value %}selected{% endif %}>{{ slot.label }}</option>{% endfor %}</optgroup>{% endfor %}
           </select>
         </div>
       </div>
