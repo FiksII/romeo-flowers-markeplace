@@ -1,4 +1,4 @@
-{% load market_tags %}
+{% load market_tags static %}
 {% if filters.category %}<input type="hidden" name="category" value="{{ filters.category }}">{% endif %}
 
 <details class="pop" data-pop="flower" name="filter-pop">
@@ -9,7 +9,7 @@
     <label class="mini-search live-only">{% include "storefront/partials/icon.html" with name="search" %}<span class="visually-hidden">Найти цветок</span><input type="search" placeholder="Найти цветок" autocomplete="off" data-flower-search></label>
     <div class="tags" role="group" aria-label="Цветы в составе">
       {% for flower in flower_options %}
-        {% if flower.count or flower.selected %}<label class="filter-tag flower-palette-{{ flower.palette }}" data-flower-name="{{ flower.name }}"><input type="checkbox" name="flower" value="{{ flower.pk }}"{% if flower.selected %} checked{% endif %}><span class="tag-mark" aria-hidden="true"></span><span>{{ flower.name }}</span><small>{{ flower.count }}</small></label>{% endif %}
+        {% if flower.count or flower.selected %}<label class="filter-tag flower-palette-{{ flower.palette }}" data-flower-name="{{ flower.name }}"><input type="checkbox" name="flower" value="{{ flower.pk }}"{% if flower.selected %} checked{% endif %}>{% if flower.image %}<img class="filter-flower-image" src="{% static flower.image %}" alt="" width="28" height="32" loading="lazy">{% endif %}<span class="tag-mark" aria-hidden="true"></span><span>{{ flower.name }}</span><small>{{ flower.count }}</small></label>{% endif %}
       {% endfor %}
     </div>
     <p class="empty-tags" data-flower-empty hidden>Нет доступных цветов с таким названием.</p>

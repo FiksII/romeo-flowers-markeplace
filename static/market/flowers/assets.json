@@ -1,0 +1,398 @@
+{
+  "rose-white": {
+    "name": "Р РѕР·Р° Р±РµР»Р°СЏ",
+    "source_sha256": "f35bd84dd348accea7ae916924faa6957d839d47b0451251c578948f1023f768",
+    "webp_sha256": "b4fa72973bf346df888213dd71f533e7fdca33e33050d928d4c1c22d5c39a060",
+    "width": 240,
+    "height": 240,
+    "bytes": 15112,
+    "generator": "built-in image_gen"
+  },
+  "rose-red": {
+    "name": "Р РѕР·Р° РєСЂР°СЃРЅР°СЏ",
+    "source_sha256": "8777d9d86081b5ef648998fb35a0666689999defaf3a5da335f7b8cd4f30aabe",
+    "webp_sha256": "cd5f9d20ec26021d18bf9b2ffbf0df9fd87cf67cf1eab398e004cb404691d351",
+    "width": 240,
+    "height": 240,
+    "bytes": 20322,
+    "generator": "built-in image_gen"
+  },
+  "rose-spray": {
+    "name": "Р РѕР·Р° РєСѓСЃС‚РѕРІР°СЏ",
+    "source_sha256": "f5d2f5eab89c3303373e9f9860144e632c8cc286fa748179009b563a278be5ad",
+    "webp_sha256": "adb0d6ec0303b10c3f3d8e32c4bd9749de78bc6e4d239ece9368c227e228aaf0",
+    "width": 240,
+    "height": 240,
+    "bytes": 22856,
+    "generator": "built-in image_gen"
+  },
+  "rose-garden": {
+    "name": "Р РѕР·Р° РїРёРѕРЅРѕРІРёРґРЅР°СЏ",
+    "source_sha256": "c58aeea808863e5d21bdae78ab7930e195acd14a66ff2c06ae9f206a5c090d46",
+    "webp_sha256": "0cee1c414c1b36532631848cd16d053a09a6b13585f73e79cdc8e5bf2d37e313",
+    "width": 240,
+    "height": 240,
+    "bytes": 19372,
+    "generator": "built-in image_gen"
+  },
+  "chrysanthemum": {
+    "name": "РҐСЂРёР·Р°РЅС‚РµРјР°",
+    "source_sha256": "6d46f8e13d0919fb5e8b960801cb5225207f3222cf71ffb5974afabba41ea6ff",
+    "webp_sha256": "02269f4bdc37f8c431f74392f984cbff7a9e482c14f895027554582ee2fd08ac",
+    "width": 240,
+    "height": 240,
+    "bytes": 21988,
+    "generator": "built-in image_gen"
+  },
+  "chrysanthemum-spray": {
+    "name": "РҐСЂРёР·Р°РЅС‚РµРјР° РєСѓСЃС‚РѕРІР°СЏ",
+    "source_sha256": "0ca6c1bd9b039271500d3d4a3b1492b35362af385444fb8175475554cc4809fb",
+    "webp_sha256": "10070c367aeaa7dee2d81705ceed996153ff58290a0fea656d63742b474efa61",
+    "width": 240,
+    "height": 240,
+    "bytes": 22204,
+    "generator": "built-in image_gen"
+  },
+  "carnation-spray": {
+    "name": "Р“РІРѕР·РґРёРєР° РєСѓСЃС‚РѕРІР°СЏ",
+    "source_sha256": "414e59e0db1c52db9e16b6cfb1fcd02bcf392ba5d0022b391c7642b56d223f4f",
+    "webp_sha256": "2f24131a7398962a32c232b8a7a901a12d31ffadb78a4d015d4a4245db43bb11",
+    "width": 240,
+    "height": 240,
+    "bytes": 22936,
+    "generator": "built-in image_gen"
+  },
+  "delphinium": {
+    "name": "Р”РµР»СЊС„РёРЅРёСѓРј",
+    "source_sha256": "46e071ebbd4da3b033211f5e6f2b8964116abfd3029f66ae065eccf592013039",
+    "webp_sha256": "b70d57f1f2fefe037710d76fde550da66c41ca27c9843bf7537470f9c3a433c4",
+    "width": 240,
+    "height": 240,
+    "bytes": 15258,
+    "generator": "built-in image_gen"
+  },
+  "anthurium": {
+    "name": "РђРЅС‚СѓСЂРёСѓРј",
+    "source_sha256": "0f09bf3c8396037f31f2f3bcbb1703b78776f6942572f9c332ecdabb3542ad16",
+    "webp_sha256": "62e70d4096925f0e5b2acd621fd87dca946e1519bcdb98ec55dba99193102d10",
+    "width": 240,
+    "height": 240,
+    "bytes": 20236,
+    "generator": "built-in image_gen"
+  },
+  "anemone": {
+    "name": "РђРЅРµРјРѕРЅР°",
+    "source_sha256": "45316322b73aa7751ebf7581e7de110d14e212459ef59f00fddfa6b535516e72",
+    "webp_sha256": "f0446553f664fc09e669beefcf58b82d7b75518c93fee6cee8ac25a806e811e7",
+    "width": 240,
+    "height": 240,
+    "bytes": 20216,
+    "generator": "built-in image_gen"
+  },
+  "narcissus": {
+    "name": "РќР°СЂС†РёСЃСЃ",
+    "source_sha256": "b14d628f21dfff632ce482cda096193e2184b7456be0538655cc145209ea885b",
+    "webp_sha256": "2287366e42e726875857a03157db094712d57a9c7d516f78db0c61924e8816dc",
+    "width": 240,
+    "height": 240,
+    "bytes": 14740,
+    "generator": "built-in image_gen"
+  },
+  "hyacinth": {
+    "name": "Р“РёР°С†РёРЅС‚",
+    "source_sha256": "3812518b8e7dba230a5e470b6322d33844fbf1232f9bbf7d756a8eb312c5a551",
+    "webp_sha256": "102190ef387e88e9b617d64f11f0e495f31fa8e5e6a799cc73253c88c715ff1a",
+    "width": 240,
+    "height": 240,
+    "bytes": 16448,
+    "generator": "built-in image_gen"
+  },
+  "lilac": {
+    "name": "РЎРёСЂРµРЅСЊ",
+    "source_sha256": "9a7e4862a03952d5763e5f54cf9b293ff4be77b1506a98a8e4c2d2bd28a48e8b",
+    "webp_sha256": "c3da7b5864788aac955120311d5c5e18ecb7346a83ed53e8885ddb282f34630c",
+    "width": 240,
+    "height": 240,
+    "bytes": 21084,
+    "generator": "built-in image_gen"
+  },
+  "astilbe": {
+    "name": "РђСЃС‚РёР»СЊР±Р°",
+    "source_sha256": "543055c9f16f8b6c0fbbd79dbee58b2989528f2406007a514c32063956a79bfb",
+    "webp_sha256": "a26abbdcd609cf56dafce58260147cfa12019eb25904fd16ab3c7ece736219f0",
+    "width": 240,
+    "height": 240,
+    "bytes": 24552,
+    "generator": "built-in image_gen"
+  },
+  "astrantia": {
+    "name": "РђСЃС‚СЂР°РЅС†РёСЏ",
+    "source_sha256": "6575afdf5b7173d4c2f26316448955e2835bf6147701839c2138f196854cbd72",
+    "webp_sha256": "ad937e4aab69ed0b6554031a5500878ae884e43470f783e86e887f581b9ae712",
+    "width": 240,
+    "height": 240,
+    "bytes": 25972,
+    "generator": "built-in image_gen"
+  },
+  "scabiosa": {
+    "name": "РЎРєР°Р±РёРѕР·Р°",
+    "source_sha256": "528b16081404f957823eb114523075d84d7dca0be71062a141bb2846a2d8af28",
+    "webp_sha256": "867ae3c255db747034d0acc31eb4ff2029abaaf89c38f5309f4a4c7daf4925f1",
+    "width": 240,
+    "height": 240,
+    "bytes": 25666,
+    "generator": "built-in image_gen"
+  },
+  "ozothamnus": {
+    "name": "РћР·РѕС‚Р°РјРЅСѓСЃ",
+    "source_sha256": "64abab4b9048977455e2882ebfa51a4b33dbd21e6ab156c77b2888351391dd1b",
+    "webp_sha256": "e00a3ae590c00812fe5ad3f0ba1eb2897ff6ebd3d640fd82a4c172c807835639",
+    "width": 240,
+    "height": 240,
+    "bytes": 32206,
+    "generator": "built-in image_gen"
+  },
+  "limonium": {
+    "name": "Р›РёРјРѕРЅРёСѓРј",
+    "source_sha256": "be51602fd28eadea28b9f2365cb54ea77e18aa2b790f437200ecc48661323d12",
+    "webp_sha256": "f33252649757d41c0f90c994ab9ba50117bcecb2c29f4e6bb574281ac6ac351a",
+    "width": 240,
+    "height": 240,
+    "bytes": 21296,
+    "generator": "built-in image_gen"
+  },
+  "eustoma": {
+    "name": "Эустома",
+    "source_sha256": "72a14b8f6b0de2745d3d997d10cca8ba3409e9904495c9a0cbf85da306ba519a",
+    "webp_sha256": "9f42e12a03b6d7744c463e2ad5417059fa80d225a3869f21127131f77d4c4c36",
+    "width": 240,
+    "height": 240,
+    "bytes": 18422,
+    "generator": "built-in image_gen"
+  },
+  "alstroemeria": {
+    "name": "Альстромерия",
+    "source_sha256": "d49ec18a7b1a33e0e27050e15d2d60fcf27f4ce1c4fb78cc3cebe09503cab9e7",
+    "webp_sha256": "944e88abf3a8b1a859bb0a7459064d2e1ba6299bb0964b6809ffba51b7237c24",
+    "width": 240,
+    "height": 240,
+    "bytes": 22266,
+    "generator": "built-in image_gen"
+  },
+  "gerbera": {
+    "name": "Гербера",
+    "source_sha256": "597017c0caf7288213e9d1ecbef29436571ae9fa30d220c4d5cb4f39461e8982",
+    "webp_sha256": "d18a5b12184d4261732027126c4acb69565f3e987a6fa96a7d4bd48d5751594f",
+    "width": 240,
+    "height": 240,
+    "bytes": 23692,
+    "generator": "built-in image_gen"
+  },
+  "ranunculus": {
+    "name": "Ранункулюс",
+    "source_sha256": "ca23cd68b262b68c2f99d6c853517dc55834917aa96d47843ec58c8dd48713c8",
+    "webp_sha256": "4bc4afeb698faebe6413de052394b7fab1ee329eb37bae25921305fab61c83f0",
+    "width": 240,
+    "height": 240,
+    "bytes": 23514,
+    "generator": "built-in image_gen"
+  },
+  "iris": {
+    "name": "Ирис",
+    "source_sha256": "5196359ca15a0f295edc384aacad22615fae7cc21e79d0249ee728240f9591fa",
+    "webp_sha256": "a7f435a6a150b1ad424b265d8015c74ad1a21585f13c88f528484c57c8adc5ae",
+    "width": 240,
+    "height": 240,
+    "bytes": 22110,
+    "generator": "built-in image_gen"
+  },
+  "freesia": {
+    "name": "Фрезия",
+    "source_sha256": "403cd4d5b8d7468bd15033c3ff51c12bb3289cadba3b861fcc69a847d3cd2fbd",
+    "webp_sha256": "5919dd6a61370f1faa6572db1451ff97382c773403314008d8370ca5de906657",
+    "width": 240,
+    "height": 240,
+    "bytes": 18260,
+    "generator": "built-in image_gen"
+  },
+  "gypsophila": {
+    "name": "Гипсофила",
+    "source_sha256": "dfd1ba40ac096401e6b979504f5d55bb3f46af67cdd1448a5a5e104209690449",
+    "webp_sha256": "db1d251c1584ce0cd57e221c83e6c7c9a1479f5e27321c4a15a57d1d8b0b41c7",
+    "width": 240,
+    "height": 240,
+    "bytes": 33732,
+    "generator": "built-in image_gen"
+  },
+  "cornflower": {
+    "name": "Василёк",
+    "source_sha256": "acc00ee0bb6456edde92448db8683222b88eafcb7a17b8ce5993725533dc516d",
+    "webp_sha256": "767b7d986fd3d6e6695f2f8b0ba1649b872d06ed30a7ce34a108d3e57088243e",
+    "width": 240,
+    "height": 240,
+    "bytes": 23760,
+    "generator": "built-in image_gen"
+  },
+  "matthiola": {
+    "name": "Маттиола",
+    "source_sha256": "816339cf0cd8fdec99d6985922e9d48de307262bd6a5f6ca86cbe5f2ac2b2080",
+    "webp_sha256": "01bb1c86c3376609235de53ca029b66a9f096117346cc218e9d16790ed89fbf3",
+    "width": 240,
+    "height": 240,
+    "bytes": 17002,
+    "generator": "built-in image_gen"
+  },
+  "sunflower": {
+    "name": "Подсолнух",
+    "source_sha256": "5a9c392d72cfb64bc85cb50e249f8858a931df85ec33d65ad30edcb653dad517",
+    "webp_sha256": "8773404bdcd44bfcfb76f8e3d92c4f7bd8820c38b3ff8b1da319f67615d95fb8",
+    "width": 240,
+    "height": 240,
+    "bytes": 25014,
+    "generator": "built-in image_gen"
+  },
+  "gladiolus": {
+    "name": "Гладиолус",
+    "source_sha256": "c9ef0d32dd289fbba838adc795365c39c145f56acba7e162697f3acc48a43b49",
+    "webp_sha256": "a78fa6ec9826101c6358f507f1bed2c11781351e417ad24d288ff398583b36a5",
+    "width": 240,
+    "height": 240,
+    "bytes": 15418,
+    "generator": "built-in image_gen"
+  },
+  "dahlia": {
+    "name": "Георгина",
+    "source_sha256": "641dcc8e3d915a247dfc51ec46b5329d07d84c18dd738263b5e0eb9737d4720e",
+    "webp_sha256": "94b65219ff8728236c38768d2e8d8e2a27dfebbdbfdf1b34feea3344d39a802b",
+    "width": 240,
+    "height": 240,
+    "bytes": 23434,
+    "generator": "built-in image_gen"
+  },
+  "amaryllis": {
+    "name": "Амариллис",
+    "source_sha256": "598dd15b61b51c9f6663b283c5bef0c5edfc17b55e63d2c454f6e0088f14d3c8",
+    "webp_sha256": "53fe2bd323ee4d7b437d0db77059f082e142c5d58a6aeba565751c3f6e14536f",
+    "width": 240,
+    "height": 240,
+    "bytes": 20046,
+    "generator": "built-in image_gen"
+  },
+  "protea": {
+    "name": "Протея",
+    "source_sha256": "7dbe29d0c816fba580a69d38ca4b678c8c2f02650f94f8ca83cb72a7099a12b0",
+    "webp_sha256": "a0cf677fae57b53ad46178e6c18ed1ef7b0dde0c99b9b79065c730899fc7f253",
+    "width": 240,
+    "height": 240,
+    "bytes": 25360,
+    "generator": "built-in image_gen"
+  },
+  "strelitzia": {
+    "name": "Стрелиция",
+    "source_sha256": "31411ae5b94b32d8fc7b1cf560791770bd21fd81c7f670472bf42a1c4cc1d73e",
+    "webp_sha256": "0874d154fba2bf69306b051838700aa6b8a9a3cb2db20e8a4258fb9fb97b93e4",
+    "width": 240,
+    "height": 240,
+    "bytes": 15850,
+    "generator": "built-in image_gen"
+  },
+  "brassica": {
+    "name": "Брассика",
+    "source_sha256": "8ee60735c8c3cea1b4286ca3556ab38c8756ff79df550d5d896771617daf8654",
+    "webp_sha256": "4640a6b48d11846b90cf4fece55384dd2cf9eaa1741f7597d76ea9fa3c5fba96",
+    "width": 240,
+    "height": 240,
+    "bytes": 27956,
+    "generator": "built-in image_gen"
+  },
+  "veronica": {
+    "name": "Вероника",
+    "source_sha256": "277229a69a03cd6ea79af19cbc0de2d47f46f6d665dab0125f752692f57e428d",
+    "webp_sha256": "98f7c14d34d9cb9fba2a32a83ea9e253076cffe5713f83df729d234253301862",
+    "width": 240,
+    "height": 240,
+    "bytes": 14950,
+    "generator": "built-in image_gen"
+  },
+  "solidago": {
+    "name": "Солидаго",
+    "source_sha256": "a3997668a2b80a335bb24ca4f36ff5a759eb860f3dfcbb81b276fdb43f85d0cf",
+    "webp_sha256": "d8a7f61fde4cef2e698f88f98a3b326583230983c4736e04856dbb93c8edf460",
+    "width": 240,
+    "height": 240,
+    "bytes": 24134,
+    "generator": "built-in image_gen"
+  },
+  "bouvardia": {
+    "name": "Бувардия",
+    "source_sha256": "2f6745d7a0bfa3e150d5b9f0e84906249a087aeb68e0def461ea9497ef5610eb",
+    "webp_sha256": "72656bf2057b01e965c752d1228de1e785a7136c4ea49ed8a3ed77ed2a9f6476",
+    "width": 240,
+    "height": 240,
+    "bytes": 22496,
+    "generator": "built-in image_gen"
+  },
+  "waxflower": {
+    "name": "Ваксфлауэр",
+    "source_sha256": "a3a4cf1372171b8d476ab838c86e6862dbd86be139c37cab473b941f56fc729b",
+    "webp_sha256": "7a1ce2ad71a2d4ff296ee1d913ccb66e52c44dcb10559a080e6d7a0dab8a8333",
+    "width": 240,
+    "height": 240,
+    "bytes": 32406,
+    "generator": "built-in image_gen"
+  },
+  "leucospermum": {
+    "name": "Левкоспермум",
+    "source_sha256": "917abc654d6c5a9137538469f2473b8786bc942b13c046eb6e70860a875d0008",
+    "webp_sha256": "a0c013a8a8abee19c73d0eec1c244e3b7ac8af78addc6ef4b52ad33106823ad1",
+    "width": 240,
+    "height": 240,
+    "bytes": 24462,
+    "generator": "built-in image_gen"
+  },
+  "nerine": {
+    "name": "Нерине",
+    "source_sha256": "0f9edd95d665646cd35787f77f5177e5fbfca2b8f459caf56ac67ba5e5f83336",
+    "webp_sha256": "cd2d0a3c668fcb5dbaf76d145f78493f24a272bf28f5985e55944ad0ffa781ed",
+    "width": 240,
+    "height": 240,
+    "bytes": 32730,
+    "generator": "built-in image_gen"
+  },
+  "agapanthus": {
+    "name": "Агапантус",
+    "source_sha256": "be710a616ba402df544e7a986a311ae9864270b9e54109938e8fcf1d864fcb2f",
+    "webp_sha256": "ab11299cd924c789ada6e9a428893f62f8ba08530ef00876a001ea416c95a654",
+    "width": 240,
+    "height": 240,
+    "bytes": 29758,
+    "generator": "built-in image_gen"
+  },
+  "muscari": {
+    "name": "Мускари",
+    "source_sha256": "6f74428c3ef7333cf527941772226467ab216130b3d3371e15071bfe61cd7270",
+    "webp_sha256": "45eb39028a791c34dff8d261de036c40134587651d503a6dc38126a8f2d46bc8",
+    "width": 240,
+    "height": 240,
+    "bytes": 14636,
+    "generator": "built-in image_gen"
+  },
+  "lily-of-the-valley": {
+    "name": "Ландыш",
+    "source_sha256": "5b954dd5cee7339ba4cc1ec0d1c37bf9073a94094fcdb1ab158c15850104c7f2",
+    "webp_sha256": "858472b9276441d7dc070b7abbf6879396f55b0f472d3e024039c8b9e763b302",
+    "width": 240,
+    "height": 240,
+    "bytes": 17394,
+    "generator": "built-in image_gen"
+  },
+  "hibiscus": {
+    "name": "Гибискус",
+    "source_sha256": "b6a96085725ec23565a86b1f077b5aeb9725bb64fe4091650e2aaccec9ee7b7c",
+    "webp_sha256": "718e13cd87d0a7a1b3403af9ebb48d9ff179c4e6b4e69ce1efefe086a7d06ecf",
+    "width": 240,
+    "height": 240,
+    "bytes": 24046,
+    "generator": "built-in image_gen"
+  }
+}
