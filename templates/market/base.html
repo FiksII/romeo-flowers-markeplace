@@ -56,16 +56,16 @@
 </main>
 <footer class="site-footer">
   <div class="shell footer-grid">
-    <section class="footer-brand" aria-label="О маркетплейсе">
+    <section class="footer-brand" aria-label="О Ромео">
       <a class="brand" href="{% url 'market:home' %}"><img class="brand-logo" src="{% static 'market/images/logo-emblem.webp' %}" width="120" height="120" alt="Цветы от Ромео"></a>
-      <p>Букеты от местных флористов с доставкой и самовывозом по Москве и области.</p>
+      <p>Цветы от Ромео с доставкой и самовывозом по Москве и области.</p>
       {% if contacts.telegram or contacts.instagram %}<div class="social-links">{% if contacts.telegram %}<a href="{{ contacts.telegram }}" aria-label="Telegram" rel="noopener">{% include "storefront/partials/icon.html" with name="telegram" %}</a>{% endif %}{% if contacts.instagram %}<a href="{{ contacts.instagram }}" aria-label="Instagram" rel="noopener">{% include "storefront/partials/icon.html" with name="instagram" %}</a>{% endif %}</div>{% endif %}
     </section>
     <nav class="footer-col footer-catalogue" aria-label="Каталог">
       <h2>Каталог</h2>
       {% for item in rail_categories %}<a href="{% url 'market:home' %}?category={{ item.value }}#catalogue">{{ item.label }}</a>{% endfor %}
       <a href="{% url 'market:home' %}#catalogue">Все букеты</a>
-      <a href="{% url 'market:home' %}#partners">Магазины-партнёры</a>
+      {% if receiving.method == 'pickup' %}<a href="{% url 'market:home' %}#partners">Пункты самовывоза</a>{% endif %}
     </nav>
     <nav class="footer-col footer-info" aria-label="Покупателям">
       <h2>Покупателям</h2>
