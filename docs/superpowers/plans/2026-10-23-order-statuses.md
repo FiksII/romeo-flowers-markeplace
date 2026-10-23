@@ -20,11 +20,13 @@
 - [x] Add tests for all three fulfillment routes, skipped-step rejection, payment and role checks, and role-aware card/detail actions; observe failures.
 - [x] Update market/models.py labels and next_step, market/access.py role-aware next action, market/orders.py server enforcement, market/templatetags/market_tags.py and order templates. Add choices migration. Update demo history command and old test helpers for mandatory ready and final actor.
 - [x] Run focused tests then full Python suite, lint, Django checks and migration checks; review the branch independently.
-- [ ] Merge verified branch to develop; package exact develop, verify current server release, back up database/media/env, migrate, collectstatic, restart and smoke-test dev.
-- [ ] Record validation/deployment, promote verified develop to master without production deployment, push branches.
+- [x] Merge verified branch to develop; package exact develop, verify current server release, back up database/media/env, migrate, collectstatic, restart and smoke-test dev.
+- [x] Record validation/deployment, promote verified develop to master without production deployment, push branches.
 
 ## Execution ledger
 
 - User explicitly confirmed chains and completion responsibilities in chat. Existing administrative override retained; accepted remains the incoming order stage.
 - Red: 6 failures reproduced missing ready, old labels, forbidden completion and inconsistent UI. Green: 569 passed, 5 PostgreSQL-only skips; Ruff, Django check and migration checks passed. Independent reviewer found no important issues. One old board assertion was updated to require ready instead of the former skipped stage.
 - Existing Django choices and authorization were checked against official Django 5.2 documentation; no dependency changes.
+- Dev: /srv/romeo-marketplace/releases/20261023-145624-order-statuses, exact develop 06278d25a753dc148029e24b7a03c9ce4e00f4dc. All 580 file hashes checked. Server SQLite: 569 passed, 5 skipped; PostgreSQL: 574 passed. Migration 0024 and collectstatic applied. Backup: /srv/backups/romeo-marketplace-before-order-statuses-20261023-145624.
+- Preflight initially rejected a diagnostic user without email; corrected the fixture only and reran successfully before and after cutover. Transactional smoke checked all routes, stock, order completion, role-aware UI and forbidden direct POST; no persistent test data or messages. HTTPS, assets, service/timer verified. Runtime configuration unchanged, live T-Bank retained.
