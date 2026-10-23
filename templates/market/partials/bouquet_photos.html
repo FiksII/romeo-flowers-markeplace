@@ -1,16 +1,25 @@
 <fieldset class="bouquet-photo-editor" data-photo-editor>
   <legend>Фотографии букета</legend>
-  <p class="field-help">Главное фото показывается в каталоге, заказах и уведомлениях. Изменения сохранятся вместе с букетом.</p>
+  <p class="field-help">Нажмите звёздочку слева, чтобы сделать фото главным, или крестик справа, чтобы удалить. Изменения сохранятся вместе с букетом.</p>
   {% if form.photo_items %}<div class="bouquet-photo-grid">
     {% for item in form.photo_items %}<div class="bouquet-photo-tile">
-      <a href="{{ item.file.url }}" target="_blank" rel="noopener"><img src="{{ item.file.url }}" alt="Фото букета {{ forloop.counter }}" loading="lazy" width="120" height="150"></a>
-      <label><input type="radio" name="primary_photo" value="{{ item.id }}" {% if form.is_bound %}{% if form.primary_photo.value == item.id %}checked{% endif %}{% elif forloop.first %}checked{% endif %}> Главное фото</label>
-      <label><input type="checkbox" name="remove_photos" value="{{ item.id }}" {% if item.id in form.remove_photos.value %}checked{% endif %}> Удалить</label>
+      <div class="photo-image-frame">
+        <a href="{{ item.file.url }}" target="_blank" rel="noopener"><img src="{{ item.file.url }}" alt="Фото букета {{ forloop.counter }}" loading="lazy" width="120" height="150"></a>
+        <label class="photo-action photo-primary-toggle" title="Сделать фото {{ forloop.counter }} главным">
+          <input class="visually-hidden" type="radio" name="primary_photo" value="{{ item.id }}" data-photo-primary aria-label="Сделать фото {{ forloop.counter }} главным" {% if form.primary_photo.value %}{% if form.primary_photo.value == item.id %}checked{% endif %}{% elif forloop.first %}checked{% endif %}>
+          <span class="photo-star-empty" aria-hidden="true">☆</span><span class="photo-star-filled" aria-hidden="true">★</span>
+        </label>
+        <label class="photo-action photo-remove-toggle" title="Удалить или вернуть фото {{ forloop.counter }}">
+          <input class="visually-hidden" type="checkbox" name="remove_photos" value="{{ item.id }}" data-photo-remove aria-label="Удалить фото {{ forloop.counter }}" {% if item.id in form.remove_photos.value %}checked{% endif %}>
+          <span class="photo-remove-icon" aria-hidden="true">×</span><span class="photo-restore-icon" aria-hidden="true">↶</span>
+        </label>
+        <span class="photo-main-badge">Главное</span>
+      </div>
+      <p class="photo-removal-note">Будет удалено · ↶ вернуть</p>
     </div>{% endfor %}
   </div>{% endif %}
   <div class="field"><label for="{{ field.id_for_label }}">Добавить фотографии</label>{{ field }}<div class="field-help">{{ field.help_text }}</div>{{ field.errors }}</div>
   <div class="bouquet-photo-grid" data-photo-previews aria-live="polite"></div>
   <p class="field-help" data-photo-status role="status"></p>
-  <label><input type="radio" name="primary_photo" value="new" {% if form.primary_photo.value == 'new' %}checked{% endif %}> Сделать первое из новых фото главным</label>
   {{ form.primary_photo.errors }}{{ form.remove_photos.errors }}
 </fieldset>

@@ -173,7 +173,10 @@ class ProductForm(forms.Form):
         self.photo_items = gallery_items(listing)
         choices = [(row["id"], f"Фото {index + 1}") for index, row in enumerate(self.photo_items)]
         self.fields["remove_photos"].choices = choices
-        self.fields["primary_photo"].choices = [("", "Сохранить текущее главное фото"), *choices, ("new", "Первое из новых фото")]
+        upload_value = self.files.getlist("photo") if hasattr(self.files, "getlist") else self.files.get("photo", [])
+        uploads = upload_value if isinstance(upload_value, (list, tuple)) else [upload_value]
+        new_choices = [(f"new:{index}", f"Новое фото {index + 1}") for index in range(min(len(uploads), MAX_PHOTOS))]
+        self.fields["primary_photo"].choices = [("", "Сохранить текущее главное фото"), *choices, ("new", "Первое из новых фото"), *new_choices]
         self.fields["photo"].widget.attrs["data-photo-count"] = len(choices)
         self.fields["pickup_price"].required = False
         self.fields["pickup_price"].label = "Стандартный — цена самовывозом, ₽"

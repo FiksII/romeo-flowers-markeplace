@@ -67,16 +67,16 @@ def save_photos(listing, uploads, remove_ids=(), primary_id=None):
     valid_ids = {row["id"] for row in rows}
     remove_ids = {str(pk) for pk in remove_ids}
     primary_id = str(primary_id) if primary_id else None
+    if primary_id == "new":
+        primary_id = "new:0"
+    new_ids = {f"new:{index}" for index in range(len(uploads))}
     if (
         not remove_ids.issubset(valid_ids)
-        or primary_id not in (None, "new")
-        and primary_id not in valid_ids
+        or primary_id is not None and primary_id not in valid_ids | new_ids
     ):
         raise ValidationError(
             "Фотографии изменились. Обновите страницу и повторите сохранение."
         )
-    if primary_id == "new" and not uploads:
-        raise ValidationError("Загрузите новое фото или выберите существующее главным.")
     if len(rows) - len(remove_ids) + len(uploads) > MAX_PHOTOS:
         raise ValidationError(
             f"Можно сохранить не больше {MAX_PHOTOS} фотографий букета."
@@ -105,7 +105,7 @@ def save_photos(listing, uploads, remove_ids=(), primary_id=None):
             image.original.save(name, upload, save=False)
             written.append((image.original.storage, image.original.name))
             image.save()
-            kept.append(("new" if index == 0 else f"new:{index}", image))
+            kept.append((f"new:{index}", image))
         if primary_id and primary_id not in remove_ids:
             kept.sort(key=lambda pair: pair[0] != primary_id)
         for order, (_, image) in enumerate(kept):
