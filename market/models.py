@@ -490,6 +490,7 @@ class ShopOrder(models.Model):
         choices=[
             ("cash", "Наличными при получении"),
             ("online", "Онлайн"),
+            ("gift", "Подарок за счёт магазина"),
         ],
     )
     payment_status = models.CharField(
@@ -499,6 +500,7 @@ class ShopOrder(models.Model):
             ("pending", "Ожидает оплаты"),
             ("paid", "Оплачен"),
             ("refunded", "Возвращён"),
+            ("free", "Бесплатно"),
         ],
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -523,7 +525,31 @@ class ShopOrder(models.Model):
 
     @property
     def can_be_worked(self):
-        return self.payment_method == "cash" or self.payment_status == "paid"
+        return (
+            self.payment_method == "cash"
+            or self.payment_status == "paid"
+            or self.is_gift
+        )
+
+    @property
+    def is_gift(self):
+        return self.payment_method == "gift" and self.payment_status == "free"
+
+    @property
+    def can_cancel(self):
+        return (self.payment_status == "pending" or self.is_gift) and self.status in {
+            "accepted",
+            "preparing",
+        }
+
+    @property
+    def can_cancel_by_shop(self):
+        return (self.payment_status == "pending" or self.is_gift) and self.status in {
+            "accepted",
+            "preparing",
+            "ready",
+            "courier",
+        }
 
     def get_status_display(self):
         if self.status == "completed" and self.method == "pickup":
@@ -580,6 +606,8 @@ class ShopOrder(models.Model):
     @property
     def platform_collects(self):
         """Whether Romeo, not the shop, is the one who receives the customer's money."""
+        if self.is_gift:
+            return False
         return self.payment_method == "online" or (
             self.method == "delivery" and self.delivery_owner == "platform"
         )
@@ -628,6 +656,52 @@ class ShopOrderItem(models.Model):
     @property
     def size_label(self):
         return dict(SIZES).get(self.size, "")
+
+
+class LoyaltyReward(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    sequence = models.PositiveIntegerField()
+    order = models.OneToOneField(
+        "order.Order",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="loyalty_reward",
+    )
+    limit = models.DecimalField(max_digits=12, decimal_places=2)
+    paid_total = models.DecimalField(max_digits=14, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "sequence"], name="market_loyalty_user_sequence"
+            )
+        ]
+        ordering = ["-sequence"]
+
+
+class LoyaltyPurchase(models.Model):
+    """Immutable units consumed by a gift; later refunds cannot shift other units."""
+
+    reward = models.ForeignKey(
+        LoyaltyReward, on_delete=models.PROTECT, related_name="purchases"
+    )
+    item = models.ForeignKey(
+        ShopOrderItem, on_delete=models.PROTECT, related_name="loyalty_uses"
+    )
+    units = models.PositiveIntegerField()
+    paid = models.DecimalField(max_digits=14, decimal_places=2)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["reward", "item"], name="market_loyalty_reward_item"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(units__gt=0), name="market_loyalty_positive_units"
+            ),
+        ]
 
 
 class Payout(models.Model):

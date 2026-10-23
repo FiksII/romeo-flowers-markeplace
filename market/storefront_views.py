@@ -263,7 +263,9 @@ def home(request):
                 hide_flowers={str(item["pk"]) for item in rail},
             ),
             "can_reset_filters": len(active_chips) > 1,
-            "partner_shops": partner_shops(unsearched) if context.method == "pickup" else [],
+            "partner_shops": partner_shops(unsearched)
+            if context.method == "pickup"
+            else [],
         },
     )
 
@@ -426,9 +428,7 @@ def basket_add(request, pk):
         (row for row in public_listings(get_context(request)) if row.pk == pk), None
     )
     if listing is None:
-        return result(
-            "Этот товар недоступен по выбранным условиям получения."
-        )
+        return result("Этот товар недоступен по выбранным условиям получения.")
     size = request.POST.get("size") or (
         listing.sizes[0] if not listing.has_size_choice else None
     )
@@ -656,7 +656,17 @@ def account_orders(request):
         .prefetch_related("shop_orders__shop")
         .order_by("-date_placed")
     )
-    return render(request, "market/orders.html", {"orders": orders})
+    from market.loyalty import progress
+
+    return render(
+        request,
+        "market/orders.html",
+        {
+            "orders": orders,
+            "loyalty_state": progress(request.user),
+            "stamp_slots": range(1, 11),
+        },
+    )
 
 
 @login_required
@@ -666,7 +676,7 @@ def customer_orders_live(request):
     from market.models import ShopOrder
 
     parts = ShopOrder.objects.filter(order__user=request.user).only(
-        "id", "status", "method", "payment_status"
+        "id", "status", "method", "payment_status", "payment_method"
     )
     response = JsonResponse(
         {
@@ -675,8 +685,7 @@ def customer_orders_live(request):
                     "id": part.pk,
                     "status": part.status,
                     "label": part.get_status_display(),
-                    "can_cancel": part.payment_status == "pending"
-                    and part.status in {"accepted", "preparing"},
+                    "can_cancel": part.can_cancel,
                 }
                 for part in parts
             ]

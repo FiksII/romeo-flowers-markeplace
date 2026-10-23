@@ -1,0 +1,29 @@
+{% extends 'market/base.html' %}{% load static market_tags %}
+{% block title %}Карта любителя цветов — Ромео{% endblock %}
+{% block content %}
+<section class="shell section-space">
+  <a class="back-link" href="{% url 'market:account' %}">← Мои заказы</a>
+  {% include 'market/partials/loyalty_card.html' %}
+  <div class="group-card loyalty-rules">
+    <h2>Покупайте цветы — получайте подарки</h2>
+    <p>Букеты из всех магазинов накапливаются в одной карте. Каждый оплаченный и полученный букет даёт один цветочек: если в заказе три букета, получите три отметки.</p>
+    <p>За каждые десять букетов выберите один в подарок. Его лимит — средняя стоимость этих десяти букетов после скидок, без отдельной платы за доставку. Лимит зависит от ваших покупок.</p>
+    <p>Доставка подарка бесплатная. Самовывоз тоже бесплатный. Адрес и время выбираете при оформлении.</p>
+    <p class="muted">Отменённые, неоплаченные и возвращённые покупки не учитываются. Подарки новых отметок не дают. После оформления подарка десять отметок использованы; при его отмене они не восстанавливаются.</p>
+  </div>
+  {% if loyalty_state.available %}
+  <div id="gifts" class="page-heading"><h1>Выберите подарочный букет</h1><p>Ваш лимит — {{ loyalty_state.limit|rub }}. К оплате за букет и доставку — 0 ₽.</p>{% if loyalty_state.available > 1 %}<p>Доступно подарков: {{ loyalty_state.available }}. Оформляйте их по одному.</p>{% endif %}</div>
+  {% include 'market/partials/receiving.html' with compact=True %}
+  <div class="product-grid">
+    {% for listing in page %}
+    <article class="product-card">
+      {% listing_photo listing 'card' as photo %}<img class="loyalty-gift-photo" src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 600px) 90vw, 30vw"{% endif %} width="400" height="440" alt="{{ listing.product.title }}" loading="lazy">
+      <div class="product-copy"><h2>{{ listing.product.title }}</h2>{% if receiving.method == 'pickup' %}<p>{{ listing.shop.name }} · {{ listing.shop.address }}</p>{% endif %}<p>В подарок · доставка бесплатно</p>
+      <div class="loyalty-gift-sizes">{% for size in listing.gift_sizes %}<a class="button button-primary button-sm" href="{% url 'market:loyalty-gift' listing.pk %}?size={{ size.value }}">Выбрать · {{ size.label }}</a>{% endfor %}</div></div>
+    </article>
+    {% empty %}<div class="empty-state"><h2>Подходящие подарки пока недоступны</h2><p>Попробуйте изменить условия получения или загляните позже. Ваши отметки сохранены.</p></div>{% endfor %}
+  </div>
+  {% if page.has_other_pages %}<nav class="pagination" aria-label="Страницы подарков">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}#gifts">← Назад</a>{% endif %}<span>{{ page.number }} / {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?page={{ page.next_page_number }}#gifts">Далее →</a>{% endif %}</nav>{% endif %}
+  {% else %}<a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать букет</a>{% endif %}
+</section>
+{% endblock %}

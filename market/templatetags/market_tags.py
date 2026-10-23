@@ -27,7 +27,12 @@ def listing_gallery(listing):
 
     rows = gallery_items(listing)
     if not rows:
-        return [{"original": listing.image_url, "detail": resized_listing_photo(listing, "detail")}]
+        return [
+            {
+                "original": listing.image_url,
+                "detail": resized_listing_photo(listing, "detail"),
+            }
+        ]
     return [
         {
             "original": row["file"].url,
@@ -74,6 +79,10 @@ def sub_money(value, other):
 
 @register.simple_tag
 def romeo_payment_instruction(part):
+    if part.is_gift:
+        return (
+            "Подарок. Букет и доставка бесплатно. Получать деньги с клиента не нужно."
+        )
     if part.payment_status == "refunded":
         return "Оплата возвращена. Не доставляйте заказ без уточнения."
     if part.payment_status == "paid":

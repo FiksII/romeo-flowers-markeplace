@@ -5,7 +5,7 @@
 <section class="shell section-space" data-customer-orders-live="{% url 'market:customer-orders-live' %}">
   <a class="back-link" href="{% url 'market:account' %}">← Мои заказы</a>
   <div class="page-heading"><span class="eyebrow">{{ order.date_placed|date:'d.m.Y H:i' }}</span><h1>Заказ № {{ order.number }}</h1><p>Сумма при оформлении {{ order.total_incl_tax|rub }}</p></div>
-  {% if parts and not pay_online %}<p class="notice">{% if parts.0.payment_method == 'cash' %}Оплата наличными при получении: заплатите курьеру или в магазине. Часть заказа можно отменить, пока её не передали курьеру.{% elif payment.status == 'CONFIRMED' %}Заказ оплачен онлайн.{% if payment.returned_amount %} {{ payment.returned_amount|rub }} за отменённые позиции вернём на карту или счёт, с которого вы платили.{% endif %}{% elif awaiting_payment %}Время на оплату истекло или онлайн-оплата сейчас недоступна. Неоплаченные части заказа будут отменены.{% else %}Заказ не был оплачен онлайн.{% endif %}</p>{% endif %}
+  {% if parts and not pay_online %}<p class="notice">{% if parts.0.is_gift %}Ваш подарочный букет. Букет, доставка и самовывоз бесплатны — платить не нужно.{% elif parts.0.payment_method == 'cash' %}Оплата наличными при получении: заплатите курьеру или в магазине. Часть заказа можно отменить, пока её не передали курьеру.{% elif payment.status == 'CONFIRMED' %}Заказ оплачен онлайн.{% if payment.returned_amount %} {{ payment.returned_amount|rub }} за отменённые позиции вернём на карту или счёт, с которого вы платили.{% endif %}{% elif awaiting_payment %}Время на оплату истекло или онлайн-оплата сейчас недоступна. Неоплаченные части заказа будут отменены.{% else %}Заказ не был оплачен онлайн.{% endif %}</p>{% endif %}
   {% if pay_online %}{% include 'market/partials/order_payment.html' %}{% endif %}
   <div class="parts-grid">
     {% for part in parts %}
@@ -18,7 +18,7 @@
       {% if part.delivery_total %}<div class="summary-row"><span>Доставка</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
       <div class="summary-row total-row"><strong>Итого</strong><strong>{{ part.total|rub }}</strong></div>
       {% if part.instructions %}<p class="muted">{{ part.instructions }}</p>{% endif %}
-      {% if part.payment_status == 'pending' and part.status == 'accepted' or part.payment_status == 'pending' and part.status == 'preparing' %}<form data-customer-cancel="{{ part.pk }}" method="post" action="{% url 'market:customer-cancel' part.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить эту часть заказа</button></form>{% endif %}
+      {% if part.can_cancel %}<form data-customer-cancel="{{ part.pk }}" method="post" action="{% url 'market:customer-cancel' part.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить эту часть заказа</button></form>{% endif %}
     </section>
     {% endfor %}
   </div>

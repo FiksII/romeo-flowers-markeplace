@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.views.generic.base import RedirectView
 
-from market import messenger_views
+from market import loyalty_views, messenger_views
 from market import payment_views as payments
 from market import portal_views as portal
 from market import storefront_views as views
@@ -32,7 +32,15 @@ urlpatterns = [
     path("basket/update/<int:pk>/", views.basket_update, name="basket-update"),
     path("checkout/", views.checkout, name="checkout"),
     path("account/orders/", views.account_orders, name="account"),
-    path("account/orders/live/", views.customer_orders_live, name="customer-orders-live"),
+    path("account/loyalty/", loyalty_views.index, name="loyalty"),
+    path(
+        "account/loyalty/gift/<int:pk>/",
+        loyalty_views.gift_checkout,
+        name="loyalty-gift",
+    ),
+    path(
+        "account/orders/live/", views.customer_orders_live, name="customer-orders-live"
+    ),
     path("account/orders/<str:number>/", views.order_detail, name="order"),
     path("account/orders/<str:number>/pay/", payments.order_pay, name="order-pay"),
     path(
@@ -64,7 +72,11 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("partner/", portal.partner_index, name="partner"),
     path("partner/new/", portal.shop_new, name="shop-new"),
-    path("partner/shops/storefront/", portal.partner_storefront, name="partner-storefront"),
+    path(
+        "partner/shops/storefront/",
+        portal.partner_storefront,
+        name="partner-storefront",
+    ),
     path("partner/<slug:slug>/", portal.partner_dashboard, name="partner-shop"),
     path(
         "partner/<slug:slug>/orders/", portal.partner_orders_page, name="partner-orders"

@@ -80,3 +80,11 @@ class MarketplaceStrategy(Default):
             )
             return info._replace(price=price, availability=UnavailableStock())
         return info
+
+
+class GiftStrategy(MarketplaceStrategy):
+    def pricing_policy(self, product, stockrecord):
+        price = super().pricing_policy(product, stockrecord)
+        if not price.exists:
+            return price
+        return FixedPrice(currency=price.currency, excl_tax=Decimal(0), tax=Decimal(0))
