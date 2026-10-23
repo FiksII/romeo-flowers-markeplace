@@ -2,7 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.views.generic.base import RedirectView
 
-from market import loyalty_views, messenger_views
+from market import loyalty_views, messenger_views, photo_delivery
 from market import payment_views as payments
 from market import portal_views as portal
 from market import storefront_views as views
@@ -12,6 +12,7 @@ from market.auth_views import SmsSignupView, restart_login
 app_name = "market"
 urlpatterns = [
     path("", views.home, name="home"),
+    path("photos/<str:token>/", photo_delivery.photo, name="photo"),
     path("catalogue/", views.catalogue, name="catalogue"),
     path("delivery/", views.legal_page, {"page": "delivery"}, name="delivery"),
     path("privacy/", views.legal_page, {"page": "privacy"}, name="privacy"),

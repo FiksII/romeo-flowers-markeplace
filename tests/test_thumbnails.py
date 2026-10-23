@@ -29,19 +29,19 @@ def thumbnail_files(media, srcset):
         yield media / url.removeprefix("/media/"), width
 
 
-def test_card_photo_is_resized_to_webp_in_two_widths(listing, media):
+def test_card_photo_is_resized_to_webp_in_four_widths(listing, media):
     listing.photo.save("rose.png", png())
     photo = listing_photo(listing, "card")
     assert photo["src"].startswith("/media/cache/") and photo["src"].endswith(".webp")
     files = list(thumbnail_files(media, photo["srcset"]))
-    assert [width for _, width in files] == ["400w", "800w"]
+    assert [width for _, width in files] == ["320w", "400w", "600w", "800w"]
     assert photo["src"] == f"/media/{files[0][0].relative_to(media).as_posix()}"
     sizes = []
     for path, _ in files:
         with Image.open(path) as image:
             assert image.format == "WEBP"
             sizes.append(image.size)
-    assert sizes == [(400, 500), (800, 1000)]
+    assert sizes == [(320, 400), (400, 500), (600, 750), (800, 1000)]
 
 
 def test_small_photo_is_not_upscaled(listing, media):
@@ -69,8 +69,25 @@ def test_catalogue_card_and_product_page_use_resized_photos(client, listing, med
     listing.photo.save("rose.png", png())
     html = client.get("/").content.decode()
     assert 'srcset="/media/cache/' in html and ".webp 800w" in html
-    assert 'sizes="(max-width: 759px) 50vw' in html
+    assert 'sizes="(max-width: 759px) calc((100vw - 44px) / 2)' in html
+    assert 'loading="eager"' in html
     assert listing.photo.url not in html
     detail = client.get(f"/products/{listing.pk}/").content.decode()
     assert 'class="detail-photo" src="/media/cache/' in detail
     assert ".webp 1000w" in detail
+
+
+def test_small_photo_has_no_duplicate_srcset_widths(listing, media):
+    listing.photo.save("small.png", png((300, 300)))
+    photo = listing_photo(listing, "card")
+    widths = [width for _, width in thumbnail_files(media, photo["srcset"])]
+    assert len(widths) == len(set(widths))
+
+
+def test_s3_thumbnail_urls_are_stable_same_origin(listing, media, settings, client):
+    listing.photo.save("rose.png", png())
+    settings.S3_ENABLED = True
+    first = listing_photo(listing, "card")
+    assert first == listing_photo(listing, "card")
+    assert first["src"].startswith("/photos/")
+    assert client.get(first["src"]).status_code == 200

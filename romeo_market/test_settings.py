@@ -15,7 +15,10 @@ DADATA_TOKEN = ""
 ADDRESS_DEMO = True
 YANDEX_TILES_API_KEY = ""
 SMSPILOT_API_KEY = ""
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    "photos": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "test-photos"},
+}
 # Tests talk to a fake T-Bank; the local .env terminal must never be charged.
 TBANK_TERMINAL_KEY = ""
 TBANK_PASSWORD = ""

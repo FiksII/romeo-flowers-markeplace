@@ -192,6 +192,12 @@ VK_CONFIRMATION_CODE = env("VK_CONFIRMATION_CODE", default="")
 MESSENGER_BACKGROUND = True
 # Shared between Gunicorn workers; must be writable by the application user.
 CACHES = {
+    "photos": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": env("PHOTO_CACHE_DIR", default=str(BASE_DIR / ".photo-cache")),
+        "TIMEOUT": 2592000,
+        "OPTIONS": {"MAX_ENTRIES": 1000},
+    },
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "market_cache",

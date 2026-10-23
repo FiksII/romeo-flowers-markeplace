@@ -22,6 +22,7 @@ def listing_photo(listing, preset):
 
 @register.simple_tag
 def listing_gallery(listing):
+    from market.photo_delivery import photo_url
     from market.photos import gallery_items
     from market.thumbnails import image_photo
 
@@ -35,7 +36,7 @@ def listing_gallery(listing):
         ]
     return [
         {
-            "original": row["file"].url,
+            "original": photo_url(row["file"].name, row["file"].storage),
             "detail": image_photo(row["file"], "detail"),
             "thumb": image_photo(row["file"], "line"),
         }

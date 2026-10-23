@@ -5,9 +5,26 @@ document.querySelectorAll("[data-bouquet-gallery]").forEach((gallery) => {
   const original = gallery.querySelector("[data-gallery-original]");
   const counter = gallery.querySelector("[data-gallery-counter]");
   const thumbnails = [...gallery.querySelectorAll("[data-gallery-thumbnail]")];
-  if (!main || thumbnails.length < 2) return;
+  const dialog = gallery.querySelector("[data-gallery-dialog]");
+  const full = dialog?.querySelector("[data-gallery-full]");
+  const status = dialog?.querySelector("[data-gallery-status]");
+  const retry = dialog?.querySelector("[data-gallery-retry]");
+  const zoom = dialog?.querySelector("[data-gallery-zoom]");
+  if (!main || !original) return;
   let index = 0, start = null, swiped = false;
+  const resetZoom = () => {
+    dialog.classList.remove("is-zoomed");
+    zoom.setAttribute("aria-pressed", "false");
+    zoom.textContent = "Увеличить";
+  };
+  const showFull = () => {
+    resetZoom();
+    status.textContent = "Загрузка фото…";
+    retry.hidden = true;
+    full.src = original.href;
+  };
   const show = (next, focus = false) => {
+    if (!thumbnails.length) return;
     index = (next + thumbnails.length) % thumbnails.length;
     const selected = thumbnails[index];
     main.srcset = selected.dataset.srcset || "";
@@ -20,6 +37,7 @@ document.querySelectorAll("[data-bouquet-gallery]").forEach((gallery) => {
     counter.textContent = `Фото ${index + 1} из ${thumbnails.length}`;
     if (focus) selected.focus();
     selected.scrollIntoView({ block: "nearest", inline: "nearest" });
+    if (dialog?.open) showFull();
   };
   thumbnails.forEach((thumbnail, i) => {
     thumbnail.addEventListener("click", (event) => {
@@ -49,8 +67,48 @@ document.querySelectorAll("[data-bouquet-gallery]").forEach((gallery) => {
   });
   original.addEventListener("pointercancel", () => { start = null; });
   original.addEventListener("click", (event) => {
-    if (swiped) { event.preventDefault(); swiped = false; }
+    if (swiped) { event.preventDefault(); swiped = false; return; }
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (!dialog || typeof dialog.showModal !== "function") return;
+    event.preventDefault();
+    dialog.showModal();
+    document.body.classList.toggle("photo-viewer-open", true);
+    showFull();
   });
+  if (dialog) {
+    dialog.querySelector("[data-gallery-close]").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => {
+      document.body.classList.toggle("photo-viewer-open", false);
+      original.focus({ preventScroll: true });
+    });
+    dialog.querySelector("[data-gallery-previous]").addEventListener("click", () => show(index - 1));
+    dialog.querySelector("[data-gallery-next]").addEventListener("click", () => show(index + 1));
+    dialog.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault();
+        show(index + (event.key === "ArrowLeft" ? -1 : 1));
+      }
+    });
+    full.addEventListener("load", () => { status.textContent = `Фото ${index + 1} из ${Math.max(1, thumbnails.length)}`; });
+    full.addEventListener("error", () => { status.textContent = "Не удалось загрузить фото."; retry.hidden = false; });
+    retry.addEventListener("click", showFull);
+    zoom.addEventListener("click", () => {
+      const expanded = dialog.classList.toggle("is-zoomed");
+      zoom.setAttribute("aria-pressed", String(expanded));
+      zoom.textContent = expanded ? "Уместить" : "Увеличить";
+    });
+    let touch = null;
+    full.addEventListener("touchstart", (event) => {
+      touch = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+    }, { passive: true });
+    full.addEventListener("touchend", (event) => {
+      if (!touch || event.touches.length || dialog.classList.contains("is-zoomed")) { touch = null; return; }
+      const end = event.changedTouches[0], dx = end.clientX - touch.x, dy = end.clientY - touch.y;
+      touch = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) show(index + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+    full.addEventListener("touchcancel", () => { touch = null; }, { passive: true });
+  }
 });
 
 document.querySelectorAll("[data-photo-editor]").forEach((editor) => {
