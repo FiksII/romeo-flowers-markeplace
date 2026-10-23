@@ -7,7 +7,7 @@ from oscar.core.loading import get_model
 from market.models import Listing, Membership
 
 pytestmark = pytest.mark.django_db
-URL = "/partner/storefront/"
+URL = "/partner/shops/storefront/"
 
 
 def add_listing(shop, title="Второй букет", **values):
@@ -75,7 +75,7 @@ def test_foreign_or_unknown_filter_is_rejected(client, owner, listing, other_sho
 
 def test_storefront_requires_login_and_shop_access(client, buyer):
     response = client.get(URL)
-    assert response.status_code == 302 and "next=/partner/storefront/" in response.url
+    assert response.status_code == 302 and "next=/partner/shops/storefront/" in response.url
     client.force_login(buyer)
     assert client.get(URL).status_code == 403
 
@@ -179,7 +179,7 @@ def test_navigation_reaches_common_storefront(client, owner, shop, other_shop):
     for url in ("/partner/", f"/partner/{shop.slug}/"):
         response = client.get(url)
         assert response.status_code == 200
-        assert 'href="/partner/storefront/"' in response.content.decode()
+        assert 'href="/partner/shops/storefront/"' in response.content.decode()
 
 
 def test_operator_retains_full_shop_access(client, listing, other_shop):
@@ -189,3 +189,13 @@ def test_operator_retains_full_shop_access(client, listing, other_shop):
     response = client.get(URL)
     assert response.status_code == 200
     assert shown_ids(response) == {listing.pk, second.pk}
+
+
+def test_shop_named_storefront_keeps_its_dashboard(client, owner, shop):
+    shop.slug = "storefront"
+    shop.save(update_fields=["slug"])
+    client.force_login(owner)
+    response = client.get("/partner/storefront/")
+    assert response.status_code == 200
+    assert response.resolver_match.url_name == "partner-shop"
+    assert response.context["shop"] == shop

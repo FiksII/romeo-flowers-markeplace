@@ -25,13 +25,13 @@
 
 ### Task 1: Страница общей витрины и навигация
 **Files:** market/portal_views.py, market/urls.py, templates/market/partner_storefront.html, templates/market/partials/partner_storefront_card.html, templates/market/partner_index.html, templates/market/partials/partner_nav.html, tests/test_owner_storefront.py, docs/shop-management.md.
-**Interfaces:** portal.partner_storefront(request) -> authenticated GET response, context shops, selected_shop, page. `/partner/storefront/?shop=<slug>&page=<number>`.
+**Interfaces:** portal.partner_storefront(request) -> authenticated GET response, context shops, selected_shop, page. `/partner/shops/storefront/?shop=<slug>&page=<number>`.
 - [x] Написать HTTP-тесты объединения, изоляции, запрещённого фильтра, наличия/публикации, цен, контекста, отзыва доступа, пагинации и ссылок.
 - [x] Запустить тесты; Expected: FAIL/404, так как страница отсутствует.
 - [x] Добавить обработчик, маршрут перед динамическим slug, шаблон и карточку; ссылки из выбора магазинов и кабинета. Переиспользовать Listing.price_variants и listing_photo.
 - [x] Запустить новый файл и существующие проверки доступа/каталога. Expected: PASS.
 - [x] Выполнить весь pytest, frontend-тесты, Ruff, Django check и makemigrations --check. Expected: PASS (PostgreSQL-only тесты пропускаются в SQLite).
-- [ ] Обновить пользовательскую документацию, выполнить отдельное независимое ревью и исправить существенные замечания. Зафиксировать код и документы.
+- [x] Обновить пользовательскую документацию, выполнить отдельное независимое ревью и исправить существенные замечания. Зафиксировать код и документы.
 
 ### Task 2: Проверка и выпуск develop
 **Files:** docs/deployment.md; временные скрипты в игнорируемой .superpowers/deploy.
