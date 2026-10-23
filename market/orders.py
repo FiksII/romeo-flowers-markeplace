@@ -14,7 +14,11 @@ from oscar.core.loading import get_model
 from oscar.core.prices import Price
 
 from market import messengers
-from market.access import may_set_delivery_destination, shops_for_user
+from market.access import (
+    may_complete_order,
+    may_set_delivery_destination,
+    shops_for_user,
+)
 from market.addresses import validate_address
 from market.availability import available_slots, location_matches
 from market.bouquet_options import line_size
@@ -429,13 +433,15 @@ def transition_shop_order(part, actor, target):
         raise ValidationError("Исполнение доступно после подтверждения оплаты.")
     allowed = {
         "accepted": {"preparing"},
-        "preparing": {"ready" if part.method == "pickup" else "courier"},
-        "ready": {"completed"} if part.method == "pickup" else set(),
+        "preparing": {"ready"},
+        "ready": {"completed"} if part.method == "pickup" else {"courier"},
         "courier": {"completed"} if part.method == "delivery" else set(),
     }
     if target not in allowed.get(part.status, set()):
         raise ValidationError("Этот переход статуса недоступен.")
     if target == "completed":
+        if not may_complete_order(actor, part):
+            raise PermissionDenied
         Stock = get_model("partner", "StockRecord")
         for line in part.lines.order_by("stockrecord_id"):
             Stock.objects.select_for_update().get(

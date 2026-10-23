@@ -57,7 +57,9 @@ def order_part(owner, shop, listing, method="pickup", payment="cash"):
 
 
 def deliver(part, actor):
-    for target in ["preparing", "ready" if part.method == "pickup" else "courier"]:
+    for target in ["preparing", "ready"] + (
+        ["courier"] if part.method == "delivery" else []
+    ):
         transition_shop_order(part, actor, target)
     return transition_shop_order(part, actor, "completed")
 
@@ -112,10 +114,10 @@ def test_cash_in_the_shop_makes_the_shop_owe_romeo_its_part(owner, shop, listing
     assert BalanceEntry.objects.get().kind == "shop_collected"
 
 
-def test_cash_taken_by_romeo_courier_credits_the_shop(owner, shop, listing):
+def test_cash_taken_by_romeo_courier_credits_the_shop(owner, admin_user, shop, listing):
     part = order_part(owner, shop, listing, "delivery")
     assert part.platform_collects
-    deliver(part, owner)
+    deliver(part, admin_user)
     assert shop_balance(shop) == Decimal(2500)
 
 
