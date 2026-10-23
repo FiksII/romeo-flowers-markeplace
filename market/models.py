@@ -800,8 +800,8 @@ class MessengerLink(models.Model):
     it in the bot (or the VK community) fills ``chat_id`` in. The number is a label for
     the shop: messengers do not let a bot write to a phone number."""
 
-    TELEGRAM, VK = "telegram", "vk"
-    CHANNELS = [(TELEGRAM, "Telegram"), (VK, "ВК")]
+    TELEGRAM, VK, MAX = "telegram", "vk", "max"
+    CHANNELS = [(TELEGRAM, "Telegram"), (VK, "ВК"), (MAX, "MAX")]
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -822,7 +822,9 @@ class MessengerLink(models.Model):
     chat_id = models.CharField(max_length=32, blank=True)
     title = models.CharField(max_length=100, blank=True)
     enabled = models.BooleanField(default=True)
-    can_manage_catalogue = models.BooleanField("Добавление букетов в Telegram", default=False)
+    can_manage_catalogue = models.BooleanField(
+        "Добавление букетов через бота", default=False
+    )
     code = models.CharField(max_length=12, unique=True, null=True, blank=True)
     code_created_at = models.DateTimeField(null=True, blank=True)
     linked_at = models.DateTimeField(null=True, blank=True)
@@ -859,9 +861,12 @@ class MessengerLink(models.Model):
 
 
 class TelegramBouquetDraft(models.Model):
-    """One durable, locked dialogue per private chat; no uploaded files until save."""
+    """Durable catalogue dialogue; historical model name retained for Telegram data."""
 
-    chat_id = models.CharField(max_length=32, unique=True)
+    channel = models.CharField(
+        max_length=10, choices=MessengerLink.CHANNELS, default="telegram"
+    )
+    chat_id = models.CharField(max_length=32)
     link = models.ForeignKey(MessengerLink, null=True, on_delete=models.SET_NULL)
     step = models.CharField(max_length=40, default="shop")
     data = models.JSONField(default=dict)
@@ -870,6 +875,37 @@ class TelegramBouquetDraft(models.Model):
     last_update_id = models.BigIntegerField(default=-1)
     last_response = models.JSONField(default=dict)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["channel", "chat_id"], name="market_bot_draft_channel_chat"
+            )
+        ]
+
+
+class MaxBotEvent(models.Model):
+    """Durable MAX delivery receipt and retryable bot reply, scoped to a dialog."""
+
+    event_key = models.CharField(max_length=64, unique=True)
+    chat_id = models.CharField(max_length=32)
+    payload = models.JSONField()
+    response = models.JSONField(null=True, blank=True)
+    status = models.CharField(
+        max_length=8,
+        default="pending",
+        choices=[("pending", "Ждёт"), ("sent", "Обработано"), ("failed", "Ошибка")],
+    )
+    attempts = models.PositiveSmallIntegerField(default=0)
+    error = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status", "created_at"]),
+            models.Index(fields=["chat_id", "status", "id"]),
+        ]
 
 
 class MessengerMessage(models.Model):

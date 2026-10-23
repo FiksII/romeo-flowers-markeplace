@@ -1,4 +1,4 @@
-"""Order notifications in Telegram and VK.
+"""Order notifications in Telegram, VK and MAX.
 
 A person links a chat by sending a one-time code to the Telegram bot (``/start CODE``
 from a t.me link) or to the VK community (a vk.me link or the code as a message). New
@@ -6,9 +6,8 @@ order parts become ``MessengerMessage`` rows in the same transaction as the orde
 its payment; after the commit a thread delivers them, and ``send_notifications`` (run
 by the minute timer) retries what is left.
 
-Both APIs need only a couple of plain HTTPS calls, so they use urllib like the other
-providers here; bot frameworks (python-telegram-bot, aiogram, vk_api) would add async
-runtimes or polling loops the site does not need.
+Telegram and VK use the existing HTTPS clients. MAX uses its Python SDK through
+``max_transport``; all channels share linking, formatting and the durable outbox.
 Docs: https://core.telegram.org/bots/api and https://dev.vk.com/ru/api/callback/getting-started
 """
 
@@ -71,8 +70,17 @@ def vk_enabled():
     return bool(settings.VK_GROUP_ID and settings.VK_GROUP_TOKEN)
 
 
+def max_enabled():
+    return bool(settings.MAX_BOT_TOKEN and settings.MAX_BOT_USERNAME)
+
+
 def channel_enabled(channel):
-    return telegram_enabled() if channel == MessengerLink.TELEGRAM else vk_enabled()
+    enabled = {
+        MessengerLink.TELEGRAM: telegram_enabled,
+        MessengerLink.VK: vk_enabled,
+        MessengerLink.MAX: max_enabled,
+    }.get(channel)
+    return bool(enabled and enabled())
 
 
 def telegram_webhook_secret():
@@ -84,6 +92,22 @@ def telegram_webhook_secret():
 
 def vk_callback_secret():
     return salted_hmac("market.vk-callback", settings.VK_GROUP_TOKEN).hexdigest()[:32]
+
+
+def max_webhook_secret():
+    return salted_hmac("market.max-webhook", settings.MAX_BOT_TOKEN).hexdigest()[:48]
+
+
+def max_call(method, **params):
+    from market.max_transport import call
+
+    return call(method, **params)
+
+
+def max_send(chat_id, text, photos=(), **kwargs):
+    from market.max_transport import send as send_max
+
+    return send_max(chat_id, text, photos=photos, **kwargs)
 
 
 def _post_json(url, params, timeout=10):
@@ -212,7 +236,11 @@ def send(link, text, photos=(), caption=None):
             text=text,
             link_preview_options={"is_disabled": True},
         )
-    else:
+    elif link.channel == MessengerLink.MAX:
+        if not max_enabled():
+            raise MessengerError("MAX is not configured")
+        max_send(link.chat_id, text, photos=photos)
+    elif link.channel == MessengerLink.VK:
         if not vk_enabled():
             raise MessengerError("VK is not configured")
         vk_call(
@@ -222,6 +250,8 @@ def send(link, text, photos=(), caption=None):
             random_id=secrets.randbelow(2**31),
             dont_parse_links=1,
         )
+    else:
+        raise MessengerError("Unknown messenger channel")
 
 
 # Linking
@@ -279,7 +309,11 @@ def add_shop_number(shop, channel, phone, now=None):
 def connect_url(link):
     if link.channel == MessengerLink.TELEGRAM:
         return f"https://t.me/{settings.TELEGRAM_BOT_USERNAME}?start={link.code}"
-    return f"https://vk.me/club{settings.VK_GROUP_ID}?ref={link.code}"
+    if link.channel == MessengerLink.MAX:
+        return f"https://max.ru/{settings.MAX_BOT_USERNAME}?start={link.code}"
+    if link.channel == MessengerLink.VK:
+        return f"https://vk.me/club{settings.VK_GROUP_ID}?ref={link.code}"
+    return ""
 
 
 def find_code(*texts):
@@ -560,7 +594,7 @@ def recipients(part):
         owners |= Q(user__is_superuser=True, user__is_active=True)
     channels = [
         channel
-        for channel in (MessengerLink.TELEGRAM, MessengerLink.VK)
+        for channel, _ in MessengerLink.CHANNELS
         if channel_enabled(channel)
     ]
     return (
@@ -612,11 +646,16 @@ def deliver(message_id, now=None):
         try:
             if not link.enabled or not link.chat_id:
                 raise RecipientGone("link disabled")
-            if message.part_id and link.channel == MessengerLink.TELEGRAM:
+            if message.part_id and link.channel in {
+                MessengerLink.TELEGRAM, MessengerLink.MAX,
+            }:
                 part = message.part
                 message.text = order_text(part, for_admin=link.user_id is not None)
                 caption = message.text
-                if len(caption.encode("utf-16-le")) // 2 > 1024:
+                if (
+                    link.channel == MessengerLink.TELEGRAM
+                    and len(caption.encode("utf-16-le")) // 2 > 1024
+                ):
                     caption = order_text(
                         part, for_admin=link.user_id is not None, compact=True
                     )

@@ -226,12 +226,12 @@ def _row_action(request, link, action):
     elif not link.is_linked:
         messages.error(request, f"{name} по этой ссылке ещё не подключён.")
     elif action in {"catalogue-on", "catalogue-off"}:
-        if link.shop_id and link.channel == MessengerLink.TELEGRAM:
+        if link.shop_id and link.channel in {MessengerLink.TELEGRAM, MessengerLink.MAX}:
             link.can_manage_catalogue = action == "catalogue-on"
             link.save(update_fields=["can_manage_catalogue"])
             AuditEntry.objects.create(
                 shop=link.shop, actor=request.user,
-                action=f"Добавление букетов в Telegram: {'разрешено' if link.can_manage_catalogue else 'запрещено'} · {link.phone}",
+                action=f"Добавление букетов в {name}: {'разрешено' if link.can_manage_catalogue else 'запрещено'} · {link.phone}",
             )
             messages.success(request, "Право на добавление букетов сохранено.")
     elif action == "test":

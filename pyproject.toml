@@ -14,6 +14,8 @@ dependencies = [
     "gunicorn==26.2.0 ; sys_platform != 'win32'",
     "django-allauth>=65.19.7,<66",
     "shapely>=2.2,<3",
+    "maxapi",
+    "pydantic>=2,<3",
 ]
 
 [dependency-groups]
@@ -26,3 +28,6 @@ dev = ["pytest>=9.1.1", "pytest-django>=4.14.0", "ruff>=0.16.5"]
 "market/admin.py" = ["RUF012"]
 "market/forms.py" = ["RUF012"]
 "market/models.py" = ["RUF012"]
+
+[tool.uv.sources]
+maxapi = { git = "https://github.com/max-messenger/max-botapi-python.git", rev = "4a286baa06d38f2db9f7244d94f89508743f8fee" }

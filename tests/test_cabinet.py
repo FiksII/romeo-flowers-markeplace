@@ -90,6 +90,7 @@ def test_partner_settings_opens_notification_channels(client, owner, shop):
     assert [channel["id"] for channel in response.context["channels"]] == [
         "telegram",
         "vk",
+        "max",
     ]
 
 

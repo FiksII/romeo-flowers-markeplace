@@ -183,6 +183,8 @@ SITE_URL = env("SITE_URL", default="").rstrip("/")
 # VK with a community id, its token (messages access) and the Callback API confirmation.
 TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
 TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME", default="").lstrip("@")
+MAX_BOT_TOKEN = env("MAX_BOT_TOKEN", default="")
+MAX_BOT_USERNAME = env("MAX_BOT_USERNAME", default="").lstrip("@")
 VK_GROUP_ID = env("VK_GROUP_ID", default="")
 VK_GROUP_TOKEN = env("VK_GROUP_TOKEN", default="")
 VK_CONFIRMATION_CODE = env("VK_CONFIRMATION_CODE", default="")
