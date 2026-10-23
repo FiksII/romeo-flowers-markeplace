@@ -136,4 +136,6 @@ def test_new_shop_requires_signed_local_address_and_approval(client, owner, city
     shop = Shop.objects.get(name="Новая мастерская")
     assert shop.status == "review"
     assert shop.memberships.get().user_id == owner.pk
+    assert client.get(f"/shops/{shop.slug}/").url == f"/partner/{shop.slug}/"
+    client.logout()
     assert client.get(f"/shops/{shop.slug}/").status_code == 404

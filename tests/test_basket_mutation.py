@@ -32,10 +32,10 @@ def test_async_add_errors_do_not_redirect_or_change_basket(client, listing, data
 
 @pytest.mark.parametrize("operation", ["add", "update"])
 def test_stale_request_cannot_edit_frozen_basket(
-    client, monkeypatch, owner, listing, operation
+    client, monkeypatch, buyer, listing, operation
 ):
-    client.force_login(owner)
-    basket = basket_for(owner, listing)
+    client.force_login(buyer)
+    basket = basket_for(buyer, listing)
     line = basket.all_lines().get()
     get_model("basket", "Basket").objects.filter(pk=basket.pk).update(
         status=basket.FROZEN

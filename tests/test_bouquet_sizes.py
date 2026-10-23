@@ -91,10 +91,10 @@ def test_customer_price_prefix_depends_on_distinct_prices(client, listing, same_
 
 
 def test_sizes_have_separate_lines_and_locked_order_prices(
-    client, owner, shop, listing
+    client, buyer, shop, listing
 ):
     configure(listing)
-    client.force_login(owner)
+    client.force_login(buyer)
     for size in ["s", "l"]:
         client.post(f"/basket/add/{listing.pk}/", {"size": size})
     response = client.get("/basket/")
@@ -102,7 +102,7 @@ def test_sizes_have_separate_lines_and_locked_order_prices(
     assert basket.num_lines == 2
     assert basket.total_incl_tax == Decimal(6000)
     order = place_market_order(
-        owner, basket, {shop.pk: choice(shop)}, None, CONTACT, NOW
+        buyer, basket, {shop.pk: choice(shop)}, None, CONTACT, NOW
     )
     assert order.total_incl_tax == Decimal(6000)
     assert order.shop_orders.get().goods_total == Decimal(6000)
@@ -126,9 +126,9 @@ def test_missing_or_disabled_size_cannot_be_added(client, listing, size):
     assert client.get("/basket/").wsgi_request.basket.num_lines == 0
 
 
-def test_removed_size_rejected_at_checkout(client, owner, shop, listing):
+def test_removed_size_rejected_at_checkout(client, buyer, shop, listing):
     configure(listing)
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/", {"size": "s"})
     basket = client.get("/basket/").wsgi_request.basket
     configure(listing, sizes=["standard"])
@@ -137,14 +137,14 @@ def test_removed_size_rejected_at_checkout(client, owner, shop, listing):
         assert response.status_code == 200
         assert response.context["groups"][0]["available"] is False
     with pytest.raises(ValidationError):
-        place_market_order(owner, basket, {shop.pk: choice(shop)}, None, CONTACT, NOW)
+        place_market_order(buyer, basket, {shop.pk: choice(shop)}, None, CONTACT, NOW)
 
 
 def test_total_stock_shared_by_sizes_at_update_and_checkout(
-    client, owner, shop, listing
+    client, buyer, shop, listing
 ):
     configure(listing)
-    client.force_login(owner)
+    client.force_login(buyer)
     for size in ["s", "m"]:
         client.post(f"/basket/add/{listing.pk}/", {"size": size, "quantity": "2"})
     basket = client.get("/basket/").wsgi_request.basket
@@ -155,7 +155,7 @@ def test_total_stock_shared_by_sizes_at_update_and_checkout(
     assert line.quantity == 2
     get_model("basket", "Line").objects.filter(pk=line.pk).update(quantity=4)
     with pytest.raises(ValidationError):
-        place_market_order(owner, basket, {shop.pk: choice(shop)}, None, CONTACT, NOW)
+        place_market_order(buyer, basket, {shop.pk: choice(shop)}, None, CONTACT, NOW)
 
 
 def test_size_specific_own_delivery_price(client, listing, shop):

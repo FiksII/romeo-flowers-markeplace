@@ -16,6 +16,13 @@ def owner(db):
 
 
 @pytest.fixture
+def buyer(db):
+    return get_user_model().objects.create_user(
+        "buyer", "buyer@example.com", "long-secret-pass"
+    )
+
+
+@pytest.fixture
 def stranger(db):
     return get_user_model().objects.create_user(
         "other", "other@example.com", "long-secret-pass"

@@ -69,6 +69,7 @@ a.category-chip:hover{border-color:var(--forest);color:var(--forest)}
 /* Phones get the flowers from the «Цветы» button: the rail would push the bouquets down. */
 @media(max-width:759px){.flower-rail{display:none}}
 .mobile-bottom-nav{grid-template-columns:repeat(3,1fr)}
+.partner-portal .mobile-bottom-nav{grid-template-columns:1fr}
 /* The logo is a round emblem: sized by height to fit the header row, larger in the footer. */
 .site-header .brand-logo{width:64px;height:64px}
 .footer-brand .brand-logo{width:120px;height:120px}

@@ -88,7 +88,9 @@ def test_save_multiple_flowers_filter_and_partner_popularity(
     form = ProductForm(shop=shop)
     assert next(iter(form.fields["flowers"].queryset)) == peony
     assert next(iter(ProductForm(shop=other_shop).fields["flowers"].queryset)) == rose
+    client.logout()
     assert peony.name in client.get(f"/products/{listing.pk}/").content.decode()
+    client.force_login(owner)
     client.post(
         f"/partner/{shop.slug}/products/{listing.pk}/",
         {
@@ -148,6 +150,7 @@ def test_flower_picker_renders_search_colours_and_saved_selection(
     parser = SelectedFlowers()
     parser.feed(html)
     assert set(parser.selected) == {red.pk, white.pk}
+    client.logout()
     assert (
         "flower-palette-red" in client.get(f"/products/{listing.pk}/").content.decode()
     )

@@ -9,7 +9,7 @@
   <a href="{% url 'market:shop-payout' shop.slug %}"{% if current == 'shop-payout' %} aria-current="page"{% endif %}>Реквизиты и зона доставки</a>
   <a href="{% url 'market:shop-settings' shop.slug %}"{% if current == 'shop-settings' %} aria-current="page"{% endif %}>Настройки</a>
   {% if request.user.is_superuser %}<a href="{% url 'market:operator-shop' shop.slug %}"{% if current == 'operator-shop' %} aria-current="page"{% endif %}>Управление магазином</a>{% endif %}
-  {% if shop.status == 'active' %}<a href="{% url 'market:shop' shop.slug %}">Витрина ↗</a>{% endif %}
+  {% if shop.status == 'active' and not partner_dashboard_url %}<a href="{% url 'market:shop' shop.slug %}">Витрина ↗</a>{% endif %}
 </nav>
 {% if current != 'partner-balance' %}{% payouts_to_confirm shop as to_confirm %}{% for payout in to_confirm %}<p class="notice">Ромео отправил вам выплату {{ payout.amount|rub }}. <a class="text-link" href="{% url 'market:partner-balance' shop.slug %}">Подтвердите получение</a></p>{% endfor %}{% endif %}
 {% endwith %}
