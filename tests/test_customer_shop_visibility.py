@@ -24,11 +24,11 @@ def test_shop_identity_is_only_visible_for_selected_pickup(client, listing, meth
 
 
 @pytest.mark.parametrize('method', ['delivery', 'pickup'])
-def test_customer_order_identifies_only_pickup_shop(client, owner, shop, listing, method):
-    order = place_market_order(owner, basket_for(owner, listing),
+def test_customer_order_identifies_only_pickup_shop(client, buyer, shop, listing, method):
+    order = place_market_order(buyer, basket_for(buyer, listing),
         {shop.pk: choice(shop, method)}, ADDRESS if method == 'delivery' else None,
         CONTACT, NOW)
-    client.force_login(owner)
+    client.force_login(buyer)
     html = client.get(f'/account/orders/{order.number}/').content.decode()
     assert (shop.name in html) is (method == 'pickup')
     assert 'Итого по магазину' not in html

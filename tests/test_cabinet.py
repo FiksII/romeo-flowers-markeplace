@@ -283,13 +283,13 @@ def test_counted_stock_cannot_drop_below_reserved(owner, shop):
     save_listing(shop, product_data(stock=1), listing)
 
 
-def test_basket_accepts_any_quantity_of_an_always_in_stock_bouquet(client, owner, shop):
+def test_basket_accepts_any_quantity_of_an_always_in_stock_bouquet(client, buyer, shop):
     always = make_listing(shop, title="Всегда", always_in_stock=True, stock=None)
     counted = make_listing(shop, title="Три штуки", stock=3)
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{always.pk}/", {"quantity": "50"})
     client.post(f"/basket/add/{counted.pk}/", {"quantity": "50"})
-    basket = get_model("basket", "Basket").objects.get(owner=owner)
+    basket = get_model("basket", "Basket").objects.get(owner=buyer)
     quantities = {line.product.title: line.quantity for line in basket.all_lines()}
     assert quantities == {"Всегда": 50}
     client.post(f"/basket/add/{counted.pk}/", {"quantity": "3"})
@@ -605,7 +605,7 @@ def test_dashboard_counts_bouquets_and_warns_about_a_missing_zone(client, owner,
 # --- what buyers see ------------------------------------------------------------------
 
 
-def test_buyer_pages_show_the_right_price_and_delivery_terms(client, owner, shop):
+def test_buyer_pages_show_the_right_price_and_delivery_terms(client, buyer, shop):
     shop.own_delivery = True
     shop.save()
     listing = make_listing(shop, delivery_price=2400)
@@ -614,7 +614,7 @@ def test_buyer_pages_show_the_right_price_and_delivery_terms(client, owner, shop
     assert "Доставка магазина" not in product
     assert "Доставку Ромео добавим" not in product
     assert client.get(f"/shops/{shop.slug}/").url == '/'
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/", {"quantity": "1"})
     checkout = client.get("/checkout/").content.decode()
     assert '<option value="delivery"' in checkout

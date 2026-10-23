@@ -305,13 +305,13 @@ def test_reservation_waits_for_a_payment_in_progress(bank, owner, shop, listing)
 
 
 def test_pay_button_sends_the_customer_to_the_bank_form(
-    bank, owner, stranger, shop, listing, client
+    bank, buyer, stranger, shop, listing, client
 ):
-    order = online_order(owner, shop, listing)
+    order = online_order(buyer, shop, listing)
     pay_url = f"/account/orders/{order.number}/pay/"
     client.force_login(stranger)
     assert client.post(pay_url).status_code == 404
-    client.force_login(owner)
+    client.force_login(buyer)
     page = client.get(f"/account/orders/{order.number}/").content.decode()
     assert f'action="{pay_url}"' in page and "Перейти к оплате" in page
     response = client.post(pay_url)
@@ -327,31 +327,31 @@ def test_pay_button_sends_the_customer_to_the_bank_form(
 
 
 def test_return_from_bank_checks_payment_before_showing_order(
-    bank, owner, shop, listing, client
+    bank, buyer, shop, listing, client
 ):
-    order = online_order(owner, shop, listing)
+    order = online_order(buyer, shop, listing)
     payment = online_payments.start_payment(order, now=timezone.now(), **URLS)
     bank.state, bank.order_ref = "CONFIRMED", payment.order_ref
-    client.force_login(owner)
+    client.force_login(buyer)
     page = client.get(f"/account/orders/{order.number}/?payment=return")
     assert page.status_code == 200
     assert order.shop_orders.get().payment_status == "paid"
     assert "data-pay-form" not in page.content.decode()
 
 
-def test_declined_payment_offers_another_try(bank, owner, shop, listing, client):
-    order = online_order(owner, shop, listing)
+def test_declined_payment_offers_another_try(bank, buyer, shop, listing, client):
+    order = online_order(buyer, shop, listing)
     payment = online_payments.start_payment(order, now=timezone.now(), **URLS)
     online_payments.handle_notification(notification(payment, "REJECTED"))
-    client.force_login(owner)
+    client.force_login(buyer)
     page = client.get(f"/account/orders/{order.number}/").content.decode()
     assert "Банк не провёл платёж" in page and "Попробовать ещё раз" in page
 
 
-def test_pay_errors_return_to_the_order(bank, owner, shop, listing, client):
-    order = online_order(owner, shop, listing)
-    cancel_shop_order(order.shop_orders.get(), owner)
-    client.force_login(owner)
+def test_pay_errors_return_to_the_order(bank, buyer, shop, listing, client):
+    order = online_order(buyer, shop, listing)
+    cancel_shop_order(order.shop_orders.get(), buyer)
+    client.force_login(buyer)
     response = client.post(f"/account/orders/{order.number}/pay/", follow=True)
     assert response.redirect_chain[-1][0] == f"/account/orders/{order.number}/"
     page = response.content.decode()

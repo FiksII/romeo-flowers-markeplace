@@ -91,4 +91,5 @@ def market_context(request):
         },
         "has_shops": request.user.is_authenticated
         and shops_for_user(request.user).exists(),
+        "partner_dashboard_url": getattr(request, "partner_dashboard_url", None),
     }

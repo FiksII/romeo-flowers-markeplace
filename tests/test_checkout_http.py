@@ -43,8 +43,8 @@ def test_incomplete_recipient_phone_is_rejected():
     assert "phone" in form.errors
 
 
-def test_checkout_options_ignore_stale_catalogue_time(client, owner, shop, listing):
-    client.force_login(owner)
+def test_checkout_options_ignore_stale_catalogue_time(client, buyer, shop, listing):
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     session = client.session
     session["receiving"] = {"when": "date", "day": "2020-01-01", "hour": 3}
@@ -54,8 +54,8 @@ def test_checkout_options_ignore_stale_catalogue_time(client, owner, shop, listi
     assert group["slot_options"]["pickup"]
 
 
-def test_checkout_can_clarify_delivery_with_recipient(client, owner, shop, listing):
-    client.force_login(owner)
+def test_checkout_can_clarify_delivery_with_recipient(client, buyer, shop, listing):
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     basket = client.get("/checkout/").wsgi_request.basket
     response = client.post(
@@ -73,7 +73,7 @@ def test_checkout_can_clarify_delivery_with_recipient(client, owner, shop, listi
         },
     )
     assert response.status_code == 302
-    order = get_model("order", "Order").objects.get(user=owner)
+    order = get_model("order", "Order").objects.get(user=buyer)
     part = order.shop_orders.get()
     assert order.total_incl_tax == Decimal(2500)
     assert order.shipping_incl_tax == 0
@@ -85,11 +85,11 @@ def test_checkout_can_clarify_delivery_with_recipient(client, owner, shop, listi
 
 @pytest.mark.parametrize("own_delivery, expected_status", [(False, 200), (True, 302)])
 def test_delivery_call_requires_interval_for_romeo(
-    client, owner, shop, listing, own_delivery, expected_status
+    client, buyer, shop, listing, own_delivery, expected_status
 ):
     shop.own_delivery = own_delivery
     shop.save()
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     basket = client.get("/checkout/").wsgi_request.basket
     response = client.post(
@@ -106,12 +106,12 @@ def test_delivery_call_requires_interval_for_romeo(
     )
     assert response.status_code == expected_status
     assert (
-        get_model("order", "Order").objects.filter(user=owner).exists() == own_delivery
+        get_model("order", "Order").objects.filter(user=buyer).exists() == own_delivery
     )
 
 
-def test_checkout_no_call_accepts_address_in_checkout(client, owner, shop, listing):
-    client.force_login(owner)
+def test_checkout_no_call_accepts_address_in_checkout(client, buyer, shop, listing):
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     basket = client.get("/checkout/").wsgi_request.basket
     data = {
@@ -129,7 +129,7 @@ def test_checkout_no_call_accepts_address_in_checkout(client, owner, shop, listi
     }
     response = client.post("/checkout/", data)
     assert response.status_code == 302
-    part = get_model("order", "Order").objects.get(user=owner).shop_orders.get()
+    part = get_model("order", "Order").objects.get(user=buyer).shop_orders.get()
     assert part.address == ADDRESS["value"]
     assert part.delivery_contact == "no_call"
     assert part.address_details == "Кв. 5, домофон 5"
@@ -138,9 +138,9 @@ def test_checkout_no_call_accepts_address_in_checkout(client, owner, shop, listi
 
 @pytest.mark.parametrize("missing", ["address_token", "slot"])
 def test_checkout_no_call_requires_address_and_slot(
-    client, owner, shop, listing, missing
+    client, buyer, shop, listing, missing
 ):
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     basket = client.get("/checkout/").wsgi_request.basket
     data = {
@@ -158,7 +158,7 @@ def test_checkout_no_call_requires_address_and_slot(
     data.pop("address_token" if missing == "address_token" else f"slot_{shop.pk}")
     response = client.post("/checkout/", data)
     assert response.status_code == 200
-    assert not get_model("order", "Order").objects.filter(user=owner).exists()
+    assert not get_model("order", "Order").objects.filter(user=buyer).exists()
 
 
 def test_context_optional_and_signed_address(client, city, shop, listing):
@@ -189,8 +189,8 @@ def test_context_optional_and_signed_address(client, city, shop, listing):
     assert not client.session.get("receiving")
 
 
-def test_buyer_checkout_http_and_duplicate_post(client, owner, shop, listing):
-    client.force_login(owner)
+def test_buyer_checkout_http_and_duplicate_post(client, buyer, shop, listing):
+    client.force_login(buyer)
     assert client.post(f"/basket/add/{listing.pk}/").status_code == 302
     response = client.get("/checkout/")
     assert response.status_code == 200
@@ -206,7 +206,7 @@ def test_buyer_checkout_http_and_duplicate_post(client, owner, shop, listing):
     }
     placed = client.post("/checkout/", data)
     assert placed.status_code == 302
-    order = get_model("order", "Order").objects.get(user=owner)
+    order = get_model("order", "Order").objects.get(user=buyer)
     assert order.total_incl_tax == Decimal(2500)
     assert client.get(placed.url).status_code == 200
     assert client.post("/checkout/", data).url == placed.url

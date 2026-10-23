@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'storefront/css/romeo.css' %}?v=2">
   {% block report_assets %}{% endblock %}
   {% block map_assets %}{% endblock %}
-  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=24">
+  <link rel="stylesheet" href="{% static 'market/market.css' %}?v=25">
   <link rel="stylesheet" href="{% static 'market/flower-tags.css' %}?v=5">
   <link rel="stylesheet" href="{% static 'market/bouquet-options.css' %}?v=1">
   <script src="{% static 'market/bouquet-options.js' %}?v=1" defer></script>
@@ -21,24 +21,29 @@
   <script src="{% static 'market/carousel.js' %}?v=1" defer></script>
   <script src="{% static 'market/partner.js' %}?v=5" defer></script>
 </head>
-<body>
+<body{% if partner_dashboard_url %} class="partner-portal"{% endif %}>
 <a class="skip-link" href="#main">К содержимому</a>
 <div class="service-bar">
   <div class="shell">
-    <p class="service-hours">{% include "storefront/partials/icon.html" with name="truck" %}<span>Доставку организует Ромео · время получения выбираете вы</span></p>
+    <p class="service-hours">{% if partner_dashboard_url %}<span>Панель управления магазином</span>{% else %}{% include "storefront/partials/icon.html" with name="truck" %}<span>Доставку организует Ромео · время получения выбираете вы</span>{% endif %}</p>
     <div class="service-contacts"><span>Москва и Московская область</span></div>
   </div>
 </div>
 <header class="site-header">
   <div class="shell header-row">
-    <a class="brand" href="{% url 'market:home' %}" aria-label="Цветы от Ромео — главная"><img class="brand-logo" src="{% static 'market/images/logo-emblem.webp' %}" width="64" height="64" alt="Цветы от Ромео"></a>
+    <a class="brand" href="{% if partner_dashboard_url %}{{ partner_dashboard_url }}{% else %}{% url 'market:home' %}{% endif %}" aria-label="Цветы от Ромео — главная"><img class="brand-logo" src="{% static 'market/images/logo-emblem.webp' %}" width="64" height="64" alt="Цветы от Ромео"></a>
+    {% if not partner_dashboard_url %}
     <a class="city" href="{% url 'market:home' %}#receiving" aria-label="Место и время получения: {{ receiving_label }}">{% include "storefront/partials/icon.html" with name="pin" %}<span>{{ receiving_label }}</span>{% include "storefront/partials/icon.html" with name="chevron-down" class="icon-sm" %}</a>
     <form class="site-search" action="{% url 'market:home' %}#catalogue" method="get" role="search">
       <label class="visually-hidden" for="site-search">Поиск букетов</label>
       <input id="site-search" type="search" name="q" placeholder="Поиск букетов" autocomplete="off" value="{% if request.resolver_match.url_name == 'home' %}{{ request.GET.q }}{% endif %}">
       <button type="submit" aria-label="Найти букет">{% include "storefront/partials/icon.html" with name="search" %}</button>
     </form>
+    {% endif %}
     <nav class="header-actions" aria-label="Главное меню">
+      {% if partner_dashboard_url %}
+        <a class="button button-secondary button-sm header-cta" href="{{ partner_dashboard_url }}">Панель управления</a>
+      {% else %}
       <a class="icon-link basket-link" href="{% url 'market:basket' %}" aria-label="Корзина{% if request.basket.num_items %}, товаров: {{ request.basket.num_items }}{% endif %}">{% include "storefront/partials/icon.html" with name="bag" %}{% if request.basket.num_items %}<b class="basket-count">{{ request.basket.num_items }}</b>{% endif %}</a>
       {% if request.user.is_authenticated %}
         <a class="icon-link" href="{% url 'market:account' %}" aria-label="Мои заказы">{% include "storefront/partials/icon.html" with name="user" %}</a>
@@ -47,6 +52,7 @@
       {% else %}
         <a class="icon-link" href="{% url 'market:login' %}" aria-label="Войти">{% include "storefront/partials/icon.html" with name="user" %}</a>
       {% endif %}
+      {% endif %}
     </nav>
   </div>
 </header>
@@ -54,6 +60,15 @@
   {% if messages %}<div class="shell message-stack" role="status">{% for message in messages %}<p class="message {{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
   {% block content %}{% endblock %}
 </main>
+{% if partner_dashboard_url %}
+<footer class="site-footer">
+  <div class="shell footer-bottom">
+    <small>© {% now "Y" %} Цветы от Ромео</small>
+    <a href="{{ partner_dashboard_url }}">Панель управления</a>
+    <form method="post" action="{% url 'market:logout' %}">{% csrf_token %}<button class="muted-link">Выйти · {{ request.user.username }}</button></form>
+  </div>
+</footer>
+{% else %}
 <footer class="site-footer">
   <div class="shell footer-grid">
     <section class="footer-brand" aria-label="О Ромео">
@@ -88,10 +103,15 @@
     <nav class="footer-legal" aria-label="Документы"><a href="{% url 'market:privacy' %}">Политика конфиденциальности</a><a href="{% url 'market:offer' %}">Публичная оферта</a><a href="{% url 'market:requisites' %}">Реквизиты</a></nav>
   </div>
 </footer>
+{% endif %}
 <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+  {% if partner_dashboard_url %}
+  <a href="{{ partner_dashboard_url }}" aria-current="page">{% include "storefront/partials/icon.html" with name="user" %}<span>Панель управления</span></a>
+  {% else %}
   <a href="{% url 'market:home' %}"{% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'product' or request.resolver_match.url_name == 'shop' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="bouquet" %}<span>Букеты</span></a>
   <a class="basket-link" href="{% url 'market:basket' %}"{% if request.resolver_match.url_name == 'basket' or request.resolver_match.url_name == 'checkout' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="bag" %}{% if request.basket.num_items %}<b class="basket-count">{{ request.basket.num_items }}</b>{% endif %}<span>Корзина</span></a>
   {% if request.user.is_authenticated %}<a href="{% if has_shops %}{% url 'market:partner' %}{% else %}{% url 'market:account' %}{% endif %}"{% if request.resolver_match.url_name == 'account' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="user" %}<span>{% if has_shops %}Кабинет{% else %}Заказы{% endif %}</span></a>{% else %}<a href="{% url 'market:login' %}"{% if request.resolver_match.url_name == 'login' %} aria-current="page"{% endif %}>{% include "storefront/partials/icon.html" with name="user" %}<span>Войти</span></a>{% endif %}
+  {% endif %}
 </nav>
 </body>
 </html>

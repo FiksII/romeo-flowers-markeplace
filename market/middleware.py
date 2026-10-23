@@ -1,8 +1,38 @@
 from django.core.cache import cache
+from django.shortcuts import redirect
 from oscar.apps.basket.middleware import BasketMiddleware
 
+from market.access import partner_dashboard_url
 from market.orders import expire_unpaid_orders
 from market.strategy import MarketplaceStrategy
+
+
+class PartnerStorefrontMiddleware:
+    """Shop members work in the portal instead of placing customer orders."""
+
+    customer_routes = frozenset({
+        "home", "catalogue", "product", "shop", "receiving", "basket",
+        "basket-add", "basket-update", "checkout", "account",
+        "customer-orders-live", "order", "order-pay", "order-pay-status",
+        "customer-cancel",
+    })
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        request.partner_dashboard_url = partner_dashboard_url(request.user)
+        match = request.resolver_match
+        if (
+            request.partner_dashboard_url
+            and match.namespace == "market"
+            and match.url_name in self.customer_routes
+        ):
+            return redirect(request.partner_dashboard_url)
+        return None
 
 
 class SmsErrorMiddleware:

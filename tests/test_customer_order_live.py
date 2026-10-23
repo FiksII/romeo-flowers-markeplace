@@ -37,9 +37,9 @@ def test_live_only_contains_customer_parts_and_current_labels(
     assert client.get(url).status_code == 302
 
 
-def test_live_delivery_labels_and_cancellation(client, owner, shop, listing):
-    part = paid_part(owner, shop, listing)
-    client.force_login(owner)
+def test_live_delivery_labels_and_cancellation(client, buyer, shop, listing):
+    part = paid_part(buyer, shop, listing)
+    client.force_login(buyer)
     url = reverse("market:customer-orders-live")
     for status, label in [
         ("ready", "Готов"),
@@ -58,9 +58,9 @@ def test_live_delivery_labels_and_cancellation(client, owner, shop, listing):
     assert client.get(url).json()["parts"][0]["can_cancel"] is True
 
 
-def test_both_customer_views_include_live_hooks(client, owner, shop, listing):
-    part = paid_part(owner, shop, listing)
-    client.force_login(owner)
+def test_both_customer_views_include_live_hooks(client, buyer, shop, listing):
+    part = paid_part(buyer, shop, listing)
+    client.force_login(buyer)
     for url in [
         reverse("market:account"),
         reverse("market:order", args=[part.order.number]),
