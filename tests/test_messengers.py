@@ -760,7 +760,7 @@ def settings_url(shop):
 def test_shop_settings_without_configured_channels(client, owner, shop):
     client.force_login(owner)
     html = client.get(settings_url(shop)).content.decode()
-    assert html.count("Канал ещё не подключён") == 2
+    assert html.count("Канал ещё не подключён") == 3
     client.post(
         settings_url(shop),
         {"action": "add", "channel": "telegram", "phone": "8 (999) 111-22-33"},
