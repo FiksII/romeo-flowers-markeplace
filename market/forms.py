@@ -14,7 +14,7 @@ from oscar.core.loading import get_model
 from market.addresses import decode_address, encode_address
 from market.auth_adapter import RussianPhoneField
 from market.bouquet_options import SIZES, TAGS
-from market.delivery_areas import preset_city_ids
+from market.delivery_areas import normalized, preset_city_ids
 from market.models import (
     Flower,
     Listing,
@@ -439,7 +439,7 @@ class ShopFormBase(forms.ModelForm):
             city = data.get("settlement")
             if city and (
                 city.region != address["region"]
-                or city.name.casefold() != address["city"].casefold()
+                or normalized(city.name) != normalized(address["city"])
             ):
                 raise ValidationError(
                     "Адрес должен соответствовать выбранному населённому пункту."
