@@ -65,7 +65,7 @@ def test_home_shows_the_category_chips_and_the_hero(client, listing):
         '<a class="category-chip is-active" href="/#catalogue" data-live-link '
         'aria-current="true"><span class="category-name">Все</span><small>1</small></a>'
     ) in chips
-    # The only bouquet is a monobouquet: the empty categories are shown, not linked.
+    # The only bouquet is a monobouquet: empty categories are omitted.
     assert 'href="/?category=bouquet#catalogue"' in chips
     for value, label in (
         ("bouquet", "Монобукеты"),
@@ -73,10 +73,12 @@ def test_home_shows_the_category_chips_and_the_hero(client, listing):
         ("basket", "Корзины"),
         ("box", "В коробке"),
     ):
-        assert f'<span class="category-name">{label}</span>' in chips
-        if value != "bouquet":
+        if value == "bouquet":
+            assert f'<span class="category-name">{label}</span>' in chips
+        else:
+            assert f'<span class="category-name">{label}</span>' not in chips
             assert f'href="/?category={value}#catalogue"' not in chips
-    assert chips.count('class="category-chip is-zero" aria-disabled="true"') == 3
+    assert 'category-chip is-zero' not in chips
     assert 'class="hero-slide is-active"' in html
     assert 'class="price-tile"' not in html
 
