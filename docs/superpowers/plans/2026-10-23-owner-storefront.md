@@ -1,6 +1,6 @@
 # Owner storefront Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Дать владельцу общую витрину доступных ему магазинов.
 
@@ -36,8 +36,8 @@
 ### Task 2: Проверка и выпуск develop
 **Files:** docs/deployment.md; временные скрипты в игнорируемой .superpowers/deploy.
 **Interfaces:** полный git archive проверенного develop; manifest commit/files/sha256/expected_release.
-- [ ] Сверить текущий серверный релиз и исходники, объединить ветку в develop и повторно проверить merge. Expected: все проверки зелёные.
-- [ ] Сохранить БД, media, окружение и путь старого релиза; подготовить новый релиз из полного снимка develop, проверить манифест, зависимости и тесты. Expected: проверки успешны.
-- [ ] Выполнить migrate/collectstatic, атомарно переключить current, перезапустить службу. Expected: служба и таймер активны.
-- [ ] Проверить HTTPS, общую витрину нескольких магазинов с временным доступом в откатываемой транзакции, изоляцию и статические ресурсы. Expected: 200/запрещённый доступ как в контракте.
-- [ ] Записать подтверждённый выпуск, продвинуть develop в master без production-выкладки.
+- [x] Сверить текущий серверный релиз и исходники, объединить ветку в develop и повторно проверить merge. Expected: все проверки зелёные.
+- [x] Сохранить БД, media, окружение и путь старого релиза; подготовить новый релиз из полного снимка develop, проверить манифест, зависимости и тесты. Expected: проверки успешны.
+- [x] Выполнить migrate/collectstatic, атомарно переключить current, перезапустить службу. Expected: служба и таймер активны.
+- [x] Проверить HTTPS, общую витрину нескольких магазинов с временным доступом в откатываемой транзакции, изоляцию и статические ресурсы. Expected: 200/запрещённый доступ как в контракте.
+- [x] Записать подтверждённый выпуск, продвинуть develop в master без production-выкладки.
