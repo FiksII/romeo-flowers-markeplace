@@ -20,7 +20,7 @@
     {% if work_parts %}<div class="order-cards">{% for part in work_parts %}{% include 'market/partials/order_card.html' %}{% endfor %}</div>{% else %}<p class="muted order-empty">Сейчас ничего не собирается.</p>{% endif %}
   </section>
   </div>
-  <h2 class="spaced-heading">{% if shop %}Полученные и отменённые{% else %}Все заказы{% endif %}</h2>
+  <h2 class="spaced-heading">Полученные и отменённые</h2>
   <div class="report-toolbar">
     <div><p class="muted">{{ period_start|date:'d.m.Y' }} — {{ period_end|date:'d.m.Y' }}</p></div>
     <form method="get"><label for="order-days">Период</label><select id="order-days" name="days">{% for value in period_options %}<option value="{{ value }}"{% if days == value %} selected{% endif %}>{{ value }} дней</option>{% endfor %}</select><button class="button button-secondary button-sm">Показать</button></form>

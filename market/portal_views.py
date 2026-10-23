@@ -176,11 +176,12 @@ def operator_orders_page(request):
     ]
     return _orders_page(
         request,
-        ShopOrder.objects.order_by("-created_at", "-pk"),
+        ShopOrder.objects.filter(status__in=HISTORY_STATUSES).order_by("-created_at", "-pk"),
         extra={
             "romeo_parts": romeo_parts,
             "new_parts": [part for part in other_parts if part.status == "accepted"],
             "work_parts": [part for part in other_parts if part.status != "accepted"],
+            "history": True,
         },
     )
 
