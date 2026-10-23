@@ -63,13 +63,39 @@ test HTTPS and each changed scenario. Record factual outcomes in deployment docs
 
 - [x] Clean isolated worktree and QA branch created at develop 5614f03.
 - [x] Read-only dev diagnosis completed for timetable and catalogue visibility.
-- [ ] Cities directory.
-- [ ] Exact address reproduction/fix (awaiting one address example).
-- [ ] Price labels.
-- [ ] Composition filter rail.
-- [ ] Administrator order history.
-- [ ] Timetable configuration (awaiting owner confirmation).
-- [ ] Customer shop identity.
-- [ ] Delivery online-only payment.
-- [ ] Messenger inline check.
-- [ ] Full verification, develop integration, dev release and smoke checks.
+- [x] Cities directory.
+- [x] Exact-address include/exclude verified against the real configured zone; reported absence was caused by missing hours. City spelling normalization fixed separately.
+- [x] Price labels.
+- [x] Composition filter rail.
+- [x] Administrator order history.
+- [x] Timetable configuration: owner confirmed shop 7 daily 09:00–21:00 and shop 1 round-the-clock Friday work.
+- [x] Customer shop identity.
+- [x] Delivery online-only payment.
+- [x] Messenger inline check.
+- [x] Full verification, develop integration, dev release and smoke checks.
+
+
+## Verified result — 23 October 2026
+
+- Dev release `/srv/romeo-marketplace/releases/20261023-134910-first-qa`,
+  verified develop source `58352aad062bab9f6262e0471eee37e00cbd413e`.
+- All 564 PostgreSQL tests passed, including row-lock/concurrency checks;
+  isolated database and role removed. SQLite: 559 passed, five PostgreSQL skips.
+  All 26 frontend tests, Ruff, Django and migration checks passed.
+- Additive city data migration `0023` applied; 74 oblast entries and five Moscow
+  locations available. Existing settlement IDs and shop relations retained.
+- Confirmed operational repair: 21 rows added to shop 7 (daily 09:00–21:00);
+  missing Friday work row restored to shop 1 (00:00–24:00). Audit rows recorded.
+- Backup: `/srv/backups/romeo-marketplace-before-first-qa-20261023-134910`.
+  Database dump, media, runtime environment and previous-release path retained.
+- New bouquet 18 visible in catalogue and detail; exact signed point inside its
+  actual zone includes it and a point outside excludes it. Today has delivery
+  and pickup intervals for both affected shops. No zone geometry was changed.
+- Confirmed price prefix, pickup identity, online-only delivery rejection,
+  operator history and inline messenger feedback after cutover. Live messenger
+  check used a mocked sender, with transactional diagnostic data rolled back.
+- Browser confirmed new bouquet, its composition, today's intervals and Romeo
+  branding. Legal offer intentionally retains actual legal roles; owner did not
+  change Romeo's role to seller. Production was not deployed.
+- Independent code review found one important shared-copy gap; the footer and
+  banner were corrected and their regressions passed before deployment.
