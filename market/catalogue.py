@@ -122,11 +122,13 @@ def catalogue_candidates(context, filters=None, now=None):
     )
     if filters.get("q"):
         term = filters["q"].strip()[:100]
-        query = query.filter(
+        search = (
             Q(product__title__icontains=term)
             | Q(product__description__icontains=term)
-            | Q(shop__name__icontains=term)
         )
+        if context.method == "pickup":
+            search |= Q(shop__name__icontains=term)
+        query = query.filter(search)
     if filters.get("shop"):
         query = query.filter(shop__slug=filters["shop"][:100])
     listings = []
