@@ -22,6 +22,9 @@ def test_seller_urls_are_scoped(client, owner, shop, other_shop, listing):
 
 
 def test_public_shop_never_discloses_bank_data(client, shop):
+    session = client.session
+    session['receiving'] = {'method': 'pickup'}
+    session.save()
     shop.bank_account = "12345678901234567890"
     shop.save()
     response = client.get(f"/shops/{shop.slug}/")

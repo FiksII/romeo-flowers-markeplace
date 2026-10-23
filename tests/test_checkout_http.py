@@ -12,6 +12,11 @@ from tests.test_orders import ADDRESS
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def online_checkout(settings):
+    settings.MARKET_ONLINE_PAYMENTS = True
+
+
 @pytest.mark.parametrize(
     "phone", ["+7(999)123-45-67", "8 (999) 123-45-67", "9991234567"]
 )
@@ -209,6 +214,9 @@ def test_buyer_checkout_http_and_duplicate_post(client, owner, shop, listing):
 
 
 def test_home_listing_and_all_portal_forms_render(client, owner, shop, listing):
+    session = client.session
+    session['receiving'] = {'method': 'pickup'}
+    session.save()
     for url in [
         "/",
         f"/products/{listing.pk}/",

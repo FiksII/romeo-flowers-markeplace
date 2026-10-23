@@ -159,9 +159,7 @@ def test_preset_selection_also_updates_city_only_delivery_search(shop):
 
     from market.models import Settlement
 
-    city = Settlement.objects.create(
-        name="Химки", slug="khimki-preset-test", region="50"
-    )
+    city = Settlement.objects.get(name="Химки", region="50")
     root = Path(__file__).resolve().parents[1] / "static/market/delivery-areas"
     feature = json.loads((root / "osm-1703094.geojson").read_text(encoding="utf-8"))
     form = ShopInfoForm(
@@ -204,7 +202,7 @@ def test_adding_preset_keeps_city_filter_of_existing_custom_contour(shop):
 
     from market.models import Settlement
 
-    city = Settlement.objects.create(name="Химки", slug="mixed-khimki", region="50")
+    city = Settlement.objects.get(name="Химки", region="50")
     root = Path(__file__).resolve().parents[1] / "static/market/delivery-areas"
     feature = json.loads((root / "osm-1703094.geojson").read_text(encoding="utf-8"))
     zone = collection(RING)

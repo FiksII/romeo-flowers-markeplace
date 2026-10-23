@@ -109,6 +109,20 @@ def test_history_data_excludes_active_orders(client, owner, stranger, shop, list
     assert "history-only" in data["data"][0][0]
 
 
+def test_operator_history_is_below_active_cards(client, owner, stranger, shop, listing):
+    owner.is_superuser = True
+    owner.save()
+    active = order_part(stranger, shop, listing)
+    done = make_part(shop, 'operator-history')
+    client.force_login(owner)
+    response = client.get('/operator/orders/')
+    assert [part.pk for part in response.context['parts']] == [done.pk]
+    assert active.pk in {part.pk for part in response.context['new_parts']}
+    html = response.content.decode()
+    assert 'data-history="1"' in html
+    assert html.index('id="new-orders"') < html.index('Полученные и отменённые')
+
+
 def test_live_endpoint_reports_new_orders_and_payouts(
     client, owner, stranger, shop, other_shop, listing
 ):

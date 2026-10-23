@@ -11,7 +11,7 @@
   <form class="filter-bar" id="filter-form" method="get" action="{% url 'market:home' %}#catalogue" role="search" aria-label="Фильтры каталога" data-filter-form>
     <label class="filter-search">
       {% include "storefront/partials/icon.html" with name="search" %}
-      <span class="visually-hidden">Название или магазин</span>
+      <span class="visually-hidden">Название букета</span>
       <input id="filter-q" type="search" name="q" placeholder="Найти букет" autocomplete="off" value="{{ filters.q }}">
     </label>
     {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}

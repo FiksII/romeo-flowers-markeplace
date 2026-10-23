@@ -64,6 +64,8 @@ def test_admin_creates_shop_with_selected_owner(client, admin, owner, city):
     assert created.latitude == Decimal("55.75")
     assert created.delivery_settlements.get() == city
     assert created.partner.name == created.name
+    assert created.hours.count() == 21
+    assert set(created.hours.values_list("start_minute", "end_minute")) == {(540, 1260)}
     assert AuditEntry.objects.filter(shop=created, actor=admin).exists()
     client.force_login(owner)
     assert client.get(f"/partner/{created.slug}/").status_code == 200

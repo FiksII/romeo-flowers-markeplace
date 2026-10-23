@@ -24,12 +24,12 @@ def stranger(db):
 
 @pytest.fixture
 def city(db):
-    return Settlement.objects.create(name="Москва", slug="moscow", region="77")
+    return Settlement.objects.get_or_create(name="Москва", slug="moscow", region="77")[0]
 
 
 @pytest.fixture
 def oblast(db):
-    return Settlement.objects.create(name="Химки", slug="khimki", region="50")
+    return Settlement.objects.get_or_create(name="Химки", slug="khimki", region="50")[0]
 
 
 @pytest.fixture
