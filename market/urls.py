@@ -32,6 +32,7 @@ urlpatterns = [
     path("basket/update/<int:pk>/", views.basket_update, name="basket-update"),
     path("checkout/", views.checkout, name="checkout"),
     path("account/orders/", views.account_orders, name="account"),
+    path("account/orders/live/", views.customer_orders_live, name="customer-orders-live"),
     path("account/orders/<str:number>/", views.order_detail, name="order"),
     path("account/orders/<str:number>/pay/", payments.order_pay, name="order-pay"),
     path(
