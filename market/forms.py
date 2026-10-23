@@ -857,8 +857,15 @@ class CheckoutContactForm(forms.Form):
     )
 
     def clean_payment_method(self):
-        # Cash on receipt is the default way to pay.
-        return self.cleaned_data["payment_method"] or "cash"
+        method = self.cleaned_data["payment_method"] or (
+            "online" if self.has_delivery else "cash"
+        )
+        if self.has_delivery:
+            if not settings.MARKET_ONLINE_PAYMENTS:
+                raise ValidationError("Онлайн-оплата доставки временно недоступна. Выберите самовывоз.")
+            if method != "online":
+                raise ValidationError("Доставка оплачивается только онлайн.")
+        return method
 
     def __init__(self, *args, has_delivery=False, user=None, **kwargs):
         self.has_delivery = has_delivery

@@ -163,6 +163,29 @@ if (checkout) {
   };
   const deliveryFields = () => {
     const hasDelivery = groups.some((group) => group.querySelector("[data-method]").value === "delivery");
+    const payments = [...checkout.querySelectorAll('[name="payment_method"]')];
+    const online = payments.find((radio) => radio.value === "online");
+    payments.forEach((radio) => {
+      const unavailable = hasDelivery && radio.value === "cash";
+      radio.disabled = unavailable;
+      radio.closest("label").hidden = unavailable;
+      if (unavailable && radio.checked) {
+        radio.checked = false;
+        if (online) online.checked = true;
+      }
+    });
+    if (!payments.some((radio) => radio.checked && !radio.disabled)) {
+      const first = payments.find((radio) => !radio.disabled);
+      if (first) first.checked = true;
+    }
+    const paymentHelp = checkout.querySelector("[data-payment-help]");
+    if (paymentHelp) {
+      paymentHelp.textContent = hasDelivery
+        ? online ? "Доставка оплачивается онлайн." : "Онлайн-оплата доставки временно недоступна. Выберите самовывоз."
+        : online ? "При самовывозе можно оплатить онлайн или наличными при получении." : "При самовывозе — наличными при получении.";
+    }
+    const submit = checkout.querySelector("[data-checkout-submit]");
+    if (submit) submit.disabled = hasDelivery && !online;
     const call = checkout.querySelector('[name="delivery_contact"]:checked')?.value === "call";
     checkout.querySelector("[data-delivery-fields]").hidden = !hasDelivery;
     checkout.querySelector("[data-call-help]").hidden = !call;

@@ -40,9 +40,20 @@ def order_part(owner, shop, listing, method="pickup", payment="cash"):
         ADDRESS,
         CONTACT,
         NOW,
-        payment_method=payment,
+        payment_method="online" if method == "delivery" else payment,
     )
-    return order.shop_orders.get()
+    part = order.shop_orders.get()
+    if method == "delivery" and payment == "cash":
+        # Historical cash deliveries must remain operable. New checkout forbids
+        # them, so construct the old persisted state explicitly for those tests.
+        from market import messengers
+
+        part.payment_method = "cash"
+        part.save(update_fields=["payment_method"])
+        order.status = "Processing"
+        order.save(update_fields=["status"])
+        messengers.notify_new_part(part)
+    return part
 
 
 def deliver(part, actor):
@@ -196,7 +207,7 @@ def test_balance_entries_are_never_edited(owner, shop, listing):
         entry.save()
 
 
-def test_checkout_creates_cash_order_and_rejects_online_until_connected(
+def test_pickup_checkout_creates_cash_order_and_rejects_online_until_connected(
     client, owner, shop, listing
 ):
     client.force_login(owner)
@@ -209,8 +220,8 @@ def test_checkout_creates_cash_order_and_rejects_online_until_connected(
         "name": "Иван",
         "phone": "+79991234567",
         "delivery_contact": "call",
-        f"method_{shop.pk}": "delivery",
-        f"slot_{shop.pk}": next_slot(shop, "delivery", timezone.now()).value,
+        f"method_{shop.pk}": "pickup",
+        f"slot_{shop.pk}": next_slot(shop, "pickup", timezone.now()).value,
     }
     response = client.post("/checkout/", {**data, "payment_method": "online"})
     assert response.status_code == 200
