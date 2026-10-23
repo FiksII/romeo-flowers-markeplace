@@ -9,7 +9,13 @@
     </ol>
   </div>
   <div class="flower-card-reward">
-    {% if loyalty_state.available %}<h3>Ваш подарок готов!</h3><p>Выберите букет до {{ loyalty_state.limit|rub }}. Букет и доставка — бесплатно.</p><a class="button button-primary" href="{% url 'market:loyalty' %}#gifts">Выбрать подарок</a>
-    {% else %}<h3>11-й букет бесплатно</h3><p>До подарка осталось {{ loyalty_state.remaining }} {{ loyalty_state.remaining|ru_plural:'букет,букета,букетов' }}.</p><a class="text-link" href="{% url 'market:loyalty' %}">О программе</a>{% endif %}
+    {% if loyalty_state.available %}
+      <img class="flower-card-gift" src="{% static 'storefront/images/design/gift-10.webp' %}" width="150" height="166" alt="">
+      <div><h3>Ваш подарок готов!</h3><p>Букет до {{ loyalty_state.limit|rub }} и доставка — бесплатно.</p></div>
+      <a class="button button-primary" href="{% url 'market:loyalty' %}#gifts">Выбрать подарок {% include 'storefront/partials/icon.html' with name='arrow-right' class='icon-sm' %}</a>
+    {% else %}
+      <img class="flower-card-gift" src="{% static 'storefront/images/design/gift-11.webp' %}" width="162" height="176" alt="">
+      <div><h3>11-й букет в подарок</h3><p>До подарка осталось {{ loyalty_state.remaining }} {{ loyalty_state.remaining|ru_plural:'букет,букета,букетов' }}.</p><a class="text-link" href="{% url 'market:loyalty' %}">О программе</a></div>
+    {% endif %}
   </div>
 </section>
