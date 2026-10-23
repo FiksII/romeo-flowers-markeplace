@@ -285,13 +285,15 @@ def product_detail(request, pk):
     context = get_context(request)
     options = receiving_options(listing.shop, context)
     listing.display_price = listing.price_for(context.method)
+    sizes = listing.size_options(context.method)
+    listing.display_price_varies = len({option["price"] for option in sizes}) > 1
     return render(
         request,
         "market/product.html",
         {
             "listing": listing,
             "options": options,
-            "size_options": listing.size_options(context.method),
+            "size_options": sizes,
             "recommendations": [
                 row for row in public_listings(get_context(request)) if row.pk != pk
             ][:4],

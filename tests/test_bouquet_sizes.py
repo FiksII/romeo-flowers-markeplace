@@ -75,6 +75,21 @@ def test_one_size_adds_without_selector(client, listing):
     assert basket.all_lines().get().attributes.get().value == "M"
 
 
+@pytest.mark.parametrize('same_price', [False, True])
+def test_customer_price_prefix_depends_on_distinct_prices(client, listing, same_price):
+    configure(listing, sizes=['s', 'm'], pickup_price_s='1500',
+              pickup_price_m='1500' if same_price else '3000')
+    page = client.get(f'/products/{listing.pk}/')
+    price = page.content.decode().split('class="detail-price money">')[1].split('</strong>')[0]
+    assert price.startswith('от ') is not same_price
+    assert '1\xa0500' in price
+    html = client.get('/').content.decode()
+    card_price = html.split('class="product-price"><b>')[1].split('</b>')[0]
+    assert card_price.startswith('от ') is not same_price
+    # A price from an arbitrary first size must not replace the minimum on load.
+    assert ' checked' not in page.content.decode().split('data-size-picker>')[1].split('</fieldset>')[0]
+
+
 def test_sizes_have_separate_lines_and_locked_order_prices(
     client, owner, shop, listing
 ):
