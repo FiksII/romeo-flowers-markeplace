@@ -1,6 +1,6 @@
 {% load market_tags %}<article class="product-card">
   <div class="product-media">
-    {% listing_photo listing "card" as photo %}<a class="product-image" href="{% url 'market:product' listing.pk %}"><img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 759px) 50vw, (max-width: 1180px) 31vw, 302px"{% endif %} alt="{{ listing.product.title }}" loading="lazy" width="400" height="500"></a>
+    {% listing_photo listing "card" as photo %}<a class="product-image" href="{% url 'market:product' listing.pk %}"><img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 759px) calc((100vw - 44px) / 2), (max-width: 1180px) calc((86.112vw - 48px) / 3), 292px"{% endif %} alt="{{ listing.product.title }}" loading="{% if forloop.counter <= 4 %}eager{% else %}lazy{% endif %}" decoding="async" width="400" height="500"></a>
     {% if receiving.method == 'pickup' %}<span class="city-chip">{{ listing.shop.settlement.name }}</span>{% endif %}
   </div>
   <div class="product-copy">

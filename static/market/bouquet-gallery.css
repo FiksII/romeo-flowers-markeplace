@@ -1,4 +1,17 @@
 .bouquet-gallery{min-width:0}
+.photo-viewer-open{overflow:hidden}
+.photo-viewer{box-sizing:border-box;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;padding:16px;background:#171b17;color:#fff}
+.photo-viewer::backdrop{background:#171b17}
+.photo-viewer[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px}
+.photo-viewer-toolbar,.photo-viewer-controls{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.photo-viewer button{min-height:44px;min-width:44px;padding:8px 14px;border:1px solid #ffffff70;border-radius:24px;background:#fff1;color:#fff;cursor:pointer}
+.photo-viewer button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.photo-viewer-stage{display:grid;place-items:center;min-height:0;overflow:auto;overscroll-behavior:contain}
+.photo-viewer-stage img{display:block;width:auto;height:auto;max-width:100%;max-height:calc(100dvh - 160px);object-fit:contain}
+.photo-viewer.is-zoomed .photo-viewer-stage{display:block}
+.photo-viewer.is-zoomed img{max-width:none;max-height:none;margin:auto}
+.photo-viewer-controls p{margin:0;text-align:center}
+.photo-viewer [hidden]{display:none}
 .bouquet-gallery-main{display:block;touch-action:pan-y}
 .bouquet-gallery-main .detail-photo{display:block}
 .gallery-counter{margin:12px 0 8px}

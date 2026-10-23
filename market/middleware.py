@@ -24,6 +24,8 @@ class PartnerStorefrontMiddleware:
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        if request.resolver_match.view_name == "market:photo":
+            return None
         request.partner_dashboard_url = partner_dashboard_url(request.user)
         match = request.resolver_match
         if (
