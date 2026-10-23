@@ -162,13 +162,13 @@ def test_category_has_one_control_and_is_preserved_by_the_filter_form(client, bo
     assert 'name="category"' not in cleared.content.decode()
 
 
-def test_flower_outside_the_rail_keeps_its_removable_chip(client, bouquets):
+def test_previously_unillustrated_flower_is_removable_in_rail(client, bouquets):
     response = client.get("/", {"flower": [pk("Роза"), pk("Василёк")]})
 
-    assert [c["label"] for c in response.context["filter_chips"]] == ["Василёк"]
-    assert response.context["filter_chips"][0]["url"] == (
-        f"/?flower={pk('Роза')}#catalogue"
-    )
+    assert response.context["filter_chips"] == []
+    cornflower = next(row for row in response.context['flower_rail'] if row['pk'] == pk('Василёк'))
+    assert cornflower['active']
+    assert cornflower['url'] == f"/?flower={pk('Роза')}#catalogue"
 
 
 def test_home_explains_an_empty_result_for_several_flowers(client, bouquets):
@@ -243,6 +243,19 @@ def test_flower_rail_offers_only_flowers_that_bouquets_have(client, bouquets):
     roses = client.get("/", {"flower": [pk("Роза")], "category": "composition"})
     # A chosen flower stays in the rail even without results, so it can be cleared.
     assert {c["label"] for c in roses.context["flower_rail"]} == {"Розы"}
+
+
+def test_flower_rail_includes_composition_outside_the_illustrated_shortlist(client, listing):
+    names = ['Роза белая', 'Гипсофила метельчатая', 'Гелихризум']
+    flowers = [Flower.objects.get_or_create(name=name)[0] for name in names]
+    listing.flowers.set(flowers)
+    response = client.get('/')
+    rail = {row['pk']: row for row in response.context['flower_rail']}
+    assert set(rail) == {flower.pk for flower in flowers}
+    for flower in flowers:
+        filtered = client.get(rail[flower.pk]['url'])
+        assert filtered.context['total_count'] == 1
+        assert filtered.context['page'].object_list[0].pk == listing.pk
 
 
 def test_filters_work_without_javascript(client, bouquets):

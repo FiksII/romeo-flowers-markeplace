@@ -61,21 +61,21 @@ FLOWER_RAIL = (
 def flower_rail(params):
     """Flower circles; each one adds its flower to the filter or removes it."""
     chosen = set(params.getlist("flower"))
-    pks = dict(
-        Flower.objects.filter(
-            name__in=[name for name, _, _ in FLOWER_RAIL]
-        ).values_list("name", "pk")
-    )
+    flowers = list(Flower.objects.all())
+    by_name = {flower.name: flower for flower in flowers}
+    illustrated = {name: (label, image) for name, label, image in FLOWER_RAIL}
+    ordered = [by_name[name] for name, _, _ in FLOWER_RAIL if name in by_name]
+    ordered += [flower for flower in flowers if flower.name not in illustrated]
     return [
         {
-            "pk": pks[name],
-            "label": label,
-            "image": f"storefront/images/design/{image}.webp",
-            "url": toggle_flower_url(params, pks[name]),
-            "active": str(pks[name]) in chosen,
+            "pk": flower.pk,
+            "label": illustrated.get(flower.name, (flower.name, ""))[0],
+            "image": f"storefront/images/design/{illustrated[flower.name][1]}.webp"
+            if flower.name in illustrated else "",
+            "url": toggle_flower_url(params, flower.pk),
+            "active": str(flower.pk) in chosen,
         }
-        for name, label, image in FLOWER_RAIL
-        if name in pks
+        for flower in ordered
     ]
 
 
