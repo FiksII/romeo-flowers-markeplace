@@ -1,4 +1,4 @@
-"""Telegram catalogue dialogue using the existing Django product form and Bot API.
+"""Shared bot catalogue dialogue using the existing Django product form.
 
 Drafts and update receipts share a locked row, so worker restarts and Telegram
 retries cannot lose a step or publish a second bouquet. Only explicit shop grants
@@ -39,9 +39,9 @@ NO_ACCESS = (
 )
 
 
-def grants(chat_id):
+def grants(chat_id, channel=MessengerLink.TELEGRAM):
     return MessengerLink.objects.filter(
-        channel=MessengerLink.TELEGRAM,
+        channel=channel,
         chat_id=str(chat_id),
         shop__isnull=False,
         linked_at__isnull=False,
@@ -49,10 +49,22 @@ def grants(chat_id):
     ).select_related("shop")
 
 
-def menu_for_chat(chat_id):
-    if grants(chat_id).exists():
+def menu_for_chat(chat_id, channel=MessengerLink.TELEGRAM):
+    if grants(chat_id, channel).exists():
         return {"keyboard": [[{"text": ADD}]], "resize_keyboard": True}
     return None
+
+
+def no_access(channel):
+    return NO_ACCESS.replace("Telegram", dict(MessengerLink.CHANNELS)[channel])
+
+
+def catalogue_photo(draft, file_id):
+    if draft.channel == MessengerLink.MAX:
+        from market.max_transport import download_photo as download_max_photo
+
+        return download_max_photo(file_id)
+    return download_photo(file_id)
 
 
 def download_photo(file_id):
@@ -114,7 +126,17 @@ def _draft_photos(data):
     if "photos" in data:
         return data["photos"]
     # A draft started by the previous release can still be completed.
-    return [{"file_id": data["photo_id"], "document": data.get("photo_document", False), "update_id": 0}] if data.get("photo_id") else []
+    return (
+        [
+            {
+                "file_id": data["photo_id"],
+                "document": data.get("photo_document", False),
+                "update_id": 0,
+            }
+        ]
+        if data.get("photo_id")
+        else []
+    )
 
 
 def _summary(draft):
@@ -165,7 +187,7 @@ def _prompt(draft, error=""):
         text = "Выберите магазин для нового букета."
         rows = [
             [_button(draft, link.shop.name[:60], "pick", str(link.pk))]
-            for link in grants(draft.chat_id)
+            for link in grants(draft.chat_id, draft.channel)
         ]
     elif step == "photo":
         count = len(_draft_photos(data))
@@ -175,7 +197,10 @@ def _prompt(draft, error=""):
             f"Добавлено: {count}. Первое фото — главное. Когда закончите, нажмите «Далее»."
         )
         if count:
-            rows = [[_button(draft, "Далее", "next")], [_button(draft, "Очистить фото", "clear_photos")]]
+            rows = [
+                [_button(draft, "Далее", "next")],
+                [_button(draft, "Очистить фото", "clear_photos")],
+            ]
     elif step == "title":
         text = "Как называется букет? Напишите название (до 255 символов)."
     elif step == "description":
@@ -238,7 +263,7 @@ def _prompt(draft, error=""):
             "method": "sendMessage",
             "chat_id": draft.chat_id,
             "text": "Добавление завершено. Для нового букета нажмите «Добавить букет».",
-            "reply_markup": menu_for_chat(draft.chat_id),
+            "reply_markup": menu_for_chat(draft.chat_id, draft.channel),
         }
     controls = []
     if step != "shop":
@@ -255,7 +280,9 @@ def _prompt(draft, error=""):
 
 def _publish(draft, public):
     data = draft.data | {"is_public": public}
-    uploads = [download_photo(photo["file_id"]) for photo in _draft_photos(data)]
+    uploads = [
+        catalogue_photo(draft, photo["file_id"]) for photo in _draft_photos(data)
+    ]
     if not uploads:
         raise ValidationError("Добавьте хотя бы одну фотографию букета.")
     form = ProductForm(data, {"photo": uploads}, shop=draft.link.shop)
@@ -269,7 +296,7 @@ def _publish(draft, public):
             listing = save_listing(draft.link.shop, form.cleaned_data)
             AuditEntry.objects.create(
                 shop=draft.link.shop,
-                action=f"Букет #{listing.pk} добавлен через Telegram · {draft.link.phone}",
+                action=f"Букет #{listing.pk} добавлен через {dict(MessengerLink.CHANNELS)[draft.channel]} · {draft.link.phone}",
             )
     except Exception:
         if listing:
@@ -284,7 +311,7 @@ def _publish(draft, public):
         "method": "sendMessage",
         "chat_id": draft.chat_id,
         "text": f"Букет {'опубликован' if public else 'сохранён скрытым'}: {listing.product.title}\n{url}",
-        "reply_markup": menu_for_chat(draft.chat_id),
+        "reply_markup": menu_for_chat(draft.chat_id, draft.channel),
     }
 
 
@@ -294,12 +321,12 @@ def _apply_callback(draft, action, value, update_id):
         _advance(draft, backwards=True)
     elif action == "pick" and step == "shop":
         link = (
-            grants(draft.chat_id).filter(pk=value).first()
+            grants(draft.chat_id, draft.channel).filter(pk=value).first()
             if value.isdecimal()
             else None
         )
         if not link:
-            raise ValidationError(NO_ACCESS)
+            raise ValidationError(no_access(draft.channel))
         draft.link, draft.step = link, "photo"
         draft.data["own_delivery"] = link.shop.own_delivery
     elif action == "pick" and step == "category":
@@ -328,7 +355,13 @@ def _apply_callback(draft, action, value, update_id):
         draft.data["photo_album_ids"] = []
         draft.data.pop("photo_id", None)
         draft.data.pop("photo_document", None)
-    elif action == "next" and step in {"photo", "description", "flowers", "tags", "sizes"}:
+    elif action == "next" and step in {
+        "photo",
+        "description",
+        "flowers",
+        "tags",
+        "sizes",
+    }:
         if step == "photo" and not _draft_photos(draft.data):
             raise ValidationError("Добавьте хотя бы одну фотографию букета.")
         if step == "sizes" and not draft.data.get("sizes"):
@@ -364,11 +397,21 @@ def _apply_message(draft, message):
         selected = list(_draft_photos(data))
         file_id = str(photo["file_id"])
         if any(item["file_id"] == file_id for item in selected):
-            data.setdefault("photo_update_ids", []).append(message["_catalogue_update_id"])
+            data.setdefault("photo_update_ids", []).append(
+                message["_catalogue_update_id"]
+            )
             return
         if len(selected) >= MAX_PHOTOS:
-            raise ValidationError(f"Можно добавить не больше {MAX_PHOTOS} фотографий. Удалите лишние кнопкой «Очистить фото».")
-        selected.append({"file_id": file_id, "document": not bool(photos), "update_id": message["_catalogue_update_id"]})
+            raise ValidationError(
+                f"Можно добавить не больше {MAX_PHOTOS} фотографий. Удалите лишние кнопкой «Очистить фото»."
+            )
+        selected.append(
+            {
+                "file_id": file_id,
+                "document": not bool(photos),
+                "update_id": message["_catalogue_update_id"],
+            }
+        )
         selected.sort(key=lambda item: item.get("update_id", 0))
         data["photos"] = selected
         album_id = message.get("media_group_id")
@@ -398,15 +441,18 @@ def _apply_message(draft, message):
 
 
 @transaction.atomic
-def _handle(chat_id, update_id, message, callback):
+def _handle(chat_id, update_id, message, callback, channel=MessengerLink.TELEGRAM):
     text = str(message.get("text", "")).strip() if message else ""
     command = text.split("@", 1)[0].split(" ", 1)[0]
     start = command == "/add" or text == ADD
     draft = (
         TelegramBouquetDraft.objects.select_for_update()
-        .filter(chat_id=str(chat_id))
+        .filter(chat_id=str(chat_id), channel=channel)
         .first()
     )
+    if draft and channel == MessengerLink.MAX and not draft.token:
+        # MAX also uses this row as the durable lock for invitation/help events.
+        draft = None
     if draft and draft.updated_at < timezone.now() - timedelta(days=1):
         # Telegram can randomize update IDs after a week without updates.
         draft.last_update_id, draft.last_response = -1, {}
@@ -417,7 +463,7 @@ def _handle(chat_id, update_id, message, callback):
             "method": "sendMessage",
             "chat_id": chat_id,
             "text": "Добавление отменено.",
-            "reply_markup": menu_for_chat(chat_id),
+            "reply_markup": menu_for_chat(chat_id, channel),
         }
         if draft:
             draft.step, draft.data, draft.last_response = "done", {}, response
@@ -428,20 +474,24 @@ def _handle(chat_id, update_id, message, callback):
         return None
     if not draft and not start and not callback:
         return None
-    allowed = grants(chat_id)
+    allowed = grants(chat_id, channel)
     if not allowed.exists():
         if draft:
             draft.data, draft.step = {}, "done"
             draft.save()
-        return {"method": "sendMessage", "chat_id": chat_id, "text": NO_ACCESS}
+        return {"method": "sendMessage", "chat_id": chat_id, "text": no_access(channel)}
     if draft and update_id in draft.data.get("photo_update_ids", []):
         return draft.last_response or {}
     # Album parts can reach concurrent webhook workers out of update-ID order.
     # Accept media in the photo step or late parts of an already accepted album.
     # Clearing the photos advances the boundary and forgets all previous albums.
     active_photo = (
-        draft and message
-        and (draft.step == "photo" or message.get("media_group_id") in draft.data.get("photo_album_ids", []))
+        draft
+        and message
+        and (
+            draft.step == "photo"
+            or message.get("media_group_id") in draft.data.get("photo_album_ids", [])
+        )
         and (message.get("photo") or message.get("document"))
         and update_id > draft.data.get("photo_start_update_id", draft.last_update_id)
     )
@@ -455,14 +505,19 @@ def _handle(chat_id, update_id, message, callback):
     if start:
         if not draft:
             # get_or_create handles two workers receiving the first /add together.
-            draft, _ = TelegramBouquetDraft.objects.get_or_create(chat_id=str(chat_id))
+            draft, _ = TelegramBouquetDraft.objects.get_or_create(
+                chat_id=str(chat_id), channel=channel
+            )
             draft = TelegramBouquetDraft.objects.select_for_update().get(pk=draft.pk)
             if update_id <= draft.last_update_id:
                 return draft.last_response
         links = list(allowed)
         draft.link = links[0] if len(links) == 1 else None
         draft.step = "photo" if draft.link else "shop"
-        draft.data, draft.token = {"sizes": ["standard"], "photo_start_update_id": update_id}, secrets.token_hex(4)
+        draft.data, draft.token = (
+            {"sizes": ["standard"], "photo_start_update_id": update_id},
+            secrets.token_hex(4),
+        )
         if draft.link:
             draft.data["own_delivery"] = draft.link.shop.own_delivery
     elif not draft:
@@ -470,7 +525,7 @@ def _handle(chat_id, update_id, message, callback):
             "method": "sendMessage",
             "chat_id": chat_id,
             "text": "Нажмите «Добавить букет», чтобы начать.",
-            "reply_markup": menu_for_chat(chat_id),
+            "reply_markup": menu_for_chat(chat_id, channel),
         }
     elif draft.step == "done":
         return draft.last_response or _prompt(draft)
@@ -487,14 +542,18 @@ def _handle(chat_id, update_id, message, callback):
     if draft.step not in {"shop", "done"} and not draft.link_id:
         draft.data, draft.step, draft.last_response = {}, "done", {}
         draft.save()
-        return {"method": "sendMessage", "chat_id": chat_id, "text": NO_ACCESS}
+        return {"method": "sendMessage", "chat_id": chat_id, "text": no_access(channel)}
     # Lock the selected grant for the entire write, including publication.
     if draft.link_id:
         link = allowed.select_for_update(of=("self",)).filter(pk=draft.link_id).first()
         if not link:
             draft.data, draft.step = {}, "done"
             draft.save()
-            return {"method": "sendMessage", "chat_id": chat_id, "text": NO_ACCESS}
+            return {
+                "method": "sendMessage",
+                "chat_id": chat_id,
+                "text": no_access(channel),
+            }
         draft.link = link
     response, error = None, ""
     previous_step = draft.step
@@ -527,7 +586,7 @@ def _handle(chat_id, update_id, message, callback):
                         "method": "sendMessage",
                         "chat_id": chat_id,
                         "text": "Добавление отменено.",
-                        "reply_markup": menu_for_chat(chat_id),
+                        "reply_markup": menu_for_chat(chat_id, channel),
                     }
                 else:
                     response = _apply_callback(draft, parts[3], parts[4], update_id)
@@ -536,17 +595,24 @@ def _handle(chat_id, update_id, message, callback):
         except ValidationError as exc:
             error = " ".join(exc.messages)
         except messengers.MessengerError:
-            error = "Telegram временно недоступен. Попробуйте ещё раз; букет пока не сохранён."
+            error = f"{dict(MessengerLink.CHANNELS)[channel]} временно недоступен. Попробуйте ещё раз; букет пока не сохранён."
     draft.revision += 1
     if draft.step == "review" and previous_step != "review" and not error:
         try:
             document = draft.data.get("photo_document")
-            messengers.telegram_call(
-                "sendDocument" if document else "sendPhoto",
-                chat_id=chat_id,
-                **{"document" if document else "photo": draft.data["photo_id"]},
-                caption="Фото нового букета",
-            )
+            if channel == MessengerLink.MAX:
+                from market.max_transport import preview_photo
+
+                preview_photo(chat_id, draft.data["photo_id"], document=bool(document))
+            else:
+                messengers.telegram_call(
+                    "sendDocument" if document else "sendPhoto",
+                    chat_id=chat_id,
+                    **{"document" if document else "photo": draft.data["photo_id"]},
+                    caption="Фото нового букета",
+                )
+        except ValidationError as exc:
+            error = " ".join(exc.messages)
         except messengers.MessengerError:
             pass  # The complete editable summary is still delivered below.
     response = response or _prompt(draft, error)
@@ -559,7 +625,10 @@ def _handle(chat_id, update_id, message, callback):
     ):
         response["method"] = "editMessageText"
         response["message_id"] = callback["message"]["message_id"]
-    draft.last_update_id, draft.last_response = max(update_id, draft.last_update_id), response
+    draft.last_update_id, draft.last_response = (
+        max(update_id, draft.last_update_id),
+        response,
+    )
     draft.save()
     return response
 

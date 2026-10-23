@@ -50,6 +50,7 @@ urlpatterns = [
         messenger_views.telegram_webhook,
         name="telegram-webhook",
     ),
+    path("messengers/max/webhook/", messenger_views.max_webhook, name="max-webhook"),
     path("messengers/vk/callback/", messenger_views.vk_callback, name="vk-callback"),
     path("account/cancel/<int:pk>/", views.customer_cancel, name="customer-cancel"),
     path("signup/", SmsSignupView.as_view(), name="signup"),

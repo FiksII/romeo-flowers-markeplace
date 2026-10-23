@@ -22,6 +22,22 @@ def _json(request):
 
 @csrf_exempt
 @require_POST
+def max_webhook(request):
+    secret = request.headers.get("X-Max-Bot-Api-Secret", "")
+    if not messengers.channel_enabled(MessengerLink.MAX) or not hmac.compare_digest(secret, messengers.max_webhook_secret()):
+        return HttpResponseForbidden()
+    if len(request.body) > 512 * 1024:
+        return HttpResponse(status=413)
+    update = _json(request)
+    if not isinstance(update, dict):
+        return HttpResponse(status=400)
+    from market.max_bot import accept
+    accept(update)
+    return JsonResponse({"success": True})
+
+
+@csrf_exempt
+@require_POST
 def telegram_webhook(request):
     secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
     if not messengers.telegram_enabled() or not hmac.compare_digest(
