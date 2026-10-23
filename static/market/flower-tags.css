@@ -1,4 +1,7 @@
 .flower-picker{border:0;padding:0;min-width:0}
+.flower-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:3px 6px;border-radius:999px;background:var(--cream);color:var(--forest);font:600 12px/1 var(--sans)}
+.flower.is-active .flower-count{background:#fff}
+.filter-flower-image{width:28px;height:32px;object-fit:contain;flex:none}
 .flower-picker legend{font-size:14px;font-weight:600;margin-bottom:12px}
 .flower-picker-body{padding:16px;border:1px solid var(--border-soft);border-radius:16px;background:#fafaf7}
 .flower-picker-caption{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 10px}
