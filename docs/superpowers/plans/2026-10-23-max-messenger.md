@@ -29,30 +29,34 @@
 ## Tasks
 
 ### 1. SDK transport (market/max_transport.py, tests/test_max_transport.py)
-- [ ] RED: mock only HTTP boundary; assert current endpoint/header, real SDK serialization, keyboard/media mapping and errors.
-- [ ] Implement call(method, **params), send(chat_id, text, photos=(), reply_markup=None, message_id=None), preview_photo(chat_id, file_id, document=False), download_photo(file_id).
-- [ ] GREEN: focused tests; no separate server or polling runtime.
+- [x] RED: mock only HTTP boundary; assert current endpoint/header, real SDK serialization, keyboard/media mapping and errors.
+- [x] Implement call(method, **params), send(chat_id, text, photos=(), reply_markup=None, message_id=None), preview_photo(chat_id, file_id, document=False), download_photo(file_id).
+- [x] GREEN: focused tests; no separate server or polling runtime.
 
 ### 2. Channel integration (messengers.py, portal_views.py, settings, templates, setup command, tests/test_max_messenger.py)
-- [ ] RED: MAX enabled/disabled, invitations and settings, recipients and photograph/payment notification parity, SDK webhook registration.
-- [ ] Implement channel enum consumer support; SDK calls and setup --channel max without re-registering other bots.
-- [ ] GREEN: focused tests and existing notification/settings tests.
+- [x] RED: MAX enabled/disabled, invitations and settings, recipients and photograph/payment notification parity, SDK webhook registration.
+- [x] Implement channel enum consumer support; SDK calls and setup --channel max without re-registering other bots.
+- [x] GREEN: focused tests and existing notification/settings tests.
 
 ### 3. Shared catalogue and durable webhook (models, migration, telegram_catalogue.py, max_bot.py, messenger_views.py, urls, send_notifications)
-- [ ] RED: full MAX dialogue through public webhook; channel isolation, receipts/retries, malformed/forged/group updates, photo gallery/documents and stale buttons.
-- [ ] Scope existing draft table by channel (default telegram), retain existing class/table; persist MAX receipt event key, raw update, response, attempts/status.
-- [ ] Reuse catalogue handlers with channel parameter; MAX converts SDK events into shared dialogue input and shared reply markup into SDK messages.
-- [ ] Drain pending receipts through existing timer; webhook returns promptly after durable acceptance.
-- [ ] GREEN: focused tests, complete Python and frontend suites, Ruff, check/migration checks; independent review.
+- [x] RED: full MAX dialogue through public webhook; channel isolation, receipts/retries, malformed/forged/group updates, photo gallery/documents and stale buttons.
+- [x] Scope existing draft table by channel (default telegram), retain existing class/table; persist MAX receipt event key, raw update, response, attempts/status.
+- [x] Reuse catalogue handlers with channel parameter; MAX converts SDK events into shared dialogue input and shared reply markup into SDK messages.
+- [x] Drain pending receipts through existing timer; webhook returns promptly after durable acceptance.
+- [x] GREEN: focused tests, complete Python and frontend suites, Ruff, check/migration checks; independent review.
 
 ### 4. Release
-- [ ] Merge feature into latest develop, verify combined result, package all source/dependencies/migrations/static.
-- [ ] Inspect actual dev release; backup, fresh venv with locked dependencies, migrate, collectstatic, atomic switch/restart, HTTPS and scenario checks.
-- [ ] When token is supplied, validate identity and register only MAX webhook/commands. Otherwise report live activation awaiting token explicitly.
-- [ ] Record exact verification/deployment evidence; promote verified develop to master and push authorized repository; production untouched.
+- [x] Merge feature into latest develop, verify combined result, package all source/dependencies/migrations/static.
+- [x] Inspect actual dev release; backup, fresh venv with locked dependencies, migrate, collectstatic, atomic switch/restart, HTTPS and scenario checks.
+- [x] When token is supplied, validate identity and register only MAX webhook/commands. Otherwise report live activation awaiting token explicitly.
+- [x] Record exact verification/deployment evidence; promote verified develop to master and push authorized repository; production untouched.
 
 ## Ledger
 
 - Base: develop 1e870bc, dev release 20261023-170634-bouquet-gallery (runtime 235caca).
 - Token absent locally/server; ignored .superpowers/deploy/max-bot.env created and opened for owner.
 - SDK pinned and inspected: upstream still uses an older URL/query token, requiring a connection adapter while retaining its Bot/method/model implementation.
+
+- Completed: feature a28caae, develop 71f22a3; 687 Python/35 frontend tests, 105 isolated PostgreSQL tests; review fixes verified.
+- MAX token verified and configured privately; webhook/commands live on dev 20261023-173933-max-integration. Real recipient chats await owner invitations.
+- Deployment held before switch for temporary test-role SET permission/cleanup, then resumed only after 105 passing tests and source hash re-verification.
