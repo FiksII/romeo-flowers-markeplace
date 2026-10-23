@@ -14,7 +14,7 @@ class PartnerStorefrontMiddleware:
         "home", "catalogue", "product", "shop", "receiving", "basket",
         "basket-add", "basket-update", "checkout", "account",
         "customer-orders-live", "order", "order-pay", "order-pay-status",
-        "customer-cancel",
+        "customer-cancel", "loyalty", "loyalty-gift",
     })
 
     def __init__(self, get_response):

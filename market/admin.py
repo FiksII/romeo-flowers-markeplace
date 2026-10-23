@@ -4,6 +4,7 @@ from market.models import (
     AuditEntry,
     DateException,
     Listing,
+    LoyaltyReward,
     Membership,
     OnlinePayment,
     Settlement,
@@ -53,6 +54,18 @@ admin.site.register(DateException)
 class ShopOrderAdmin(admin.ModelAdmin):
     list_display = ["id", "shop", "order", "method", "status", "payment_status"]
     readonly_fields = [field.name for field in ShopOrder._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(LoyaltyReward)
+class LoyaltyRewardAdmin(admin.ModelAdmin):
+    list_display = ["user", "sequence", "order", "limit", "created_at"]
+    readonly_fields = [field.name for field in LoyaltyReward._meta.fields]
 
     def has_add_permission(self, request):
         return False

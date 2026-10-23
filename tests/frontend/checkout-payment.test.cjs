@@ -4,10 +4,10 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-function page(methods, onlineAvailable = true) {
-  const radios = (onlineAvailable ? ['cash', 'online'] : ['cash']).map(value => {
+function page(methods, onlineAvailable = true, gift = false) {
+  const radios = (gift ? ['gift'] : onlineAvailable ? ['cash', 'online'] : ['cash']).map(value => {
     const label = {};
-    return { value, checked: value === 'cash', label, closest: () => label };
+    return { value, checked: value === 'cash', label, closest: () => gift ? null : label };
   });
   const controls = methods.map(value => ({ value, selectedOptions: [], addEventListener(event, callback) { this.change = callback; } }));
   const groups = controls.map(method => ({ dataset: {}, querySelector: key => {
@@ -17,6 +17,7 @@ function page(methods, onlineAvailable = true) {
   }}));
   const notice = {}, submit = {};
   const form = {
+    hasAttribute: key => gift && key === 'data-gift-checkout',
     querySelectorAll: key => key === '[data-checkout-group]' ? groups : key === '[name="payment_method"]' ? radios : [],
     querySelector: key => key === '[data-payment-help]' ? notice : key === '[data-checkout-submit]' ? submit : {},
   };
@@ -44,6 +45,12 @@ test('disabled online payment blocks delivery without cash fallback', () => {
   assert.equal(p.radios[0].disabled, true);
   assert.match(p.notice.textContent, /временно недоступна/);
   p.controls[0].value = 'pickup'; p.controls[0].change();
+  assert.equal(p.submit.disabled, false);
+  assert.equal(p.radios[0].disabled, false);
+});
+
+test('free gift delivery can be submitted without online payment or a payment label', () => {
+  const p = page(['delivery'], false, true);
   assert.equal(p.submit.disabled, false);
   assert.equal(p.radios[0].disabled, false);
 });

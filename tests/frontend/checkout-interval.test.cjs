@@ -12,6 +12,7 @@ function checkout(ownDelivery) {
   const group = { dataset: { ownDelivery: String(ownDelivery), goods: '2500' }, querySelector: (key) => groupNodes[key] ?? {} };
   const nodes = { '[name="delivery_contact"]:checked': { value: 'call' } };
   const form = {
+    hasAttribute: () => false,
     querySelectorAll: (key) => key === '[data-checkout-group]' ? [group] : [],
     querySelector: (key) => nodes[key] ?? {},
   };

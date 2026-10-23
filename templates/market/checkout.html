@@ -1,11 +1,11 @@
 {% extends 'market/base.html' %}{% load market_tags %}
-{% block title %}Оформить заказ — Ромео{% endblock %}
+{% block title %}{% if is_gift %}Оформить подарок{% else %}Оформить заказ{% endif %} — Ромео{% endblock %}
 {% block content %}<section class="shell section-space">
-  <a class="back-link" href="{% url 'market:basket' %}">← Корзина</a>
+  {% if is_gift %}<a class="back-link" href="{% url 'market:loyalty' %}#gifts">← Выбрать другой подарок</a><p class="loyalty-gift-note"><strong>Ваш подарочный букет</strong> · {{ size_label }}<br>Букет, доставка и самовывоз — бесплатно. Платить не нужно.</p>{% else %}<a class="back-link" href="{% url 'market:basket' %}">← Корзина</a>{% endif %}
   <div class="page-heading"><h1>Всё готово к красивому моменту</h1><p>Укажите получателя и выберите, нужно ли уточнить у него адрес и время.</p></div>
   {% if groups %}
-  <form method="post" class="checkout-layout" data-checkout data-address-form>{% csrf_token %}
-    <input type="hidden" name="basket_id" value="{{ request.basket.pk }}">
+  <form method="post" class="checkout-layout" data-checkout{% if is_gift %} data-gift-checkout{% endif %} data-address-form>{% csrf_token %}
+    {% if is_gift %}<input type="hidden" name="sequence" value="{{ loyalty_state.sequence }}"><input type="hidden" name="size" value="{{ size }}">{{ form.payment_method }}{{ form.payment_method.errors }}{% else %}<input type="hidden" name="basket_id" value="{{ request.basket.pk }}">{% endif %}
     <div>{{ form.non_field_errors }}
     <section class="group-card"><h2>Кто заказывает?</h2>
       {% include 'market/partials/field.html' with field=form.customer_name %}
@@ -15,7 +15,7 @@
     {% for group in groups %}
     <section class="group-card" data-checkout-group data-own-delivery="{% if group.own_delivery %}1{% else %}0{% endif %}" data-goods="{{ group.total|unlocalize_money }}">
       <div class="section-heading"><div><h2>Часть заказа {{ forloop.counter }}</h2></div><strong class="money" data-group-goods>{{ group.total|rub }}</strong></div>
-      {% for item in group.lines %}<p class="checkout-item">{{ item.listing.product.title }}{% if item.line|bouquet_size %} · {{ item.line|bouquet_size }}{% endif %} <span>× {{ item.line.quantity }}</span></p>{% endfor %}
+      {% for item in group.lines %}<p class="checkout-item">{{ item.listing.product.title }}{% if is_gift %} · {{ size_label }}{% elif item.line|bouquet_size %} · {{ item.line|bouquet_size }}{% endif %} <span>× {{ item.line.quantity }}</span></p>{% endfor %}
       <div class="two-fields">
         <div class="field"><label for="method-{{ group.shop.pk }}">Получение</label>
           <select id="method-{{ group.shop.pk }}" name="method_{{ group.shop.pk }}" data-method required>
@@ -33,7 +33,7 @@
       </div>
       <p class="notice" data-pickup-note hidden>{% if group.pickup_savings > 0 %}Экономия на товарах {{ group.pickup_savings|rub }}.<br>{% endif %}<strong>{{ group.shop.name }}</strong><br>{{ group.shop.settlement.name }}, {{ group.shop.address }}<br>{{ group.shop.pickup_instructions }}</p>
       {% if not group.available %}<p class="notice error">Эти товары или выбранный способ получения недоступны. Вернитесь в корзину.</p>{% endif %}
-      <p class="field-help">Минимальная сумма товаров {{ group.shop.minimum_order|rub }}. Время — московское.</p>
+      <p class="field-help">{% if is_gift %}Минимальная сумма заказа к подарку не применяется.{% else %}Минимальная сумма товаров {{ group.shop.minimum_order|rub }}.{% endif %} Время — московское.</p>
     </section>
     {% endfor %}
     <section class="group-card"><h2>Кому передать цветы?</h2>
@@ -62,16 +62,18 @@
     </section>
     </div>
     <aside class="summary-card"><h2>Общий заказ</h2>
-      <div class="summary-row"><span>Товары</span><strong data-goods-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
-      <div class="summary-row total-row"><span>Итого</span><strong data-order-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
+      <div class="summary-row"><span>Товары</span><strong data-goods-total>{% if is_gift %}0 ₽{% else %}{{ request.basket.total_incl_tax|rub }}{% endif %}</strong></div>
+      <div class="summary-row total-row"><span>Итого</span><strong data-order-total>{% if is_gift %}0 ₽{% else %}{{ request.basket.total_incl_tax|rub }}{% endif %}</strong></div>
+      {% if is_gift %}<p>Подарочный букет и доставка бесплатно. Получать деньги с клиента не нужно.</p>{% else %}
       <fieldset class="payment-choice"><legend>Оплата</legend>
         {{ form.payment_method }}{{ form.payment_method.errors }}
         <p class="field-help" data-payment-help>Доставка оплачивается онлайн. При самовывозе можно оплатить онлайн или наличными при получении.</p>
       </fieldset>
-      <button class="button button-primary button-block" data-checkout-submit>Создать заказ</button>
+      {% endif %}
+      <button class="button button-primary button-block" data-checkout-submit>{% if is_gift %}Получить подарок{% else %}Создать заказ{% endif %}</button>
       <p class="field-help"><a class="text-link" href="{% url 'market:delivery' %}" target="_blank" rel="noopener">Условия доставки и оплаты</a></p>
-      <p class="field-help">Нажимая «Создать заказ», вы принимаете <a class="text-link" href="{% url 'market:offer' %}" target="_blank" rel="noopener">публичную оферту</a>. <a class="text-link" href="{% url 'market:requisites' %}" target="_blank" rel="noopener">Реквизиты оператора</a></p>
-      <p class="field-help">При самовывозе применяется цена для самовывоза. Заказ с оплатой при получении резервируется до получения.</p>
+      <p class="field-help">Нажимая «{% if is_gift %}Получить подарок{% else %}Создать заказ{% endif %}», вы принимаете <a class="text-link" href="{% url 'market:offer' %}" target="_blank" rel="noopener">публичную оферту</a>. <a class="text-link" href="{% url 'market:requisites' %}" target="_blank" rel="noopener">Реквизиты оператора</a></p>
+      {% if is_gift %}<p class="field-help">При оформлении будут использованы десять отметок. При отмене подарка они не восстанавливаются.</p>{% else %}<p class="field-help">При самовывозе применяется цена для самовывоза. Заказ с оплатой при получении резервируется до получения.</p>{% endif %}
     </aside>
   </form>
   {% else %}<div class="empty-state"><h2>Корзина пуста</h2><a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать цветы</a></div>{% endif %}

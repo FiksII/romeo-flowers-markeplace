@@ -168,7 +168,8 @@ if (checkout) {
     payments.forEach((radio) => {
       const unavailable = hasDelivery && radio.value === "cash";
       radio.disabled = unavailable;
-      radio.closest("label").hidden = unavailable;
+      const label = radio.closest("label");
+      if (label) label.hidden = unavailable;
       if (unavailable && radio.checked) {
         radio.checked = false;
         if (online) online.checked = true;
@@ -185,7 +186,7 @@ if (checkout) {
         : online ? "При самовывозе можно оплатить онлайн или наличными при получении." : "При самовывозе — наличными при получении.";
     }
     const submit = checkout.querySelector("[data-checkout-submit]");
-    if (submit) submit.disabled = hasDelivery && !online;
+    if (submit) submit.disabled = hasDelivery && !online && !checkout.hasAttribute("data-gift-checkout");
     const call = checkout.querySelector('[name="delivery_contact"]:checked')?.value === "call";
     checkout.querySelector("[data-delivery-fields]").hidden = !hasDelivery;
     checkout.querySelector("[data-call-help]").hidden = !call;

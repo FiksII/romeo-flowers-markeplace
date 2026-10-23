@@ -525,7 +525,11 @@ def order_text(part, for_admin=False, compact=False):
             f"Сумма заказа {rub(part.total)}, магазину {rub(part.partner_total)}"
         )
     else:
-        if part.payment_status == "refunded":
+        if part.is_gift:
+            lines.append(
+                "Подарок за счёт магазина. Букет и доставка бесплатно. Получать деньги с клиента не нужно."
+            )
+        elif part.payment_status == "refunded":
             lines.append(
                 "Оплата возвращена. Не выдавайте заказ без уточнения в кабинете."
             )
@@ -593,9 +597,7 @@ def recipients(part):
     if admin_wants(part):
         owners |= Q(user__is_superuser=True, user__is_active=True)
     channels = [
-        channel
-        for channel, _ in MessengerLink.CHANNELS
-        if channel_enabled(channel)
+        channel for channel, _ in MessengerLink.CHANNELS if channel_enabled(channel)
     ]
     return (
         MessengerLink.objects.filter(owners)
@@ -647,7 +649,8 @@ def deliver(message_id, now=None):
             if not link.enabled or not link.chat_id:
                 raise RecipientGone("link disabled")
             if message.part_id and link.channel in {
-                MessengerLink.TELEGRAM, MessengerLink.MAX,
+                MessengerLink.TELEGRAM,
+                MessengerLink.MAX,
             }:
                 part = message.part
                 message.text = order_text(part, for_admin=link.user_id is not None)
