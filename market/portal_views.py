@@ -593,7 +593,7 @@ def product_edit(request, slug, pk=None):
                 initial[f"pickup_price_{code}"] = pickup
                 initial[f"delivery_price_{code}"] = delivery
     form = ProductForm(
-        request.POST or None, request.FILES or None, initial=initial, shop=shop
+        request.POST or None, request.FILES or None, initial=initial, shop=shop, listing=listing
     )
     if request.method == "POST" and form.is_valid():
         try:
