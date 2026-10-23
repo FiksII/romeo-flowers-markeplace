@@ -23,7 +23,7 @@ shop identity, contacts or monetary details.
 - [x] Write failing Python tests for endpoint ownership, all status labels, no-store, safe GET and DOM hooks. Write failing JS tests for in-place updates, hidden tabs, concurrent requests, retries, timeout, signed-out session and no navigation.
 - [x] Implement GET view/route, shared page hooks and standalone customer-orders.js with polling lifecycle and per-request timeout. Keep payment and fulfillment writers unchanged.
 - [x] Run relevant Python and all frontend tests, lint, Django/migration checks and independent review.
-- [ ] Merge verified branch into develop; back up, deploy exact develop with collectstatic, and verify live endpoint and static asset. Promote checked sources to master and push without production deployment.
+- [x] Merge verified branch into develop; back up, deploy exact develop with collectstatic, and verify live endpoint and static asset. Promote checked sources to master and push without production deployment.
 
 ## Execution ledger
 
@@ -32,3 +32,4 @@ shop identity, contacts or monetary details.
 - Initial full run hit a missing parent directory for pytest temp files. Created the ignored scratch parent and repeated the full suite successfully; no product change required.
 - Real IAB test against an isolated local SQLite instance: an open list changed preparing to ready, then open details changed ready to courier, solely after service transitions in another process. No reload/navigation was performed for either change. Providers disabled; disposable local data only.
 - Fetch cancellation, visibility and cache options checked against MDN platform documentation. No dependencies added.
+- Dev verified at /srv/romeo-marketplace/releases/20261023-153910-customer-live from develop 5f2dcc225cb8578877573cefd3ffe5091f1e1725. Backup /srv/backups/romeo-marketplace-before-customer-live-20261023-153910. Server full SQLite 575 passed, 5 skips; transactional live API/labels/ownership and static HTTPS checks passed before/after switch. Connection interrupted by tool update after tests; resumed only after file/environment verification. No production deployment.
