@@ -1,6 +1,7 @@
-{% extends 'market/base.html' %}{% load market_tags %}
+{% extends 'market/base.html' %}{% load market_tags static %}
+{% block report_assets %}<script src="{% static 'market/customer-orders.js' %}?v=1" defer></script>{% endblock %}
 {% block content %}
-<section class="shell section-space">
+<section class="shell section-space" data-customer-orders-live="{% url 'market:customer-orders-live' %}">
   <div class="page-heading"><h1>Мои заказы</h1></div>
   {% for order in orders %}
   <a class="order-list-card" href="{% url 'market:order' order.number %}">
@@ -8,7 +9,7 @@
       <h3>Заказ № {{ order.number }}</h3>
       <p>{{ order.date_placed|date:'d.m.Y H:i' }}</p>
       {% for part in order.shop_orders.all %}
-      <p>{{ part.get_method_display }}{% if part.method == 'pickup' %} · {{ part.shop.name }}{% endif %} <span class="status-chip">{{ part.get_status_display }}</span></p>
+      <p>{{ part.get_method_display }}{% if part.method == 'pickup' %} · {{ part.shop.name }}{% endif %} <span data-customer-order-status="{{ part.pk }}" aria-live="polite" class="status-chip">{{ part.get_status_display }}</span></p>
       {% endfor %}
     </div>
     <strong class="money">{{ order.total_incl_tax|rub }} →</strong>
