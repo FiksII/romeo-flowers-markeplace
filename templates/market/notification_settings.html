@@ -1,5 +1,6 @@
-{% extends 'market/base.html' %}{% load market_tags %}
+{% extends 'market/base.html' %}{% load market_tags static %}
 {% block title %}Настройки уведомлений — Ромео{% endblock %}
+{% block report_assets %}<script src="{% static 'market/messenger-settings.js' %}?v=1" defer></script>{% endblock %}
 {% block content %}<section class="shell section-space">
   <div class="page-heading"><span class="eyebrow">{% if shop %}{{ shop.name }}{% else %}Супер-администратор{% endif %}</span><h1>Настройки</h1></div>
   {% if shop %}{% include 'market/partials/partner_nav.html' %}{% else %}{% include 'market/partials/operator_nav.html' %}{% endif %}
@@ -21,7 +22,7 @@
         <div class="messenger-actions">
           {% if channel.id == 'telegram' and link.is_linked %}<form method="post">{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}">{% if link.can_manage_catalogue %}<span class="field-help">Добавление букетов разрешено</span> <button class="button button-secondary button-sm" name="action" value="catalogue-off">Запретить добавление букетов</button>{% else %}<button class="button button-secondary button-sm" name="action" value="catalogue-on">Разрешить добавление букетов</button>{% endif %}</form>{% endif %}
           {% if link.is_linked %}<form method="post">{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}">{% if link.enabled %}<button class="button button-secondary button-sm" name="action" value="off">Выключить</button>{% else %}<button class="button button-primary button-sm" name="action" value="on">Включить</button>{% endif %}</form>
-          <form method="post">{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}"><button class="button button-secondary button-sm" name="action" value="test">Проверить</button></form>
+          <form method="post" data-messenger-test>{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}"><button class="button button-secondary button-sm" name="action" value="test">Проверить</button><p class="field-help" role="status" aria-live="polite" data-messenger-result hidden></p></form>
           <form method="post" data-confirm="Отвязать текущий чат и выдать новую ссылку для {{ link.phone|phone }}?">{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}"><button class="muted-link" name="action" value="renew">Новая ссылка</button></form>
           {% elif channel.available %}<form method="post">{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}"><button class="muted-link" name="action" value="renew">Новая ссылка</button></form>{% endif %}
           <form method="post" data-confirm="Удалить {{ link.phone|phone }} из уведомлений {{ channel.label }}?">{% csrf_token %}<input type="hidden" name="link" value="{{ link.pk }}"><button class="muted-link danger-link" name="action" value="delete">Удалить</button></form>
@@ -45,7 +46,7 @@
         <p class="field-help">Чат: {{ channel.link.title|default:channel.link.chat_id }}</p>
         <div class="messenger-actions">
           <form method="post">{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}">{% if channel.link.enabled %}<button class="button button-secondary button-sm" name="action" value="off">Выключить</button>{% else %}<button class="button button-primary button-sm" name="action" value="on">Включить</button>{% endif %}</form>
-          <form method="post">{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}"><button class="button button-secondary button-sm" name="action" value="test">Проверить</button></form>
+          <form method="post" data-messenger-test>{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}"><button class="button button-secondary button-sm" name="action" value="test">Проверить</button><p class="field-help" role="status" aria-live="polite" data-messenger-result hidden></p></form>
           <form method="post" data-confirm="Отключить {{ channel.label }}?">{% csrf_token %}<input type="hidden" name="channel" value="{{ channel.id }}"><button class="muted-link danger-link" name="action" value="delete">Отвязать</button></form>
         </div>
       {% elif channel.link %}

@@ -197,17 +197,17 @@ def _send_test(request, link):
     except messengers.RecipientGone:
         link.enabled = False
         link.save(update_fields=["enabled"])
-        messages.error(
-            request,
+        ok = False
+        text = (
             f"{name} не принимает наши сообщения: похоже, бот или сообщество "
-            "заблокированы. Выдайте новую ссылку и подключите заново.",
+            "заблокированы. Выдайте новую ссылку и подключите заново."
         )
     except messengers.MessengerError:
-        messages.error(
-            request, "Не удалось отправить проверочное сообщение. Попробуйте позже."
-        )
+        ok, text = False, "Не удалось отправить проверочное сообщение. Попробуйте позже."
     else:
-        messages.success(request, "Проверочное сообщение отправлено.")
+        ok, text = True, "Проверочное сообщение отправлено."
+    messages.add_message(request, messages.SUCCESS if ok else messages.ERROR, text)
+    return ok, text
 
 
 def _row_action(request, link, action):
@@ -235,7 +235,7 @@ def _row_action(request, link, action):
             )
             messages.success(request, "Право на добавление букетов сохранено.")
     elif action == "test":
-        _send_test(request, link)
+        return _send_test(request, link)
     else:
         link.enabled = action == "on"
         link.save(update_fields=["enabled"])
@@ -272,7 +272,7 @@ def _notification_post(request, shop):
             user=request.user, channel=request.POST.get("channel")
         ).first()
     if link is not None:
-        _row_action(request, link, action)
+        return _row_action(request, link, action)
 
 
 def _shop_channels(shop):
@@ -326,7 +326,16 @@ def _personal_channels(user):
 
 def _notification_settings_page(request, *, shop=None):
     if request.method == "POST":
-        _notification_post(request, shop)
+        outcome = _notification_post(request, shop)
+        if request.POST.get("action") == "test" and "application/json" in request.headers.get("Accept", ""):
+            from django.http import JsonResponse
+
+            # Consume flash feedback: this request displays it beside the button.
+            list(messages.get_messages(request))
+            ok, text = outcome or (False, "Подключение не найдено или недоступно.")
+            response = JsonResponse({"ok": ok, "message": text}, status=200 if ok else 400)
+            response["Cache-Control"] = "no-store"
+            return response
         return redirect(request.path)
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET", "POST"])
