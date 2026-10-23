@@ -66,9 +66,9 @@
       <div class="summary-row total-row"><span>Итого</span><strong data-order-total>{{ request.basket.total_incl_tax|rub }}</strong></div>
       <fieldset class="payment-choice"><legend>Оплата</legend>
         {{ form.payment_method }}{{ form.payment_method.errors }}
-        {% if form.payment_method.field.choices|length < 2 %}<p class="field-help">Онлайн-оплата скоро появится.</p>{% endif %}
+        <p class="field-help" data-payment-help>Доставка оплачивается онлайн. При самовывозе можно оплатить онлайн или наличными при получении.</p>
       </fieldset>
-      <button class="button button-primary button-block">Создать заказ</button>
+      <button class="button button-primary button-block" data-checkout-submit>Создать заказ</button>
       <p class="field-help"><a class="text-link" href="{% url 'market:delivery' %}" target="_blank" rel="noopener">Условия доставки и оплаты</a></p>
       <p class="field-help">Нажимая «Создать заказ», вы принимаете <a class="text-link" href="{% url 'market:offer' %}" target="_blank" rel="noopener">публичную оферту</a>. <a class="text-link" href="{% url 'market:requisites' %}" target="_blank" rel="noopener">Реквизиты оператора</a></p>
       <p class="field-help">При самовывозе применяется цена для самовывоза. Заказ с оплатой при получении резервируется до получения.</p>

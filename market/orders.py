@@ -153,6 +153,8 @@ def place_market_order(
             shop, f"{method}_enabled"
         ):
             raise ValidationError("Этот способ получения недоступен.")
+        if method == "delivery" and payment_method != "online":
+            raise ValidationError("Доставка оплачивается только онлайн.")
         clarify = method == "delivery" and delivery_contact == "call"
         defer_slot = clarify and shop.own_delivery
         slot = None
