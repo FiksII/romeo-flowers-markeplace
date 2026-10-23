@@ -4,9 +4,6 @@
   {% for item in category_options %}
     {% if item.count or item.selected %}
     <a class="category-chip{% if item.selected %} is-active{% endif %}" href="{{ item.url }}" data-live-link{% if item.selected %} aria-current="true" aria-label="{{ item.label }} — убрать фильтр"{% endif %}><img src="{% static item.image %}" alt="" width="28" height="28" loading="lazy"><span class="category-name">{{ item.label }}</span><small>{{ item.count }}</small></a>
-    {% else %}
-    {# Nothing to show under the current filters: visible, but not a dead-end link. #}
-    <span class="category-chip is-zero" aria-disabled="true"><img src="{% static item.image %}" alt="" width="28" height="28" loading="lazy"><span class="category-name">{{ item.label }}</span><small>0</small></span>
     {% endif %}
   {% endfor %}
 </nav>

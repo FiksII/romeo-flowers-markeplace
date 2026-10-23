@@ -9,10 +9,10 @@
     <label class="mini-search live-only">{% include "storefront/partials/icon.html" with name="search" %}<span class="visually-hidden">Найти цветок</span><input type="search" placeholder="Найти цветок" autocomplete="off" data-flower-search></label>
     <div class="tags" role="group" aria-label="Цветы в составе">
       {% for flower in flower_options %}
-        <label class="filter-tag flower-palette-{{ flower.palette }}{% if flower.zero %} is-zero{% endif %}" data-flower-name="{{ flower.name }}"><input type="checkbox" name="flower" value="{{ flower.pk }}"{% if flower.selected %} checked{% endif %}><span class="tag-mark" aria-hidden="true"></span><span>{{ flower.name }}</span><small>{{ flower.count }}</small></label>
+        {% if flower.count or flower.selected %}<label class="filter-tag flower-palette-{{ flower.palette }}" data-flower-name="{{ flower.name }}"><input type="checkbox" name="flower" value="{{ flower.pk }}"{% if flower.selected %} checked{% endif %}><span class="tag-mark" aria-hidden="true"></span><span>{{ flower.name }}</span><small>{{ flower.count }}</small></label>{% endif %}
       {% endfor %}
     </div>
-    <p class="empty-tags" data-flower-empty hidden>Такого цветка нет в справочнике.</p>
+    <p class="empty-tags" data-flower-empty hidden>Нет доступных цветов с таким названием.</p>
     <div class="menu-actions">
       {% if flowers_selected %}<a class="link" href="{{ flowers_reset_url }}" data-live-link data-keep-open>Сбросить</a>{% else %}<span></span>{% endif %}
       <button class="button button-primary" type="submit">{% if not flowers_selected %}Показать{% elif total_count %}Показать {{ total_count }} {{ total_count|ru_plural:"букет,букета,букетов" }}{% else %}Ничего не найдено{% endif %}</button>
