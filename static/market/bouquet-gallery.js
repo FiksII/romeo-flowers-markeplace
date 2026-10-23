@@ -57,8 +57,14 @@ document.querySelectorAll("[data-photo-editor]").forEach((editor) => {
   const input = editor.querySelector("[data-photo-upload]");
   const previews = editor.querySelector("[data-photo-previews]");
   const status = editor.querySelector("[data-photo-status]");
-  let urls = [];
+  let urls = [], selectedFile = null;
   const release = () => { urls.forEach(url => URL.revokeObjectURL(url)); urls = []; };
+  const ensurePrimary = () => {
+    if (editor.querySelector("[data-photo-primary]:checked")) return;
+    const next = [...editor.querySelectorAll("[data-photo-primary]")].find(radio =>
+      !radio.closest(".bouquet-photo-tile").querySelector("[data-photo-remove]:checked"));
+    if (next) next.checked = true;
+  };
   const updateStatus = () => {
     const files = [...input.files];
     const removed = editor.querySelectorAll('input[name="remove_photos"]:checked').length;
@@ -71,21 +77,61 @@ document.querySelectorAll("[data-photo-editor]").forEach((editor) => {
   input.addEventListener("change", () => {
     release();
     previews.replaceChildren();
-    [...input.files].forEach((file, index) => {
+    const files = [...input.files];
+    files.forEach((file, index) => {
       const tile = document.createElement("div");
       tile.className = "bouquet-photo-tile";
+      const frame = document.createElement("div");
+      frame.className = "photo-image-frame";
       const image = document.createElement("img");
       image.src = URL.createObjectURL(file);
       urls.push(image.src);
       image.alt = `Новое фото ${index + 1}`;
       image.width = 120; image.height = 150;
-      const label = document.createElement("span");
-      label.textContent = `Новое фото ${index + 1}`;
-      tile.append(image, label);
-      previews.append(tile);
+      const star = document.createElement("label");
+      star.className = "photo-action photo-primary-toggle";
+      star.title = `Сделать новое фото ${index + 1} главным`;
+      const radio = document.createElement("input");
+      radio.type = "radio"; radio.name = "primary_photo"; radio.value = `new:${index}`;
+      radio.className = "visually-hidden"; radio.dataset.photoPrimary = "";
+      radio.setAttribute("aria-label", star.title);
+      radio.checked = selectedFile === file;
+      star.append(radio);
+      ["empty", "filled"].forEach((state, i) => {
+        const icon = document.createElement("span");
+        icon.className = `photo-star-${state}`; icon.textContent = i ? "★" : "☆";
+        icon.setAttribute("aria-hidden", "true"); star.append(icon);
+      });
+      const remove = document.createElement("button");
+      remove.type = "button"; remove.className = "photo-action photo-delete-new";
+      remove.textContent = "×"; remove.setAttribute("aria-label", `Убрать новое фото ${index + 1}`);
+      remove.addEventListener("click", () => {
+        if (selectedFile === file) selectedFile = null;
+        const transfer = new DataTransfer();
+        files.filter((_, i) => i !== index).forEach(kept => transfer.items.add(kept));
+        input.files = transfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      const badge = document.createElement("span");
+      badge.className = "photo-main-badge"; badge.textContent = "Главное";
+      frame.append(image, star, remove, badge); tile.append(frame); previews.append(tile);
     });
+    ensurePrimary();
     updateStatus();
   });
-  editor.addEventListener("change", updateStatus);
+  editor.addEventListener("change", (event) => {
+    const control = event.target;
+    if (control.matches("[data-photo-primary]") && control.checked) {
+      const remove = control.closest(".bouquet-photo-tile").querySelector("[data-photo-remove]");
+      if (remove) remove.checked = false;
+      selectedFile = control.value.startsWith("new:") ? input.files[Number(control.value.split(":")[1])] : null;
+    }
+    if (control.matches("[data-photo-remove]") && control.checked) {
+      const primary = control.closest(".bouquet-photo-tile").querySelector("[data-photo-primary]");
+      primary.checked = false;
+    }
+    ensurePrimary();
+    updateStatus();
+  });
   window.addEventListener("pagehide", release, { once: true });
 });

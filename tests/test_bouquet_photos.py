@@ -265,3 +265,15 @@ def test_long_upload_name_fits_existing_primary_photo_column(client, owner, shop
     listing = shop.listings.get()
     assert len(listing.photo.name) <= 100
     assert listing.product.images.first().original.name == listing.photo.name
+
+
+def test_any_new_photo_can_be_selected_as_primary(client, owner, shop):
+    response = upload(client, owner, shop, photo=[photo(), photo("side.png"), photo("back.png")], primary_photo="new:2")
+    assert response.status_code == 302
+    listing = shop.listings.get()
+    images = list(listing.product.images.all())
+    assert len(images) == 3
+    assert images[0].original.name == listing.photo.name
+    # The selected third upload is promoted; the first two retain their order.
+    assert images[0].pk > images[1].pk
+    assert images[1].pk < images[2].pk

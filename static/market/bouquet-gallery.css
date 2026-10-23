@@ -11,9 +11,20 @@
 .bouquet-photo-editor legend{font-weight:600;padding:0 8px}
 .bouquet-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px;margin:14px 0}
 .bouquet-photo-tile{min-width:0}
-.bouquet-photo-tile img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:10px;display:block;margin-bottom:10px}
-.bouquet-photo-tile label,.bouquet-photo-editor>label{display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0}
-.bouquet-photo-editor input[type="radio"],.bouquet-photo-editor input[type="checkbox"]{width:16px;height:16px;flex:0 0 auto}
+.bouquet-photo-tile img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:12px;display:block}
+.photo-image-frame{position:relative}
+.bouquet-photo-editor .photo-action{position:absolute;top:8px;display:grid;place-items:center;width:34px;height:34px;margin:0;border:0;border-radius:50%;background:rgba(255,255,255,.95);color:#273825;box-shadow:0 2px 8px #0002;cursor:pointer;font-size:25px;line-height:1;padding:0}
+.photo-primary-toggle{left:8px}
+.photo-remove-toggle,.photo-delete-new{right:8px}
+.photo-action:focus-within,.photo-action:focus-visible{outline:3px solid #395b31;outline-offset:2px}
+.photo-star-filled,.photo-restore-icon,.photo-main-badge,.photo-removal-note{display:none}
+.photo-primary-toggle:has(input:checked){color:#a56e05}
+.photo-primary-toggle:has(input:checked) .photo-star-filled,.photo-remove-toggle:has(input:checked) .photo-restore-icon{display:block}
+.photo-primary-toggle:has(input:checked) .photo-star-empty,.photo-remove-toggle:has(input:checked) .photo-remove-icon{display:none}
+.bouquet-photo-tile:has([data-photo-primary]:checked) .photo-main-badge{display:block}
+.photo-main-badge{position:absolute;bottom:8px;left:8px;padding:4px 8px;border-radius:20px;background:#273f25ed;color:white;font-size:11px;font-weight:600}
+.bouquet-photo-tile:has([data-photo-remove]:checked) img{opacity:.3}
+.bouquet-photo-tile:has([data-photo-remove]:checked) .photo-main-badge{display:none}
+.bouquet-photo-tile:has([data-photo-remove]:checked) .photo-removal-note{display:block;font-size:12px;color:var(--muted,#6b7068);margin:8px 0 0}
 .bouquet-photo-editor input[type="file"]{max-width:100%}
-.bouquet-photo-tile:has(input[type="checkbox"]:checked) img{opacity:.35}
 @media(max-width:479px){.bouquet-photo-editor{padding:14px}.bouquet-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
