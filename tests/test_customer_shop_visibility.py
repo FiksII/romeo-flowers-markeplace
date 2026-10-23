@@ -6,6 +6,12 @@ from tests.test_orders import ADDRESS, CONTACT, NOW, basket_for, choice
 pytestmark = pytest.mark.django_db
 
 
+def test_customer_footer_uses_romeo_brand_and_has_no_dead_shop_link(client):
+    html = client.get('/').content.decode()
+    for text in ['Магазины-партнёры', 'О маркетплейсе', 'от местных флористов', 'href="/#partners"']:
+        assert text not in html
+
+
 @pytest.mark.parametrize('method', ['any', 'delivery', 'pickup'])
 def test_shop_identity_is_only_visible_for_selected_pickup(client, listing, method):
     session = client.session
