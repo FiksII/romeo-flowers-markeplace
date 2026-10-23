@@ -304,14 +304,14 @@ def product_detail(request, pk):
 
 
 def shop_detail(request, slug):
-    if get_context(request).method != "pickup" and not request.user.is_superuser:
-        return redirect("market:home")
     shop = get_object_or_404(
         Shop.objects.select_related("settlement"),
         slug=slug,
         status="active",
         settlement__region__in=["77", "50"],
     )
+    if get_context(request).method != "pickup" and not request.user.is_superuser:
+        return redirect("market:home")
     return render(
         request,
         "market/shop.html",
