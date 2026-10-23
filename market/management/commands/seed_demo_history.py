@@ -322,9 +322,9 @@ class Command(BaseCommand):
             transition_shop_order(part, operator, "preparing")
             if scenario == "preparing":
                 continue
-            transition_shop_order(
-                part, operator, "ready" if part.method == "pickup" else "courier"
-            )
+            transition_shop_order(part, operator, "ready")
+            if part.method == "delivery" and scenario != "ready":
+                transition_shop_order(part, operator, "courier")
             if scenario in {"courier", "ready"}:
                 continue
             transition_shop_order(part, operator, "completed")

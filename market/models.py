@@ -431,9 +431,9 @@ class ShopOrder(models.Model):
     STATUSES = [
         ("accepted", "Принят"),
         ("preparing", "Собирается"),
-        ("ready", "Готов к выдаче"),
+        ("ready", "Готов"),
         ("courier", "Передан курьеру"),
-        ("completed", "Получен"),
+        ("completed", "Доставлен"),
         ("cancelled", "Отменён"),
     ]
     order = models.ForeignKey(
@@ -519,6 +519,11 @@ class ShopOrder(models.Model):
     def can_be_worked(self):
         return self.payment_method == "cash" or self.payment_status == "paid"
 
+    def get_status_display(self):
+        if self.status == "completed" and self.method == "pickup":
+            return "Выдан"
+        return dict(self.STATUSES).get(self.status, self.status)
+
     @property
     def next_step(self):
         """(status, button label) the shop moves this part to next, or ``None``."""
@@ -527,14 +532,18 @@ class ShopOrder(models.Model):
         pickup = self.method == "pickup"
         done = (
             "completed",
-            "Получен, наличные приняты" if self.payment_method == "cash" else "Получен",
+            "Выдан, наличные приняты"
+            if pickup
+            and self.payment_method == "cash"
+            and self.payment_status == "pending"
+            else "Выдан"
+            if pickup
+            else "Доставлен",
         )
         return {
             "accepted": ("preparing", "Начать сборку"),
-            "preparing": ("ready", "Готов к выдаче")
-            if pickup
-            else ("courier", "Передан курьеру"),
-            "ready": done if pickup else None,
+            "preparing": ("ready", "Готов"),
+            "ready": done if pickup else ("courier", "Передан курьеру"),
             "courier": None if pickup else done,
         }.get(self.status)
 

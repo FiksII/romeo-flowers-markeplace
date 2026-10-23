@@ -8,6 +8,13 @@ register = template.Library()
 
 
 @register.simple_tag
+def order_next_step(part, user):
+    from market.access import next_order_step
+
+    return next_order_step(user, part)
+
+
+@register.simple_tag
 def listing_photo(listing, preset):
     """``{% listing_photo listing "card" as photo %}`` -> ``photo.src``, ``photo.srcset``."""
     return resized_listing_photo(listing, preset)
