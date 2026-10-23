@@ -182,6 +182,8 @@ def home(request):
     )
     flowers = list(Flower.objects.all())
     chosen = set(spec.flowers)
+    if context.method != "pickup":
+        shops = []
     category_options = [
         {
             **option,
@@ -259,7 +261,7 @@ def home(request):
                 hide_flowers={str(item["pk"]) for item in rail},
             ),
             "can_reset_filters": len(active_chips) > 1,
-            "partner_shops": partner_shops(unsearched),
+            "partner_shops": partner_shops(unsearched) if context.method == "pickup" else [],
         },
     )
 
@@ -302,6 +304,8 @@ def product_detail(request, pk):
 
 
 def shop_detail(request, slug):
+    if get_context(request).method != "pickup" and not request.user.is_superuser:
+        return redirect("market:home")
     shop = get_object_or_404(
         Shop.objects.select_related("settlement"),
         slug=slug,

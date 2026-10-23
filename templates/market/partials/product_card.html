@@ -1,7 +1,7 @@
 {% load market_tags %}<article class="product-card">
   <div class="product-media">
     {% listing_photo listing "card" as photo %}<a class="product-image" href="{% url 'market:product' listing.pk %}"><img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 759px) 50vw, (max-width: 1180px) 31vw, 302px"{% endif %} alt="{{ listing.product.title }}" loading="lazy" width="400" height="500"></a>
-    <span class="city-chip">{{ listing.shop.settlement.name }}</span>
+    {% if receiving.method == 'pickup' %}<span class="city-chip">{{ listing.shop.settlement.name }}</span>{% endif %}
   </div>
   <div class="product-copy">
     <h3><a href="{% url 'market:product' listing.pk %}">{{ listing.product.title }}</a></h3>
@@ -19,6 +19,6 @@
     <form class="basket-add-form" method="post" action="{% url 'market:basket-add' listing.pk %}" data-basket-add>{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button button-pill" type="submit" aria-label="Добавить {{ listing.product.title }} в корзину">{% include "storefront/partials/icon.html" with name="plus" class="icon-sm" %}<span>В корзину</span></button></form>
     {% endif %}
     {% if request.user.is_superuser %}<a class="text-link admin-price-link" href="{% url 'market:listing-price' listing.pk %}?next={{ request.get_full_path|urlencode }}">Цена продажи</a>{% endif %}
-    <p class="product-meta"><a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · получение <span class="slot-time">{{ listing.nearest_slot.label }}</span></p>
+    <p class="product-meta">{% if receiving.method == 'pickup' %}<a href="{% url 'market:shop' listing.shop.slug %}">{{ listing.shop.name }}</a> · {% endif %}Получение <span class="slot-time">{{ listing.nearest_slot.label }}</span></p>
   </div>
 </article>

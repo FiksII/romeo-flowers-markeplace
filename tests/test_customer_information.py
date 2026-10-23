@@ -72,6 +72,9 @@ def test_offer_distinguishes_sellers_and_operator_and_explains_returns(client):
 
 
 def test_seller_identity_is_public_but_bank_details_remain_private(client, shop):
+    session = client.session
+    session['receiving'] = {'method': 'pickup'}
+    session.save()
     shop.legal_name = "ООО «Тестовый продавец»"
     shop.inn = "7701234567"
     shop.bank_account = "40802810000000000000"
@@ -84,7 +87,7 @@ def test_seller_identity_is_public_but_bank_details_remain_private(client, shop)
     assert shop.bank_bik not in html
 
 
-def test_checkout_links_to_seller_and_offer_before_order_creation(
+def test_checkout_keeps_pickup_details_and_offer_before_order_creation(
     client, owner, listing
 ):
     client.force_login(owner)
@@ -92,7 +95,8 @@ def test_checkout_links_to_seller_and_offer_before_order_creation(
     response = client.get("/checkout/")
     assert response.status_code == 200
     html = response.content.decode()
-    assert f'href="/shops/{listing.shop.slug}/"' in html
+    assert f'href="/shops/{listing.shop.slug}/"' not in html
+    assert '<strong>' + listing.shop.name + '</strong>' in html
     assert 'href="/offer/"' in html
     assert "Проект публичной оферты" not in html
     assert 'href="/delivery/"' in html

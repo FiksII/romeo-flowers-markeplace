@@ -135,7 +135,7 @@ def place_market_order(
         .order_by("pk")
     }
     if set(choices) != set(groups):
-        raise ValidationError("Выберите получение для каждого магазина.")
+        raise ValidationError("Выберите получение для каждой части заказа.")
     basket.strategy = MarketplaceStrategy(
         methods={shop_id: choice.get("method") for shop_id, choice in choices.items()},
         shops=shops,
@@ -148,7 +148,7 @@ def place_market_order(
         shop, choice = shops[shop_id], choices[shop_id]
         method = choice.get("method")
         if shop.status != "active" or shop.settlement.region not in {"77", "50"}:
-            raise ValidationError(f"Магазин «{shop.name}» временно недоступен.")
+            raise ValidationError("Эта часть заказа временно недоступна.")
         if method not in {"delivery", "pickup"} or not getattr(
             shop, f"{method}_enabled"
         ):
@@ -182,7 +182,7 @@ def place_market_order(
         )
         if not defer_slot and not slot:
             raise ValidationError(
-                f"Интервал магазина «{shop.name}» изменился. Выберите другой."
+                "Интервал получения изменился. Выберите другой."
             )
         if method == "delivery" and not clarify:
             if address is None:
@@ -190,7 +190,7 @@ def place_market_order(
             validate_address(address)
             if not location_matches(shop, method, FulfillmentContext(address=address)):
                 raise ValidationError(
-                    f"Магазин «{shop.name}» не доставляет по этому адресу."
+                    "Эти товары недоступны для доставки по выбранному адресу."
                 )
             has_delivery = True
         goods, payout, commission = Decimal(0), Decimal(0), Decimal(0)
@@ -212,7 +212,7 @@ def place_market_order(
             commission += quote.commission * line.quantity
         if goods < shop.minimum_order:
             raise ValidationError(
-                f"Минимальная сумма товаров в «{shop.name}»: {shop.minimum_order} ₽."
+                f"Минимальная сумма товаров в этой части заказа: {shop.minimum_order} ₽."
             )
         # A shop with its own delivery brings the bouquet itself and has it in the price.
         own = method == "delivery" and shop.own_delivery
@@ -363,7 +363,7 @@ def cancel_shop_order(part, actor):
     is_shop = shops_for_user(actor).filter(pk=part.shop_id).exists()
     if not is_shop and part.status not in {"accepted", "preparing"}:
         raise ValidationError(
-            "Заказ уже готов или передан курьеру. Для отмены свяжитесь с магазином."
+            "Заказ уже готов или передан курьеру. Для отмены обратитесь в поддержку."
         )
     return _cancel_locked(part)
 

@@ -14,13 +14,13 @@
     </section>
     {% for group in groups %}
     <section class="group-card" data-checkout-group data-own-delivery="{% if group.own_delivery %}1{% else %}0{% endif %}" data-goods="{{ group.total|unlocalize_money }}">
-      <div class="section-heading"><div><h2>{{ group.shop.name }}</h2><p class="muted">{{ group.shop.settlement.name }} · <a class="text-link" href="{% url 'market:shop' group.shop.slug %}" target="_blank" rel="noopener">О продавце</a></p></div><strong class="money" data-group-goods>{{ group.total|rub }}</strong></div>
+      <div class="section-heading"><div><h2>Часть заказа {{ forloop.counter }}</h2></div><strong class="money" data-group-goods>{{ group.total|rub }}</strong></div>
       {% for item in group.lines %}<p class="checkout-item">{{ item.listing.product.title }}{% if item.line|bouquet_size %} · {{ item.line|bouquet_size }}{% endif %} <span>× {{ item.line.quantity }}</span></p>{% endfor %}
       <div class="two-fields">
         <div class="field"><label for="method-{{ group.shop.pk }}">Получение</label>
           <select id="method-{{ group.shop.pk }}" name="method_{{ group.shop.pk }}" data-method required>
             <option value="">Выберите способ</option>
-            {% if group.slot_options.delivery %}<option value="delivery" data-goods="{{ group.delivery_goods_total|unlocalize_money }}" {% if group.selected_method == 'delivery' %}selected{% endif %}>{% if group.own_delivery %}Доставка магазина{% else %}Доставка Ромео{% endif %}</option>{% endif %}
+            {% if group.slot_options.delivery %}<option value="delivery" data-goods="{{ group.delivery_goods_total|unlocalize_money }}" {% if group.selected_method == 'delivery' %}selected{% endif %}>Доставка</option>{% endif %}
             {% if group.slot_options.pickup %}<option value="pickup" data-goods="{{ group.pickup_goods_total|unlocalize_money }}" data-fee="0" {% if group.selected_method == 'pickup' %}selected{% endif %}>Самовывоз{% if group.pickup_savings > 0 %} · экономия {{ group.pickup_savings|rub }}{% endif %}</option>{% endif %}
           </select>
         </div>
@@ -31,8 +31,8 @@
           </select>
         </div>
       </div>
-      <p class="notice" data-pickup-note hidden>{% if group.pickup_savings > 0 %}Экономия на товарах {{ group.pickup_savings|rub }}.<br>{% endif %}{{ group.shop.settlement.name }}, {{ group.shop.address }}<br>{{ group.shop.pickup_instructions }}</p>
-      {% if not group.available %}<p class="notice error">Этот магазин или его товары недоступны. Вернитесь в корзину.</p>{% endif %}
+      <p class="notice" data-pickup-note hidden>{% if group.pickup_savings > 0 %}Экономия на товарах {{ group.pickup_savings|rub }}.<br>{% endif %}<strong>{{ group.shop.name }}</strong><br>{{ group.shop.settlement.name }}, {{ group.shop.address }}<br>{{ group.shop.pickup_instructions }}</p>
+      {% if not group.available %}<p class="notice error">Эти товары или выбранный способ получения недоступны. Вернитесь в корзину.</p>{% endif %}
       <p class="field-help">Минимальная сумма товаров {{ group.shop.minimum_order|rub }}. Время — московское.</p>
     </section>
     {% endfor %}
@@ -47,7 +47,7 @@
       </fieldset>
       <p class="field-help" data-call-help>Позвоним получателю и уточним адрес и детали доставки. Для доставки Ромео выберите двухчасовой интервал получения.</p>
       <div data-exact-address>
-        <p class="field-help">Доставим без звонка получателю. Укажите точный адрес и выберите интервал получения для каждого магазина.</p>
+        <p class="field-help">Доставим без звонка получателю. Укажите точный адрес и выберите интервал получения для каждой части заказа.</p>
         {{ form.address_token }}
         <div class="field address-field"><label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>{{ form.address }}{{ form.address.errors }}
           <div class="address-results" role="listbox" aria-label="Адреса" hidden></div>
@@ -71,7 +71,7 @@
       <button class="button button-primary button-block">Создать заказ</button>
       <p class="field-help"><a class="text-link" href="{% url 'market:delivery' %}" target="_blank" rel="noopener">Условия доставки и оплаты</a></p>
       <p class="field-help">Нажимая «Создать заказ», вы принимаете <a class="text-link" href="{% url 'market:offer' %}" target="_blank" rel="noopener">публичную оферту</a>. <a class="text-link" href="{% url 'market:requisites' %}" target="_blank" rel="noopener">Реквизиты оператора</a></p>
-      <p class="field-help">При самовывозе учитывается цена магазина для самовывоза. Заказ с оплатой при получении резервируется до получения.</p>
+      <p class="field-help">При самовывозе применяется цена для самовывоза. Заказ с оплатой при получении резервируется до получения.</p>
     </aside>
   </form>
   {% else %}<div class="empty-state"><h2>Корзина пуста</h2><a class="button button-primary" href="{% url 'market:home' %}#catalogue">Выбрать цветы</a></div>{% endif %}
