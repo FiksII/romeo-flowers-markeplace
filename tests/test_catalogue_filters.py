@@ -131,6 +131,22 @@ def test_home_counts_what_each_choice_would_show(client, bouquets):
     assert response.context["category_total"] == 2
 
 
+def test_empty_filter_choices_are_hidden_but_chosen_choices_can_be_cleared(client, bouquets):
+    html = client.get('/').content.decode()
+    assert 'data-flower-name="Орхидея"' not in html
+    assert 'category-chip is-zero' not in html
+    assert 'data-flower-name="Роза"' in html
+    assert 'data-flower-name="Пион"' in html
+
+    selected = client.get('/', {'flower':pk('Орхидея'), 'category':'basket'})
+    html = selected.content.decode()
+    assert selected.context['total_count'] == 0
+    assert 'data-flower-name="Орхидея"' in html
+    assert f'name="flower" value="{pk("Орхидея")}" checked' in html
+    assert 'Корзины — убрать фильтр' in html
+    assert 'data-flower-name="Роза"' not in html
+
+
 def test_home_with_two_rail_flowers_avoids_duplicate_chips(client, bouquets):
     response = client.get("/", {"flower": [pk("Роза"), pk("Пион")]})
     html = response.content.decode()
