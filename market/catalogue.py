@@ -122,11 +122,13 @@ def catalogue_candidates(context, filters=None, now=None):
     )
     if filters.get("q"):
         term = filters["q"].strip()[:100]
-        query = query.filter(
+        search = (
             Q(product__title__icontains=term)
             | Q(product__description__icontains=term)
-            | Q(shop__name__icontains=term)
         )
+        if context.method == "pickup":
+            search |= Q(shop__name__icontains=term)
+        query = query.filter(search)
     if filters.get("shop"):
         query = query.filter(shop__slug=filters["shop"][:100])
     listings = []
@@ -140,6 +142,9 @@ def catalogue_candidates(context, filters=None, now=None):
             listing.nearest_slot = min(options.values(), key=lambda slot: slot.start)
             listing.display_price = listing.price_for(context.method)
             listing.display_sizes = listing.size_options(context.method)
+            listing.display_price_varies = len(
+                {option["price"] for option in listing.display_sizes}
+            ) > 1
             listings.append(listing)
     return listings
 

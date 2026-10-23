@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
+from market.delivery_areas import normalized
 from market.zones import point_in_zone
 
 
@@ -144,8 +145,9 @@ def location_matches(shop, method, context):
                 shop.delivery_zone,
             )
         return (
-            shop.settlement.name.casefold()
-            == context.address.get("city", "").casefold()
+            shop.settlement.region == context.address["region"]
+            and normalized(shop.settlement.name)
+            == normalized(context.address.get("city", ""))
         )
     if context.city_id:
         if method == "pickup":

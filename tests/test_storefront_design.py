@@ -151,7 +151,7 @@ def test_card_keeps_the_receiving_time_on_one_line(client, listing):
     response = client.get("/")
     label = response.context["page"][0].nearest_slot.label
     html = response.content.decode()
-    assert f'получение <span class="slot-time">{label}</span>' in html
+    assert f'Получение <span class="slot-time">{label}</span>' in html
 
 
 def test_category_chip_is_active_and_clears_the_filter_on_the_home_page(
@@ -269,14 +269,17 @@ def test_benefits_sit_under_the_banner(client, listing):
             'class="shell home-benefits"',
             'id="receiving"',
             'id="catalogue"',
-            'id="partners"',
         )
     ]
     assert order == sorted(order)
-    assert "<strong>Местные флористы</strong>" in html
+    assert "<strong>Цветы от Ромео</strong>" in html
+    assert 'id="partners"' not in html
 
 
 def test_partner_shops_show_shops_with_available_bouquets(client, listing):
+    session = client.session
+    session['receiving'] = {'method': 'pickup'}
+    session.save()
     html = client.get("/").content.decode()
     block = html.split('id="partners"', 1)[1].split("</section>", 1)[0]
     assert '<a href="/shops/test-shop/">Тестовые цветы</a>' in block
@@ -286,6 +289,9 @@ def test_partner_shops_show_shops_with_available_bouquets(client, listing):
 
 
 def test_partner_shops_ignore_the_catalogue_search(client, listing):
+    session = client.session
+    session['receiving'] = {'method': 'pickup'}
+    session.save()
     response = client.get("/", {"q": "нет такого букета"})
     assert response.context["total_count"] == 0
     shops = [item["shop"].slug for item in response.context["partner_shops"]]

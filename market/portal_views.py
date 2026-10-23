@@ -43,6 +43,7 @@ from market.models import (
     Payout,
     Shop,
     ShopOrder,
+    WeeklyHours,
 )
 from market.orders import (
     ACTIVE_STATUSES,
@@ -175,11 +176,12 @@ def operator_orders_page(request):
     ]
     return _orders_page(
         request,
-        ShopOrder.objects.order_by("-created_at", "-pk"),
+        ShopOrder.objects.filter(status__in=HISTORY_STATUSES).order_by("-created_at", "-pk"),
         extra={
             "romeo_parts": romeo_parts,
             "new_parts": [part for part in other_parts if part.status == "accepted"],
             "work_parts": [part for part in other_parts if part.status != "accepted"],
+            "history": True,
         },
     )
 
@@ -195,17 +197,17 @@ def _send_test(request, link):
     except messengers.RecipientGone:
         link.enabled = False
         link.save(update_fields=["enabled"])
-        messages.error(
-            request,
+        ok = False
+        text = (
             f"{name} не принимает наши сообщения: похоже, бот или сообщество "
-            "заблокированы. Выдайте новую ссылку и подключите заново.",
+            "заблокированы. Выдайте новую ссылку и подключите заново."
         )
     except messengers.MessengerError:
-        messages.error(
-            request, "Не удалось отправить проверочное сообщение. Попробуйте позже."
-        )
+        ok, text = False, "Не удалось отправить проверочное сообщение. Попробуйте позже."
     else:
-        messages.success(request, "Проверочное сообщение отправлено.")
+        ok, text = True, "Проверочное сообщение отправлено."
+    messages.add_message(request, messages.SUCCESS if ok else messages.ERROR, text)
+    return ok, text
 
 
 def _row_action(request, link, action):
@@ -233,7 +235,7 @@ def _row_action(request, link, action):
             )
             messages.success(request, "Право на добавление букетов сохранено.")
     elif action == "test":
-        _send_test(request, link)
+        return _send_test(request, link)
     else:
         link.enabled = action == "on"
         link.save(update_fields=["enabled"])
@@ -270,7 +272,7 @@ def _notification_post(request, shop):
             user=request.user, channel=request.POST.get("channel")
         ).first()
     if link is not None:
-        _row_action(request, link, action)
+        return _row_action(request, link, action)
 
 
 def _shop_channels(shop):
@@ -324,7 +326,16 @@ def _personal_channels(user):
 
 def _notification_settings_page(request, *, shop=None):
     if request.method == "POST":
-        _notification_post(request, shop)
+        outcome = _notification_post(request, shop)
+        if request.POST.get("action") == "test" and "application/json" in request.headers.get("Accept", ""):
+            from django.http import JsonResponse
+
+            # Consume flash feedback: this request displays it beside the button.
+            list(messages.get_messages(request))
+            ok, text = outcome or (False, "Подключение не найдено или недоступно.")
+            response = JsonResponse({"ok": ok, "message": text}, status=200 if ok else 400)
+            response["Cache-Control"] = "no-store"
+            return response
         return redirect(request.path)
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET", "POST"])
@@ -385,6 +396,16 @@ def shop_new(request, operator=False):
             shop.full_clean()
             shop.save()
             form.save_m2m()
+            WeeklyHours.objects.bulk_create(
+                [
+                    WeeklyHours(
+                        shop=shop, weekday=day, method=method,
+                        start_minute=9 * 60, end_minute=21 * 60,
+                    )
+                    for day in range(7)
+                    for method, _ in WeeklyHours.METHODS
+                ]
+            )
             if operator:
                 form.save_memberships()
             else:
@@ -398,9 +419,9 @@ def shop_new(request, operator=False):
             )
         messages.success(
             request,
-            "Магазин создан. Добавьте товары и настройте расписание."
+            "Магазин создан. График — ежедневно 09:00–21:00. Добавьте товары или измените расписание."
             if operator
-            else "Магазин отправлен на проверку. Можно добавить товары и настроить расписание.",
+            else "Магазин отправлен на проверку. График — ежедневно 09:00–21:00. Можно добавить товары или изменить расписание.",
         )
         return redirect("market:partner-shop", slug=shop.slug)
     return render(

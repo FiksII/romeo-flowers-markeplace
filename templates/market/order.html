@@ -9,13 +9,13 @@
   <div class="parts-grid">
     {% for part in parts %}
     <section class="group-card">
-      <div class="section-heading"><h2>{{ part.shop.name }}</h2><span class="status-chip">{{ part.get_status_display }}</span></div>
+      <div class="section-heading"><h2>{% if part.method == 'pickup' %}{{ part.shop.name }}{% else %}Доставка{% endif %}</h2><span class="status-chip">{{ part.get_status_display }}</span></div>
       <p class="payment-label">{{ part.get_payment_method_display }} · {{ part.get_payment_status_display }}</p>
       <strong>{{ part.get_method_display }}</strong>{% include 'market/partials/order_receiving.html' %}
       {% for item in part.items.all %}<div class="summary-row"><span>{{ item.title }}{% if item.size_label %} · {{ item.size_label }}{% endif %} × {{ item.quantity }}</span><span>{{ item.line_total|rub }}</span></div>{% endfor %}
       {% if part.pickup_discount_total %}<p class="field-help">В цене цветов учтена скидка за самовывоз {{ part.pickup_discount_total|rub }}.</p>{% endif %}
-      {% if part.delivery_total %}<div class="summary-row"><span>Доставка · {{ part.get_delivery_owner_display }}</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
-      <div class="summary-row total-row"><strong>Итого по магазину</strong><strong>{{ part.total|rub }}</strong></div>
+      {% if part.delivery_total %}<div class="summary-row"><span>Доставка</span><span>{{ part.delivery_total|rub }}</span></div>{% endif %}
+      <div class="summary-row total-row"><strong>Итого</strong><strong>{{ part.total|rub }}</strong></div>
       {% if part.instructions %}<p class="muted">{{ part.instructions }}</p>{% endif %}
       {% if part.payment_status == 'pending' and part.status == 'accepted' or part.payment_status == 'pending' and part.status == 'preparing' %}<form method="post" action="{% url 'market:customer-cancel' part.pk %}">{% csrf_token %}<button class="muted-link danger-link">Отменить эту часть заказа</button></form>{% endif %}
     </section>

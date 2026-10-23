@@ -61,21 +61,21 @@ FLOWER_RAIL = (
 def flower_rail(params):
     """Flower circles; each one adds its flower to the filter or removes it."""
     chosen = set(params.getlist("flower"))
-    pks = dict(
-        Flower.objects.filter(
-            name__in=[name for name, _, _ in FLOWER_RAIL]
-        ).values_list("name", "pk")
-    )
+    flowers = list(Flower.objects.all())
+    by_name = {flower.name: flower for flower in flowers}
+    illustrated = {name: (label, image) for name, label, image in FLOWER_RAIL}
+    ordered = [by_name[name] for name, _, _ in FLOWER_RAIL if name in by_name]
+    ordered += [flower for flower in flowers if flower.name not in illustrated]
     return [
         {
-            "pk": pks[name],
-            "label": label,
-            "image": f"storefront/images/design/{image}.webp",
-            "url": toggle_flower_url(params, pks[name]),
-            "active": str(pks[name]) in chosen,
+            "pk": flower.pk,
+            "label": illustrated.get(flower.name, (flower.name, ""))[0],
+            "image": f"storefront/images/design/{illustrated[flower.name][1]}.webp"
+            if flower.name in illustrated else "",
+            "url": toggle_flower_url(params, flower.pk),
+            "active": str(flower.pk) in chosen,
         }
-        for name, label, image in FLOWER_RAIL
-        if name in pks
+        for flower in ordered
     ]
 
 
@@ -182,6 +182,8 @@ def home(request):
     )
     flowers = list(Flower.objects.all())
     chosen = set(spec.flowers)
+    if context.method != "pickup":
+        shops = []
     category_options = [
         {
             **option,
@@ -259,7 +261,7 @@ def home(request):
                 hide_flowers={str(item["pk"]) for item in rail},
             ),
             "can_reset_filters": len(active_chips) > 1,
-            "partner_shops": partner_shops(unsearched),
+            "partner_shops": partner_shops(unsearched) if context.method == "pickup" else [],
         },
     )
 
@@ -285,13 +287,15 @@ def product_detail(request, pk):
     context = get_context(request)
     options = receiving_options(listing.shop, context)
     listing.display_price = listing.price_for(context.method)
+    sizes = listing.size_options(context.method)
+    listing.display_price_varies = len({option["price"] for option in sizes}) > 1
     return render(
         request,
         "market/product.html",
         {
             "listing": listing,
             "options": options,
-            "size_options": listing.size_options(context.method),
+            "size_options": sizes,
             "recommendations": [
                 row for row in public_listings(get_context(request)) if row.pk != pk
             ][:4],
@@ -306,6 +310,8 @@ def shop_detail(request, slug):
         status="active",
         settlement__region__in=["77", "50"],
     )
+    if get_context(request).method != "pickup" and not request.user.is_superuser:
+        return redirect("market:home")
     return render(
         request,
         "market/shop.html",

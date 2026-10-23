@@ -1,6 +1,6 @@
 {% load market_tags %}<fieldset class="size-picker" data-size-picker>
   <legend>Размер букета</legend>
   {% for size in size_options %}
-    <label class="size-option"><input type="radio" name="size" value="{{ size.value }}" required{% if forloop.first %} checked{% endif %}><span>{{ size.label }}</span><strong>{{ size.price|rub }}</strong></label>
+    <label class="size-option"><input type="radio" name="size" value="{{ size.value }}" required><span>{{ size.label }}</span><strong>{{ size.price|rub }}</strong></label>
   {% endfor %}
 </fieldset>
