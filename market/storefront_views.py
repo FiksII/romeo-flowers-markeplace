@@ -658,6 +658,33 @@ def account_orders(request):
 
 
 @login_required
+@require_GET
+def customer_orders_live(request):
+    """Read fulfillment state only; never query the bank while polling."""
+    from market.models import ShopOrder
+
+    parts = ShopOrder.objects.filter(order__user=request.user).only(
+        "id", "status", "method", "payment_status"
+    )
+    response = JsonResponse(
+        {
+            "parts": [
+                {
+                    "id": part.pk,
+                    "status": part.status,
+                    "label": part.get_status_display(),
+                    "can_cancel": part.payment_status == "pending"
+                    and part.status in {"accepted", "preparing"},
+                }
+                for part in parts
+            ]
+        }
+    )
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@login_required
 def order_detail(request, number):
     from market import online_payments
     from market.models import OnlinePayment
