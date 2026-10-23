@@ -70,8 +70,7 @@ def flower_rail(params):
         {
             "pk": flower.pk,
             "label": illustrated.get(flower.name, (flower.name, ""))[0],
-            "image": f"storefront/images/design/{illustrated[flower.name][1]}.webp"
-            if flower.name in illustrated else "",
+            "image": flower.tag_image,
             "url": toggle_flower_url(params, flower.pk),
             "active": str(flower.pk) in chosen,
         }
@@ -210,6 +209,7 @@ def home(request):
                 "pk": flower.pk,
                 "name": flower.name,
                 "palette": flower.tag_palette,
+                "image": flower.tag_image,
                 "count": count,
                 "selected": str(flower.pk) in chosen,
                 "zero": not count and str(flower.pk) not in chosen,
@@ -218,7 +218,9 @@ def home(request):
     # The rail offers only flowers that bouquets in the current results have.
     counts = {option["pk"]: option["count"] for option in flower_options}
     rail = [
-        item for item in flower_rail(params) if counts.get(item["pk"]) or item["active"]
+        {**item, "count": counts.get(item["pk"], 0)}
+        for item in flower_rail(params)
+        if counts.get(item["pk"]) or item["active"]
     ]
     active_chips = filter_chips(params, categories, flowers, shops)
     return render(

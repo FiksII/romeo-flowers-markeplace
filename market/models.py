@@ -181,6 +181,12 @@ class Flower(models.Model):
 
         return FLOWER_PALETTES.get(self.name, "blush")
 
+    @property
+    def tag_image(self):
+        from market.flower_illustrations import flower_image
+
+        return flower_image(self.name)
+
 
 class Listing(models.Model):
     tags = models.JSONField(
