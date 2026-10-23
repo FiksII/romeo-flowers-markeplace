@@ -90,6 +90,46 @@ def partner_index(request):
 
 
 @login_required
+@require_GET
+def partner_storefront(request):
+    """Preview sale bouquets across the user's directly accessible shops."""
+    shops = shops_for_user(request.user).select_related("settlement")
+    if not shops.exists():
+        raise PermissionDenied
+    selected_shop = None
+    if slug := request.GET.get("shop"):
+        selected_shop = get_object_or_404(shops, slug=slug)
+    listings = (
+        Listing.objects.filter(
+            shop__in=shops,
+            shop__status="active",
+            shop__settlement__region__in=["77", "50"],
+            product__is_public=True,
+        )
+        .select_related("shop__settlement", "product__product_class")
+        .prefetch_related("product__stockrecords")
+        .order_by("-pk")
+    )
+    if selected_shop:
+        listings = listings.filter(shop=selected_shop)
+    available = [
+        listing for listing in listings
+        if listing.stockrecord is not None
+        and listing.stockrecord.price is not None
+        and listing.can_supply(1)
+    ]
+    return render(
+        request,
+        "market/partner_storefront.html",
+        {
+            "shops": shops,
+            "selected_shop": selected_shop,
+            "page": Paginator(available, 24).get_page(request.GET.get("page")),
+        },
+    )
+
+
+@login_required
 def partner_dashboard(request, slug):
     shop = get_shop_for_user(request.user, slug)
     parts = shop.shop_orders.select_related("order").order_by("-created_at")

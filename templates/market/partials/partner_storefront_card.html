@@ -1,0 +1,15 @@
+{% load market_tags %}<article class="product-card">
+  <div class="product-media">
+    {% listing_photo listing "card" as photo %}<a class="product-image" href="{% url 'market:product-edit' listing.shop.slug listing.pk %}"><img src="{{ photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}" sizes="(max-width: 759px) 50vw, (max-width: 1180px) 31vw, 302px"{% endif %} alt="{{ listing.product.title }}" loading="lazy" width="400" height="500"></a>
+    <span class="city-chip">{{ listing.shop.settlement.name }}</span>
+  </div>
+  <div class="product-copy">
+    <h3><a href="{% url 'market:product-edit' listing.shop.slug listing.pk %}">{{ listing.product.title }}</a></h3>
+    <p class="product-meta"><a href="{% url 'market:products' listing.shop.slug %}">{{ listing.shop.name }}</a><br>{{ listing.shop.address }}</p>
+    {% for size in listing.price_variants %}
+      <div class="product-price">{% if listing.has_size_choice %}<span>{{ size.label }} · </span>{% endif %}{% if listing.shop.own_delivery %}<b>{{ size.delivery|rub }}</b><span class="field-help"> Доставка</span>{% if listing.shop.pickup_enabled %}<br><b>{{ size.pickup|rub }}</b><span class="field-help"> Самовывоз</span>{% endif %}{% else %}<b>{{ size.pickup|rub }}</b>{% endif %}</div>
+    {% endfor %}
+    <a class="text-link" href="{% url 'market:product-edit' listing.shop.slug listing.pk %}">Изменить букет →</a>
+    {% if request.user.is_superuser %}<a class="text-link admin-price-link" href="{% url 'market:listing-price' listing.pk %}?next={{ request.get_full_path|urlencode }}">Цена продажи</a>{% endif %}
+  </div>
+</article>

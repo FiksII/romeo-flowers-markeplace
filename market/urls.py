@@ -64,6 +64,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("partner/", portal.partner_index, name="partner"),
     path("partner/new/", portal.shop_new, name="shop-new"),
+    path("partner/shops/storefront/", portal.partner_storefront, name="partner-storefront"),
     path("partner/<slug:slug>/", portal.partner_dashboard, name="partner-shop"),
     path(
         "partner/<slug:slug>/orders/", portal.partner_orders_page, name="partner-orders"
