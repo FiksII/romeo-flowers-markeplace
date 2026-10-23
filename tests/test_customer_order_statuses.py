@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
     ],
 )
 def test_customer_sees_every_transition_in_list_and_details(
-    client, owner, stranger, shop, listing, method, delivery_owner
+    client, owner, buyer, stranger, shop, listing, method, delivery_owner
 ):
     # Customer is not a shop member. Fulfillment changes come from other users.
     part = paid_part(stranger, shop, listing, method, delivery_owner)
@@ -47,7 +47,7 @@ def test_customer_sees_every_transition_in_list_and_details(
             html = response.content.decode()
             assert f'class="status-chip">{label}</span>' in html
             assert (shop.name in html) is (method == "pickup")
-    client.force_login(owner)
+    client.force_login(buyer)
     assert (
         client.get(reverse("market:order", args=[part.order.number])).status_code == 404
     )

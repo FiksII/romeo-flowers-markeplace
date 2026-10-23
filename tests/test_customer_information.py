@@ -88,9 +88,9 @@ def test_seller_identity_is_public_but_bank_details_remain_private(client, shop)
 
 
 def test_checkout_keeps_pickup_details_and_offer_before_order_creation(
-    client, owner, listing
+    client, buyer, listing
 ):
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     response = client.get("/checkout/")
     assert response.status_code == 200

@@ -210,9 +210,9 @@ def test_balance_entries_are_never_edited(owner, shop, listing):
 
 
 def test_pickup_checkout_creates_cash_order_and_rejects_online_until_connected(
-    client, owner, shop, listing
+    client, buyer, shop, listing
 ):
-    client.force_login(owner)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     basket = client.get("/checkout/").wsgi_request.basket
     data = {
@@ -229,7 +229,7 @@ def test_pickup_checkout_creates_cash_order_and_rejects_online_until_connected(
     assert response.status_code == 200
     response = client.post("/checkout/", {**data, "payment_method": "cash"})
     assert response.status_code == 302
-    assert owner.orders.get().shop_orders.get().payment_method == "cash"
+    assert buyer.orders.get().shop_orders.get().payment_method == "cash"
 
 
 def test_balance_pages_and_payout_flow_over_http(

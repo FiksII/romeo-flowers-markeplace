@@ -16,11 +16,11 @@ def test_checkout_requires_customer_contacts_separately_from_recipient():
     assert "customer_phone" in form.errors
 
 
-def test_checkout_prefills_customer_contacts_from_account(client, owner, listing):
-    owner.first_name = "Анна"
-    owner.save()
-    CustomerPhone.objects.create(user=owner, phone="+79997654321", verified=True)
-    client.force_login(owner)
+def test_checkout_prefills_customer_contacts_from_account(client, buyer, listing):
+    buyer.first_name = "Анна"
+    buyer.save()
+    CustomerPhone.objects.create(user=buyer, phone="+79997654321", verified=True)
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     form = client.get("/checkout/").context["form"]
     assert form["customer_name"].value() == "Анна"

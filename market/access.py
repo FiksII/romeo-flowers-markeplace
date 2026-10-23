@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 from market.models import Shop
 
@@ -9,6 +10,17 @@ def shops_for_user(user):
     if user.is_superuser:
         return Shop.objects.all()
     return Shop.objects.filter(memberships__user=user).distinct()
+
+
+def partner_dashboard_url(user):
+    if not user.is_authenticated or user.is_superuser:
+        return None
+    shops = list(shops_for_user(user).values_list("slug", flat=True)[:2])
+    if len(shops) == 1:
+        return reverse("market:partner-shop", kwargs={"slug": shops[0]})
+    if shops:
+        return reverse("market:partner")
+    return None
 
 
 def get_shop_for_user(user, slug):

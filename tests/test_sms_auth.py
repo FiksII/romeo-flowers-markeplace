@@ -53,18 +53,18 @@ def test_login_offers_sms_and_legacy_password(client):
     assert "/login/password/" in response.content.decode()
 
 
-def test_first_checkout_requires_email(client, owner, listing):
-    owner.email = ""
-    owner.save()
-    client.force_login(owner)
+def test_first_checkout_requires_email(client, buyer, listing):
+    buyer.email = ""
+    buyer.save()
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     response = client.post("/checkout/", {"name": "Иван", "phone": "+79991234567"})
     assert response.status_code == 200
     assert "email" in response.context["form"].errors
 
 
-def test_returning_buyer_is_not_asked_for_email(client, owner, listing):
-    client.force_login(owner)
+def test_returning_buyer_is_not_asked_for_email(client, buyer, listing):
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     response = client.get("/checkout/")
     assert "email" not in response.context["form"].fields
@@ -153,11 +153,11 @@ def test_repeated_sms_request_is_limited(client, sms_gateway):
 
 
 def test_first_order_saves_email_and_later_checkout_does_not_ask(
-    client, owner, shop, listing
+    client, buyer, shop, listing
 ):
-    owner.email = ""
-    owner.save()
-    client.force_login(owner)
+    buyer.email = ""
+    buyer.save()
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     basket = client.get("/checkout/").wsgi_request.basket
     response = client.post(
@@ -174,19 +174,19 @@ def test_first_order_saves_email_and_later_checkout_does_not_ask(
         },
     )
     assert response.status_code == 302
-    owner.refresh_from_db()
-    assert owner.email == "buyer@example.com"
+    buyer.refresh_from_db()
+    assert buyer.email == "buyer@example.com"
     assert (
-        get_model("order", "Order").objects.get(user=owner).guest_email
+        get_model("order", "Order").objects.get(user=buyer).guest_email
         == "buyer@example.com"
     )
     assert "email" not in client.get("/checkout/").context["form"].fields
 
 
-def test_invalid_email_blocks_order(client, owner, listing):
-    owner.email = ""
-    owner.save()
-    client.force_login(owner)
+def test_invalid_email_blocks_order(client, buyer, listing):
+    buyer.email = ""
+    buyer.save()
+    client.force_login(buyer)
     client.post(f"/basket/add/{listing.pk}/")
     response = client.post(
         "/checkout/", {"email": "invalid", "name": "Иван", "phone": "+79991234567"}
