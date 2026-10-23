@@ -140,6 +140,9 @@ def catalogue_candidates(context, filters=None, now=None):
             listing.nearest_slot = min(options.values(), key=lambda slot: slot.start)
             listing.display_price = listing.price_for(context.method)
             listing.display_sizes = listing.size_options(context.method)
+            listing.display_price_varies = len(
+                {option["price"] for option in listing.display_sizes}
+            ) > 1
             listings.append(listing)
     return listings
 

@@ -5,7 +5,7 @@
   </div>
   <div class="product-copy">
     <h3><a href="{% url 'market:product' listing.pk %}">{{ listing.product.title }}</a></h3>
-    <p class="product-price"><b>{% if listing.has_size_choice %}от {% endif %}{{ listing.display_price|rub }}</b></p>
+    <p class="product-price"><b>{% if listing.display_price_varies %}от {% endif %}{{ listing.display_price|rub }}</b></p>
     {% if listing.has_size_choice %}
     <a class="button button-pill" href="{% url 'market:product' listing.pk %}" data-size-dialog-open="size-dialog-{{ listing.pk }}">Выбрать размер</a>
     <dialog class="size-dialog" id="size-dialog-{{ listing.pk }}" aria-labelledby="size-heading-{{ listing.pk }}">
