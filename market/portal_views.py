@@ -43,6 +43,7 @@ from market.models import (
     Payout,
     Shop,
     ShopOrder,
+    WeeklyHours,
 )
 from market.orders import (
     ACTIVE_STATUSES,
@@ -385,6 +386,16 @@ def shop_new(request, operator=False):
             shop.full_clean()
             shop.save()
             form.save_m2m()
+            WeeklyHours.objects.bulk_create(
+                [
+                    WeeklyHours(
+                        shop=shop, weekday=day, method=method,
+                        start_minute=9 * 60, end_minute=21 * 60,
+                    )
+                    for day in range(7)
+                    for method, _ in WeeklyHours.METHODS
+                ]
+            )
             if operator:
                 form.save_memberships()
             else:
@@ -398,9 +409,9 @@ def shop_new(request, operator=False):
             )
         messages.success(
             request,
-            "Магазин создан. Добавьте товары и настройте расписание."
+            "Магазин создан. График — ежедневно 09:00–21:00. Добавьте товары или измените расписание."
             if operator
-            else "Магазин отправлен на проверку. Можно добавить товары и настроить расписание.",
+            else "Магазин отправлен на проверку. График — ежедневно 09:00–21:00. Можно добавить товары или изменить расписание.",
         )
         return redirect("market:partner-shop", slug=shop.slug)
     return render(
