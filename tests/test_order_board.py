@@ -78,7 +78,7 @@ def test_orders_page_splits_new_work_and_history(
     assert [p.pk for p in response.context["work_parts"]] == [working.pk]
     assert [p.pk for p in response.context["parts"]] == [done.pk]
     html = response.content.decode()
-    assert "Начать сборку" in html and "Передан курьеру" in html
+    assert "Начать сборку" in html and 'value="ready"' in html
     assert "Самовывоз" in html and "Доставка Ромео" in html
     assert 'data-history="1"' in html
 

@@ -17,6 +17,24 @@ def get_shop_for_user(user, slug):
     )
 
 
+def may_complete_order(user, part):
+    """Romeo confirms its deliveries; shops confirm their delivery and pickup."""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if part.method == "delivery" and part.delivery_owner == "platform":
+        return False
+    return shops_for_user(user).filter(pk=part.shop_id).exists()
+
+
+def next_order_step(user, part):
+    step = part.next_step
+    if step and step[0] == "completed" and not may_complete_order(user, part):
+        return None
+    return step
+
+
 def may_set_delivery_destination(user, part):
     return user.is_authenticated and (
         user.is_superuser
