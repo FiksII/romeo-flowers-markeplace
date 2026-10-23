@@ -1,0 +1,16 @@
+<fieldset class="bouquet-photo-editor" data-photo-editor>
+  <legend>Фотографии букета</legend>
+  <p class="field-help">Главное фото показывается в каталоге, заказах и уведомлениях. Изменения сохранятся вместе с букетом.</p>
+  {% if form.photo_items %}<div class="bouquet-photo-grid">
+    {% for item in form.photo_items %}<div class="bouquet-photo-tile">
+      <a href="{{ item.file.url }}" target="_blank" rel="noopener"><img src="{{ item.file.url }}" alt="Фото букета {{ forloop.counter }}" loading="lazy" width="120" height="150"></a>
+      <label><input type="radio" name="primary_photo" value="{{ item.id }}" {% if form.is_bound %}{% if form.primary_photo.value == item.id %}checked{% endif %}{% elif forloop.first %}checked{% endif %}> Главное фото</label>
+      <label><input type="checkbox" name="remove_photos" value="{{ item.id }}" {% if item.id in form.remove_photos.value %}checked{% endif %}> Удалить</label>
+    </div>{% endfor %}
+  </div>{% endif %}
+  <div class="field"><label for="{{ field.id_for_label }}">Добавить фотографии</label>{{ field }}<div class="field-help">{{ field.help_text }}</div>{{ field.errors }}</div>
+  <div class="bouquet-photo-grid" data-photo-previews aria-live="polite"></div>
+  <p class="field-help" data-photo-status role="status"></p>
+  <label><input type="radio" name="primary_photo" value="new" {% if form.primary_photo.value == 'new' %}checked{% endif %}> Сделать первое из новых фото главным</label>
+  {{ form.primary_photo.errors }}{{ form.remove_photos.errors }}
+</fieldset>

@@ -111,6 +111,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 OSCAR_DEFAULT_CURRENCY = "RUB"
 OSCAR_SHOP_NAME = "Цветы от Ромео"
 OSCAR_ALLOW_ANON_CHECKOUT = False
+# Keep historical photo URLs and rollback safe; gallery edits only remove records.
+OSCAR_DELETE_IMAGE_FILES = False
 OSCAR_INITIAL_ORDER_STATUS = "AwaitingPayment"
 OSCAR_ORDER_STATUS_PIPELINE = {
     "AwaitingPayment": ("Processing", "Cancelled"),

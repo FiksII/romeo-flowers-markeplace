@@ -20,6 +20,24 @@ def listing_photo(listing, preset):
     return resized_listing_photo(listing, preset)
 
 
+@register.simple_tag
+def listing_gallery(listing):
+    from market.photos import gallery_items
+    from market.thumbnails import image_photo
+
+    rows = gallery_items(listing)
+    if not rows:
+        return [{"original": listing.image_url, "detail": resized_listing_photo(listing, "detail")}]
+    return [
+        {
+            "original": row["file"].url,
+            "detail": image_photo(row["file"], "detail"),
+            "thumb": image_photo(row["file"], "line"),
+        }
+        for row in rows
+    ]
+
+
 @register.filter
 def bouquet_size(line):
     from market.bouquet_options import SIZE_OPTION

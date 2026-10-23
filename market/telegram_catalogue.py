@@ -28,6 +28,7 @@ from market.models import (
     MessengerLink,
     TelegramBouquetDraft,
 )
+from market.photos import MAX_PHOTOS
 
 ADD = "➕ Добавить букет"
 MAX_PHOTO = 5 * 1024 * 1024
@@ -109,6 +110,13 @@ def _advance(draft, backwards=False):
     draft.step = steps[max(0, steps.index(draft.step) + (-1 if backwards else 1))]
 
 
+def _draft_photos(data):
+    if "photos" in data:
+        return data["photos"]
+    # A draft started by the previous release can still be completed.
+    return [{"file_id": data["photo_id"], "document": data.get("photo_document", False), "update_id": 0}] if data.get("photo_id") else []
+
+
 def _summary(draft):
     data = draft.data
     names = list(
@@ -120,6 +128,7 @@ def _summary(draft):
     text = [
         f"Букет: {data['title']}",
         f"Магазин: {draft.link.shop.name}",
+        f"Фотографий: {len(_draft_photos(data))}. Первое фото — главное.",
         f"Категория: {dict(Listing._meta.get_field('category').choices)[data['category']]}",
         f"Описание и состав: {_preview_text(data.get('description') or '—', 900)}",
         f"Цветы: {_preview_text(', '.join(names) or 'не выбраны', 1800)}",
@@ -159,7 +168,14 @@ def _prompt(draft, error=""):
             for link in grants(draft.chat_id)
         ]
     elif step == "photo":
-        text = "Отправьте фото букета (JPEG, PNG или WebP до 5 МБ), можно файлом."
+        count = len(_draft_photos(data))
+        text = (
+            f"Отправьте фотографии букета: альбомом или по одной, можно файлами. "
+            f"До {MAX_PHOTOS} фото JPEG, PNG или WebP, каждое до 5 МБ. "
+            f"Добавлено: {count}. Первое фото — главное. Когда закончите, нажмите «Далее»."
+        )
+        if count:
+            rows = [[_button(draft, "Далее", "next")], [_button(draft, "Очистить фото", "clear_photos")]]
     elif step == "title":
         text = "Как называется букет? Напишите название (до 255 символов)."
     elif step == "description":
@@ -239,8 +255,10 @@ def _prompt(draft, error=""):
 
 def _publish(draft, public):
     data = draft.data | {"is_public": public}
-    photo = download_photo(data["photo_id"])
-    form = ProductForm(data, {"photo": photo}, shop=draft.link.shop)
+    uploads = [download_photo(photo["file_id"]) for photo in _draft_photos(data)]
+    if not uploads:
+        raise ValidationError("Добавьте хотя бы одну фотографию букета.")
+    form = ProductForm(data, {"photo": uploads}, shop=draft.link.shop)
     if not form.is_valid():
         raise ValidationError(
             [str(e) for errors in form.errors.values() for e in errors]
@@ -254,8 +272,9 @@ def _publish(draft, public):
                 action=f"Букет #{listing.pk} добавлен через Telegram · {draft.link.phone}",
             )
     except Exception:
-        if listing and listing.photo:
-            listing.photo.delete(save=False)
+        if listing:
+            for storage, name in getattr(listing, "_uploaded_photo_files", []):
+                storage.delete(name)
         raise
     draft.step, draft.data = "done", {}
     url = settings.SITE_URL + reverse(
@@ -269,7 +288,7 @@ def _publish(draft, public):
     }
 
 
-def _apply_callback(draft, action, value):
+def _apply_callback(draft, action, value, update_id):
     step = draft.step
     if action == "back":
         _advance(draft, backwards=True)
@@ -303,7 +322,15 @@ def _apply_callback(draft, action, value):
         draft.data["flower_page"] = min(
             int(value), max(0, (Flower.objects.count() - 1) // PAGE_SIZE)
         )
-    elif action == "next" and step in {"description", "flowers", "tags", "sizes"}:
+    elif action == "clear_photos" and step == "photo":
+        draft.data["photos"] = []
+        draft.data["photo_start_update_id"] = update_id
+        draft.data["photo_album_ids"] = []
+        draft.data.pop("photo_id", None)
+        draft.data.pop("photo_document", None)
+    elif action == "next" and step in {"photo", "description", "flowers", "tags", "sizes"}:
+        if step == "photo" and not _draft_photos(draft.data):
+            raise ValidationError("Добавьте хотя бы одну фотографию букета.")
         if step == "sizes" and not draft.data.get("sizes"):
             raise ValidationError("Выберите хотя бы один размер.")
         if step == "description":
@@ -322,7 +349,8 @@ def _apply_message(draft, message):
     step, data = draft.step, draft.data
     text = str(message.get("text", "")).strip()
     form = ProductForm(shop=draft.link.shop) if draft.link_id else None
-    if step == "photo":
+    known_album = message.get("media_group_id") in data.get("photo_album_ids", [])
+    if step == "photo" or known_album:
         photos = message.get("photo")
         photo = (
             photos[-1]
@@ -333,8 +361,23 @@ def _apply_message(draft, message):
             raise ValidationError("Отправьте фотографию букета.")
         if photo.get("file_size", 0) > MAX_PHOTO:
             raise ValidationError("Используйте JPEG, PNG или WebP до 5 МБ.")
-        data["photo_id"] = str(photo["file_id"])
-        data["photo_document"] = not bool(photos)
+        selected = list(_draft_photos(data))
+        file_id = str(photo["file_id"])
+        if any(item["file_id"] == file_id for item in selected):
+            data.setdefault("photo_update_ids", []).append(message["_catalogue_update_id"])
+            return
+        if len(selected) >= MAX_PHOTOS:
+            raise ValidationError(f"Можно добавить не больше {MAX_PHOTOS} фотографий. Удалите лишние кнопкой «Очистить фото».")
+        selected.append({"file_id": file_id, "document": not bool(photos), "update_id": message["_catalogue_update_id"]})
+        selected.sort(key=lambda item: item.get("update_id", 0))
+        data["photos"] = selected
+        album_id = message.get("media_group_id")
+        if album_id and album_id not in data.setdefault("photo_album_ids", []):
+            data["photo_album_ids"].append(album_id)
+        data.setdefault("photo_update_ids", []).append(message["_catalogue_update_id"])
+        data["photo_id"] = selected[0]["file_id"]
+        data["photo_document"] = selected[0]["document"]
+        return
     elif step in {"title", "description"}:
         if step == "description" and len(text) > 1500:
             raise ValidationError("Описание должно быть не длиннее 1500 символов.")
@@ -391,9 +434,21 @@ def _handle(chat_id, update_id, message, callback):
             draft.data, draft.step = {}, "done"
             draft.save()
         return {"method": "sendMessage", "chat_id": chat_id, "text": NO_ACCESS}
+    if draft and update_id in draft.data.get("photo_update_ids", []):
+        return draft.last_response or {}
+    # Album parts can reach concurrent webhook workers out of update-ID order.
+    # Accept media in the photo step or late parts of an already accepted album.
+    # Clearing the photos advances the boundary and forgets all previous albums.
+    active_photo = (
+        draft and message
+        and (draft.step == "photo" or message.get("media_group_id") in draft.data.get("photo_album_ids", []))
+        and (message.get("photo") or message.get("document"))
+        and update_id > draft.data.get("photo_start_update_id", draft.last_update_id)
+    )
     if (
         draft
         and update_id <= draft.last_update_id
+        and not active_photo
         and draft.updated_at >= timezone.now() - timedelta(days=1)
     ):
         return draft.last_response or {}
@@ -407,7 +462,7 @@ def _handle(chat_id, update_id, message, callback):
         links = list(allowed)
         draft.link = links[0] if len(links) == 1 else None
         draft.step = "photo" if draft.link else "shop"
-        draft.data, draft.token = {"sizes": ["standard"]}, secrets.token_hex(4)
+        draft.data, draft.token = {"sizes": ["standard"], "photo_start_update_id": update_id}, secrets.token_hex(4)
         if draft.link:
             draft.data["own_delivery"] = draft.link.shop.own_delivery
     elif not draft:
@@ -475,9 +530,9 @@ def _handle(chat_id, update_id, message, callback):
                         "reply_markup": menu_for_chat(chat_id),
                     }
                 else:
-                    response = _apply_callback(draft, parts[3], parts[4])
+                    response = _apply_callback(draft, parts[3], parts[4], update_id)
             else:
-                _apply_message(draft, message)
+                _apply_message(draft, message | {"_catalogue_update_id": update_id})
         except ValidationError as exc:
             error = " ".join(exc.messages)
         except messengers.MessengerError:
@@ -504,7 +559,7 @@ def _handle(chat_id, update_id, message, callback):
     ):
         response["method"] = "editMessageText"
         response["message_id"] = callback["message"]["message_id"]
-    draft.last_update_id, draft.last_response = update_id, response
+    draft.last_update_id, draft.last_response = max(update_id, draft.last_update_id), response
     draft.save()
     return response
 
