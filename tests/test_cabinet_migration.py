@@ -27,7 +27,7 @@ def test_conversion_keeps_buyer_prices_and_what_the_shop_receives():
         ProductClass = old.get_model("catalogue", "ProductClass")
         Product = old.get_model("catalogue", "Product")
         Stock = old.get_model("partner", "StockRecord")
-        city = Settlement.objects.create(name="Москва", slug="moscow", region="77")
+        city = Settlement.objects.get_or_create(name="Москва", slug="moscow", region="77")[0]
         cls = ProductClass.objects.create(name="Цветы", slug="flowers")
         rows = {}
         for slug, markup, discount in [("with-markup", 10, 50), ("no-markup", 0, 50)]:
