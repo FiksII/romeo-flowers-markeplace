@@ -1,0 +1,2 @@
+{% load market_tags %}
+{% if part.is_romeo_delivery %}<p class="field-help">Расходы на доставку: {% if part.actual_delivery_cost is not None %}{{ part.actual_delivery_cost|rub }}{% else %}не указаны{% endif %}</p>{% endif %}

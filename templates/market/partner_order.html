@@ -28,6 +28,17 @@
     {% else %}<div class="summary-row total-row"><strong>Получить с покупателя</strong><strong>{{ part.total|rub }}</strong></div>{% endif %}
     {% endif %}
   </div>
+  {% if delivery_cost_form %}
+  <form method="post" class="form-card" id="delivery-cost">{% csrf_token %}
+    <h2>Расходы Ромео на доставку</h2>
+    <input type="hidden" name="action" value="delivery-cost">
+    {{ delivery_cost_form.non_field_errors }}
+    {% include 'market/partials/field.html' with field=delivery_cost_form.actual_delivery_cost %}
+    <p class="field-help">Внутренний расход Ромео. Цена покупателя и сумма магазину не меняются.</p>
+    {% if part.actual_delivery_cost is not None %}<div class="summary-row"><span>Результат Ромео после расходов на доставку</span><strong>{{ part.platform_net_total|rub }}</strong></div><p class="field-help">Доля Ромео и плата за доставку по подтверждённой оплате за вычетом фактических расходов. При отмене или возврате поступления не учитываются.</p>{% else %}<p class="field-help">Расходы ещё не указаны — финансовый результат предварительный.</p>{% endif %}
+    <button class="button button-secondary">Сохранить расходы</button>
+  </form>
+  {% endif %}
   <div class="group-card">
     <h2>Оплата</h2>
     {% if part.is_gift %}<p>Подарок за счёт магазина. Получать деньги с клиента не нужно.</p><p>Букет и доставка — 0 ₽. Баланс магазина не меняется.</p>{% else %}

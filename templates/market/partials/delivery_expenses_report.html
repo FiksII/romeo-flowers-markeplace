@@ -1,0 +1,4 @@
+{% load market_tags %}
+<div><span>Расходы на доставку Ромео</span><strong>{{ stats.delivery_cost|rub }}</strong></div>
+<div><span>Результат доставки Ромео</span><strong>{{ stats.delivery_margin|rub }}</strong></div>
+<div><span>Результат Ромео после расходов на доставку</span><strong>{{ stats.platform_total|rub }}</strong></div>
