@@ -530,6 +530,7 @@ html:not(.js) .live-only{display:none}
 .delivery-route dt{color:var(--muted);font-size:12px;padding-top:2px}
 .delivery-route dd{display:grid;gap:2px;margin:0;min-width:0;overflow-wrap:anywhere}
 .delivery-route small{font-size:12px}
+.delivery-route-link{justify-self:start;max-width:100%;white-space:normal}
 .delivery-card-recipient,.delivery-card-customer{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;overflow-wrap:anywhere;min-width:0}
 .delivery-card-recipient>.muted{font-size:12px}
 .delivery-card-recipient strong{font-size:14px;font-weight:500;min-width:0}
