@@ -512,6 +512,10 @@ def transition_shop_order(part, actor, target):
         else "Processing"
     )
     order.save(update_fields=["status"])
+    if target == "completed":
+        from market.referrals import qualify_part
+
+        qualify_part(part)
     return part
 
 

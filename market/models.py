@@ -1,10 +1,12 @@
 from decimal import Decimal
+from uuid import uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 from market.bouquet_options import (
     SIZES,
@@ -731,6 +733,69 @@ class LoyaltyPurchase(models.Model):
             ),
             models.CheckConstraint(
                 condition=models.Q(units__gt=0), name="market_loyalty_positive_units"
+            ),
+        ]
+
+
+class ReferralLink(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    code = models.UUIDField(default=uuid4, unique=True, editable=False)
+
+
+class Referral(models.Model):
+    """One invitation and one immutable first-purchase outcome per friend."""
+
+    friend = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="invitation"
+    )
+    referrer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="referrals"
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    first_purchase = models.OneToOneField(
+        ShopOrder,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="referral",
+    )
+    bonus_value = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    awarded_at = models.DateTimeField(null=True, blank=True)
+    reward = models.ForeignKey(
+        LoyaltyReward,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="referral_uses",
+    )
+
+    @property
+    def unit_price(self):
+        return self.bonus_value
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(friend=models.F("referrer")),
+                name="market_referral_not_self",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        bonus_value__isnull=True,
+                        awarded_at__isnull=True,
+                        reward__isnull=True,
+                    )
+                )
+                | models.Q(
+                    bonus_value__isnull=False,
+                    bonus_value__gt=0,
+                    first_purchase__isnull=False,
+                    awarded_at__isnull=False,
+                ),
+                name="market_referral_valid_bonus",
             ),
         ]
 

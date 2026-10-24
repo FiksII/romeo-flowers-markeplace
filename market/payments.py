@@ -71,6 +71,9 @@ def record_online_payment(part):
     part.payment_status = "paid"
     part.save(update_fields=["payment_status"])
     _post(part, "platform_collected", part.balance_effect)
+    from market.referrals import qualify_part
+
+    qualify_part(part)
     messengers.notify_new_part(part)
     return part
 
@@ -89,6 +92,9 @@ def record_cash_receipt(part):
     part.save(update_fields=["payment_status"])
     kind = "platform_collected" if part.platform_collects else "shop_collected"
     _post(part, kind, part.balance_effect)
+    from market.referrals import qualify_part
+
+    qualify_part(part)
     return part
 
 
