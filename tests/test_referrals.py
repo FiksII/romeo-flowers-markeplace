@@ -202,3 +202,58 @@ def test_invalid_and_self_links_preserve_valid_pending_attribution(
     client.force_login(friend)
     client.get(reverse("market:referral", args=[personal_link(friend).code]))
     assert Referral.objects.get(friend=friend).referrer == buyer
+
+
+def test_guest_own_link_does_not_hide_first_eligible_owner(client, buyer, friend):
+    client.get(reverse("market:referral", args=[personal_link(friend).code]))
+    client.get(reverse("market:referral", args=[personal_link(buyer).code]))
+    other = get_user_model().objects.create_user("third-inviter")
+    client.get(reverse("market:referral", args=[personal_link(other).code]))
+    client.force_login(friend)
+    client.get(reverse("market:account"))
+    assert Referral.objects.get(friend=friend).referrer == buyer
+
+
+def test_guest_candidates_expire_independently(client, buyer, friend):
+    session = client.session
+    session[SESSION_KEY] = {
+        "code": str(personal_link(friend).code),
+        "captured_at": (timezone.now() - timedelta(days=31)).timestamp(),
+        "fallback": {
+            "code": str(personal_link(buyer).code),
+            "captured_at": (timezone.now() - timedelta(days=1)).timestamp(),
+        },
+    }
+    session.save()
+    client.force_login(friend)
+    client.get(reverse("market:account"))
+    assert Referral.objects.get(friend=friend).referrer == buyer
+
+
+@pytest.mark.parametrize(
+    "method,status", [("gift", "completed"), ("online", "cancelled")]
+)
+def test_gift_and_cancelled_order_never_award(buyer, friend, listing, method, status):
+    referral = invite(buyer, friend)
+    part = purchase(friend, listing, 1)
+    part.payment_method, part.status = method, status
+    part.save()
+    assert qualify_part(part) is None
+    referral.refresh_from_db()
+    assert referral.first_purchase is None
+
+
+def test_bonus_value_is_weighted_bouquet_mean_without_delivery(buyer, friend, listing):
+    invite(buyer, friend)
+    part = purchase(friend, listing, 3)
+    part.delivery_total = 350
+    part.save()
+    part.items.create(
+        title="Второй букет",
+        quantity=1,
+        unit_price=1000,
+        unit_commission=0,
+        unit_payout=1000,
+        commission_percent=0,
+    )
+    assert qualify_part(part).bonus_value == Decimal("2125.00")

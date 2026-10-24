@@ -97,13 +97,13 @@ def qualify_part(part):
         return None
     invitation = (
         Referral.objects.select_for_update(of=("self",))
-        .filter(friend_id=part.order.user_id)
+        .filter(friend_id=part.order.user_id, first_purchase__isnull=True)
         .first()
     )
     if not invitation:
-        return None
-    if invitation.first_purchase_id:
-        return invitation
+        # A determined outcome is immutable. Do not lock it behind stock held
+        # by a later order: gift checkout locks the same credit before stock.
+        return Referral.objects.filter(friend_id=part.order.user_id).first()
     invitation.first_purchase = part
     previous = _successful_parts(part.order.user_id).exclude(pk=part.pk).exists()
     totals = part.items.aggregate(units=Sum("quantity"))
@@ -121,27 +121,48 @@ def qualify_part(part):
     return invitation
 
 
-def _pending(request):
-    pending = request.session.get(SESSION_KEY)
+def _valid_candidate(candidate):
     try:
-        age = timezone.now().timestamp() - float(pending["captured_at"])
-        if isfinite(age) and 0 <= age <= MAX_AGE and _link(pending["code"]):
-            return pending
+        age = timezone.now().timestamp() - float(candidate["captured_at"])
+        if isfinite(age) and 0 <= age <= MAX_AGE and _link(candidate["code"]):
+            return {"code": candidate["code"], "captured_at": candidate["captured_at"]}
     except (TypeError, KeyError, ValueError, OverflowError):
         pass
-    request.session.pop(SESSION_KEY, None)
     return None
+
+
+def _pending(request):
+    raw = request.session.get(SESSION_KEY)
+    candidates = [raw, raw.get("fallback") if isinstance(raw, dict) else None]
+    valid = [
+        value for candidate in candidates if (value := _valid_candidate(candidate))
+    ]
+    if not valid:
+        request.session.pop(SESSION_KEY, None)
+        return None
+    pending = valid[0]
+    if len(valid) > 1 and valid[1]["code"] != pending["code"]:
+        pending["fallback"] = valid[1]
+    if pending != raw:
+        request.session[SESSION_KEY] = pending
+    return pending
 
 
 def remember(request, code):
     link = _link(code)
     if not link or (request.user.is_authenticated and link.user_id == request.user.pk):
         return
-    if not _pending(request):
-        request.session[SESSION_KEY] = {
-            "code": str(link.code),
-            "captured_at": timezone.now().timestamp(),
-        }
+    pending = _pending(request)
+    candidate = {"code": str(link.code), "captured_at": timezone.now().timestamp()}
+    if not pending:
+        pending = candidate
+    elif pending["code"] != candidate["code"] and "fallback" not in pending:
+        # Before login, the first code may belong to this visitor. Two distinct
+        # codes suffice: an account has exactly one personal code, so at most
+        # one candidate can be self. Never replace the first eligible owner.
+        pending["fallback"] = candidate
+    if pending != request.session.get(SESSION_KEY):
+        request.session[SESSION_KEY] = pending
         request.session.set_expiry(max(MAX_AGE, request.session.get_expiry_age()))
     bind_pending(request)
 
@@ -154,5 +175,9 @@ def bind_pending(request):
         return
     if not CustomerPhone.objects.filter(user=request.user, verified=True).exists():
         return
-    bind(request.user, pending["code"])
+    candidate = pending
+    if _link(candidate["code"]).user_id == request.user.pk:
+        candidate = pending.get("fallback")
+    if candidate:
+        bind(request.user, candidate["code"])
     request.session.pop(SESSION_KEY, None)
