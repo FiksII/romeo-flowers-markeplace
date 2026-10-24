@@ -10,8 +10,10 @@
 - [x] Add regressions for intermediate card widths/eager first row, implement thumbnail sizes/quality/sizes; run targeted tests.
 - [x] Add dialog interaction regressions, implement single/multiple photo modal, controls/swipe/keyboard and versioned assets; run frontend and gallery tests.
 - [x] Full Python/frontend checks, Ruff, Django checks and migration check; independent review and fixes.
-- [ ] Merge into develop, rerun checks, prepare verified full manifest and dev release. Backup database/media/config, migrate/collectstatic, warm private cache, atomically switch/restart. Verify HTTPS images/cache/dialog/mobile. Promote checked develop to master without production deployment. Record release.
+- [x] Merge into develop, rerun checks, prepare verified full manifest and dev release. Backup database/media/config, migrate/collectstatic, warm private cache, atomically switch/restart. Verify HTTPS images/cache/dialog/mobile. Promote checked develop to master without production deployment. Record release.
 
 Review focus: invalid/modified tokens, failed storage reads, cache across workers/restarts, single photo without thumbnails, focus/Escape/swipe and original aspect ratio.
 
 Local verification: 739 Python tests passed, 9 PostgreSQL-only checks skipped; all 39 frontend tests passed. Ruff, Django check, migration check and diff checks passed. Independent review has no remaining Critical/Important findings. Review fixes reproduced RED first: reject oversize objects using loaded metadata before django-storages downloads the full file; no-store for 404 and 412 as well as 503.
+
+Final browser-driven improvement: uncropped WebP full-view copy up to 1600×1600, originals unchanged; regression reproduced RED and passed GREEN. Final local/server result: 740 passed, 9 skipped; review clean. Dev release `20261024-050328-photo-loading`, develop `484f12e`, all 674 source files verified, 166 images warmed, 46 responsive candidates checked over HTTPS, including actual Gunicorn cache refill. Browser checks: 320/390/1280 px, single and five-photo viewer, zoom, Escape/focus and arrow navigation. See docs/deployment.md for backup and rollback.
