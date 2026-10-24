@@ -115,7 +115,9 @@ def place_market_order(
         )
         if (
             gift_reward.order_id
-            or gift_reward.purchases.aggregate(units=Sum("units"))["units"] != 10
+            or (gift_reward.purchases.aggregate(units=Sum("units"))["units"] or 0)
+            + gift_reward.referral_uses.count()
+            != 10
         ):
             raise ValidationError("Обновите карту любителя цветов.")
     email = customer.email.strip() or contact.get("email", "").strip()

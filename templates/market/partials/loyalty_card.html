@@ -3,7 +3,7 @@
   <img class="flower-card-emblem" src="{% static 'storefront/images/design/loyalty-card.webp' %}" width="122" height="178" alt="">
   <div class="flower-card-body">
     <h2 id="flower-card-title">Карта любителя цветов</h2>
-    <p>10 букетов — 11-й в подарок. Все покупки в одной карте.</p>
+    <p>10 цветочков — букет в подарок. Покупки и приглашения в одной карте.</p>
     <ol class="flower-card-slots" aria-label="Отметок: {{ loyalty_state.stamps }} из 10">
       {% for slot in stamp_slots %}<li class="loyalty-stamp{% if slot <= loyalty_state.stamps %} is-done{% endif %}"><img src="{% if slot <= loyalty_state.stamps %}{% static 'storefront/images/design/stamp-rose.webp' %}{% else %}{% static 'storefront/images/design/stamp-rose-empty.webp' %}{% endif %}" width="50" height="72" alt=""><span>{{ slot }}</span></li>{% endfor %}
     </ol>
@@ -15,7 +15,7 @@
       <a class="button button-primary" href="{% url 'market:loyalty' %}#gifts">Выбрать подарок {% include 'storefront/partials/icon.html' with name='arrow-right' class='icon-sm' %}</a>
     {% else %}
       <img class="flower-card-gift" src="{% static 'storefront/images/design/gift-11.webp' %}" width="162" height="176" alt="">
-      <div><h3>11-й букет в подарок</h3><p>До подарка осталось {{ loyalty_state.remaining }} {{ loyalty_state.remaining|ru_plural:'букет,букета,букетов' }}.</p><a class="text-link" href="{% url 'market:loyalty' %}">О программе</a></div>
+      <div><h3>Букет в подарок</h3><p>Осталось {{ loyalty_state.remaining }} {{ loyalty_state.remaining|ru_plural:'цветочек,цветочка,цветочков' }} до подарка.</p><a class="text-link" href="{% url 'market:loyalty' %}">О программе</a></div>
     {% endif %}
   </div>
 </section>

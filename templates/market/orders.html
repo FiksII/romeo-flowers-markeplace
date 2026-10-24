@@ -1,9 +1,10 @@
 {% extends 'market/base.html' %}{% load market_tags static %}
-{% block report_assets %}<script src="{% static 'market/customer-orders.js' %}?v=1" defer></script>{% endblock %}
+{% block report_assets %}<script src="{% static 'market/customer-orders.js' %}?v=1" defer></script><script src="{% static 'market/referral.js' %}?v=1" defer></script>{% endblock %}
 {% block content %}
 <section class="shell section-space" data-customer-orders-live="{% url 'market:customer-orders-live' %}">
   <div class="page-heading"><h1>Мои заказы</h1></div>
   {% include 'market/partials/loyalty_card.html' %}
+  {% include 'market/partials/referral_card.html' %}
   {% for order in orders %}
   <a class="order-list-card" href="{% url 'market:order' order.number %}">
     <div>

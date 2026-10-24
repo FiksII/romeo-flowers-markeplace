@@ -17,6 +17,10 @@
 .flower-card-reward .button{grid-column:1/-1;min-height:42px;padding-inline:14px;font-size:13px}
 .flower-card-reward .text-link{display:inline-block;margin-top:10px;font-size:13px}
 .loyalty-rules{max-width:860px}
+.referral-card{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;margin:24px 0}
+.referral-card h2{margin-top:0}.referral-share{min-width:0}.referral-share label{display:block;margin-bottom:8px}.referral-controls{display:flex;gap:10px}.referral-controls input{flex:1;min-width:0;width:100%;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--panel-alt);font:inherit}.referral-controls .button{flex-shrink:0}.referral-status{min-height:1.5em;margin:8px 0 0}
+@media(max-width:900px){.referral-card{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.referral-controls{flex-direction:column}.referral-controls .button{width:100%}}
 .loyalty-banner{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:32px auto;padding:28px 32px;border:1px solid var(--border-strong);border-radius:16px;background:var(--panel-alt)}
 .loyalty-banner h2{margin:0 0 8px;font:500 34px/1.1 var(--display)}
 .loyalty-banner p{margin:0;color:var(--text-soft);font-size:14px}

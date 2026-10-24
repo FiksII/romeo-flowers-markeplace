@@ -1,0 +1,15 @@
+<section class="group-card referral-card" data-referral-card aria-labelledby="referral-title">
+  <div>
+    <h2 id="referral-title">Дарите повод для цветов</h2>
+    <p>Пригласите друга: после его первой оплаченной и полученной покупки получите один цветочек.</p>
+    <p class="muted">Доступно цветочков за приглашения: {{ loyalty_state.referral_stamps }}. Они уже учтены в вашей карте.</p>
+  </div>
+  <div class="referral-share">
+    <label for="referral-link">Ваша ссылка для друзей</label>
+    <div class="referral-controls">
+      <input id="referral-link" data-referral-link type="text" value="{{ referral_url }}" readonly spellcheck="false" aria-describedby="referral-status">
+      <button type="button" class="button button-primary" data-referral-copy>Скопировать ссылку</button>
+    </div>
+    <p id="referral-status" class="muted referral-status" data-referral-status role="status" aria-live="polite"></p>
+  </div>
+</section>

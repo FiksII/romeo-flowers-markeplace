@@ -657,6 +657,7 @@ def account_orders(request):
         .order_by("-date_placed")
     )
     from market.loyalty import progress
+    from market.referrals import share_url
 
     return render(
         request,
@@ -665,6 +666,7 @@ def account_orders(request):
             "orders": orders,
             "loyalty_state": progress(request.user),
             "stamp_slots": range(1, 11),
+            "referral_url": share_url(request.user),
         },
     )
 

@@ -4,7 +4,14 @@ import pytest
 from django.contrib.auth import get_user_model
 from oscar.core.loading import get_model
 
-from market.models import Listing, Membership, Settlement, Shop, WeeklyHours
+from market.models import (
+    CustomerPhone,
+    Listing,
+    Membership,
+    Settlement,
+    Shop,
+    WeeklyHours,
+)
 from market.zones import circle_zone
 
 
@@ -27,6 +34,12 @@ def stranger(db):
     return get_user_model().objects.create_user(
         "other", "other@example.com", "long-secret-pass"
     )
+
+
+@pytest.fixture
+def friend(stranger):
+    CustomerPhone.objects.create(user=stranger, phone="+79990000101", verified=True)
+    return stranger
 
 
 @pytest.fixture

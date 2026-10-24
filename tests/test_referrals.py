@@ -15,12 +15,6 @@ from tests.test_loyalty import NOW, purchase
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def friend(stranger):
-    CustomerPhone.objects.create(user=stranger, phone="+79990000101", verified=True)
-    return stranger
-
-
 def invite(buyer, friend):
     return bind(friend, personal_link(buyer).code, now=NOW - timedelta(hours=1))
 

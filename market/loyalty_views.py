@@ -29,6 +29,8 @@ class GiftContactForm(CheckoutContactForm):
 
 @login_required
 def index(request):
+    from market.referrals import share_url
+
     state = loyalty.progress(request.user)
     context = get_context(request)
     gifts = []
@@ -54,6 +56,7 @@ def index(request):
         {
             "loyalty_state": state,
             "stamp_slots": range(1, 11),
+            "referral_url": share_url(request.user),
             "page": Paginator(gifts, 12).get_page(request.GET.get("page")),
         },
     )
