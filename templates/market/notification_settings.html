@@ -1,6 +1,6 @@
 {% extends 'market/base.html' %}{% load market_tags static %}
 {% block title %}Настройки уведомлений — Ромео{% endblock %}
-{% block report_assets %}<script src="{% static 'market/messenger-settings.js' %}?v=1" defer></script>{% endblock %}
+{% block report_assets %}<script src="{% static 'market/messenger-settings.js' %}?v=2" defer></script>{% endblock %}
 {% block content %}<section class="shell section-space">
   <div class="page-heading"><span class="eyebrow">{% if shop %}{{ shop.name }}{% else %}Супер-администратор{% endif %}</span><h1>Настройки</h1></div>
   {% if shop %}{% include 'market/partials/partner_nav.html' %}{% else %}{% include 'market/partials/operator_nav.html' %}{% endif %}
