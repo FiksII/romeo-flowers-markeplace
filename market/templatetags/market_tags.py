@@ -170,6 +170,10 @@ def romeo_order_summary():
             "customer_name",
             "customer_phone",
             "actual_delivery_cost",
+            "shop__name",
+            "shop__address",
+            "shop__settlement__name",
+            "shop__pickup_instructions",
         )
     )
     summary["revision"] = hashlib.sha256(

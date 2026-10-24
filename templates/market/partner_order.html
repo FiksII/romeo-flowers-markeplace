@@ -7,7 +7,10 @@
   <div class="group-card">
     <h2>{{ part.receiving_label }}</h2>
     {% if part.is_gift %}<p class="notice">Подарок за счёт магазина. Букет и доставка бесплатно. Получать деньги с клиента не нужно.</p>{% endif %}
-    {% include 'market/partials/order_receiving.html' %}
+    {% if request.user.is_superuser and part.is_romeo_delivery %}
+    <p>{% if part.slot_start %}Доставить {{ part.slot_start|date:'d.m.Y H:i' }}–{{ part.slot_end|date:'H:i' }}{% else %}Время уточнить у получателя{% endif %}</p>
+    {% include 'market/partials/delivery_route.html' %}
+    {% else %}{% include 'market/partials/order_receiving.html' %}{% endif %}
     {% include 'market/partials/order_contacts.html' %}
     {% include 'market/partials/delivery_destination_action.html' %}
     {% if request.user.is_superuser and part.method == 'delivery' and part.delivery_owner == 'platform' %}<p class="notice">{% romeo_payment_instruction part %}</p>{% endif %}
