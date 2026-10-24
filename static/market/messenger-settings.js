@@ -14,7 +14,8 @@ document.querySelectorAll("[data-messenger-test]").forEach((form) => {
     try {
       const data = new FormData(form);
       data.set("action", "test");
-      const response = await fetch(form.action, {
+      // A button named "action" shadows the form.action DOM property.
+      const response = await fetch(form.getAttribute("action") || "", {
         method: "POST", body: data, credentials: "same-origin", mode: "same-origin",
         headers: { Accept: "application/json" },
       });
