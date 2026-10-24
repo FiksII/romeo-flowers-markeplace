@@ -82,3 +82,12 @@ test('arrow navigation wraps and moves focus with selected photograph', () => {
   assert.equal(ui.main.src, '/detail-2.webp');
   assert.equal(ui.thumbs[2].focused, true);
 });
+
+test('vertical thumbnail rail supports up and down arrow navigation', () => {
+  const ui = page();
+  assert.equal(ui.fire('thumb0', 'keydown', {key: 'ArrowDown'}).prevented, true);
+  assert.equal(ui.main.src, '/detail-1.webp');
+  assert.equal(ui.thumbs[1].focused, true);
+  ui.fire('thumb1', 'keydown', {key: 'ArrowUp'});
+  assert.equal(ui.main.src, '/detail-0.webp');
+});

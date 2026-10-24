@@ -46,7 +46,7 @@ document.querySelectorAll("[data-bouquet-gallery]").forEach((gallery) => {
       show(i);
     });
     thumbnail.addEventListener("keydown", (event) => {
-      const next = { ArrowLeft: i - 1, ArrowRight: i + 1, Home: 0, End: thumbnails.length - 1 }[event.key];
+      const next = { ArrowLeft: i - 1, ArrowUp: i - 1, ArrowRight: i + 1, ArrowDown: i + 1, Home: 0, End: thumbnails.length - 1 }[event.key];
       if (next === undefined) return;
       event.preventDefault();
       show(next, true);
