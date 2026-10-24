@@ -172,10 +172,13 @@ def test_customer_detail_has_each_gallery_photo_and_primary_link(client, owner, 
     html = response.content.decode()
     assert "data-bouquet-gallery" in html
     assert html.count("data-gallery-thumbnail") == 3
-    assert '<dialog' in html and 'data-gallery-dialog' in html
-    assert 'data-gallery-close' in html
+    assert "<dialog" in html and "data-gallery-dialog" in html
+    assert "data-gallery-close" in html
     for image in listing.product.images.all():
-        assert image.original.url in html
+        from market.thumbnails import image_photo
+
+        assert image_photo(image.original, "full")["src"] in html
+        assert image.original.url not in html
     assert 'aria-label="Фотографии букета"' in html
 
 
@@ -184,7 +187,7 @@ def test_customer_single_legacy_photo_has_no_empty_gallery_controls(client, list
     html = client.get(f"/products/{listing.pk}/").content.decode()
     assert 'class="detail-photo"' in html
     assert "data-gallery-thumbnail" not in html
-    assert 'data-gallery-dialog' in html
+    assert "data-gallery-dialog" in html
 
 
 def test_new_upload_can_become_primary(client, owner, shop):
@@ -271,7 +274,13 @@ def test_long_upload_name_fits_existing_primary_photo_column(client, owner, shop
 
 
 def test_any_new_photo_can_be_selected_as_primary(client, owner, shop):
-    response = upload(client, owner, shop, photo=[photo(), photo("side.png"), photo("back.png")], primary_photo="new:2")
+    response = upload(
+        client,
+        owner,
+        shop,
+        photo=[photo(), photo("side.png"), photo("back.png")],
+        primary_photo="new:2",
+    )
     assert response.status_code == 302
     listing = shop.listings.get()
     images = list(listing.product.images.all())

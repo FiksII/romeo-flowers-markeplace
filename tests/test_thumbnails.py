@@ -91,3 +91,18 @@ def test_s3_thumbnail_urls_are_stable_same_origin(listing, media, settings, clie
     assert first == listing_photo(listing, "card")
     assert first["src"].startswith("/photos/")
     assert client.get(first["src"]).status_code == 200
+
+
+def test_full_view_is_webp_without_cropping_or_changing_original(listing, media):
+    from market.thumbnails import image_photo
+
+    listing.photo.save("landscape.png", png((2000, 1000)))
+    with listing.photo.storage.open(listing.photo.name, "rb") as source:
+        original = source.read()
+    full = image_photo(listing.photo, "full")
+    path = media / full["src"].removeprefix("/media/")
+    with Image.open(path) as image:
+        assert image.format == "WEBP"
+        assert image.size == (1600, 800)
+    with listing.photo.storage.open(listing.photo.name, "rb") as source:
+        assert source.read() == original
