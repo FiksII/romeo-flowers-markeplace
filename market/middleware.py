@@ -14,7 +14,7 @@ class PartnerStorefrontMiddleware:
         "home", "catalogue", "product", "shop", "receiving", "basket",
         "basket-add", "basket-update", "checkout", "account",
         "customer-orders-live", "order", "order-pay", "order-pay-status",
-        "customer-cancel", "loyalty", "loyalty-gift",
+        "customer-cancel", "loyalty", "loyalty-gift", "referral",
     })
 
     def __init__(self, get_response):
@@ -35,6 +35,17 @@ class PartnerStorefrontMiddleware:
         ):
             return redirect(request.partner_dashboard_url)
         return None
+
+
+class ReferralMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from market.referrals import bind_pending
+
+        bind_pending(request)
+        return self.get_response(request)
 
 
 class SmsErrorMiddleware:

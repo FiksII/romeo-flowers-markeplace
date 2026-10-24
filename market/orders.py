@@ -115,7 +115,9 @@ def place_market_order(
         )
         if (
             gift_reward.order_id
-            or gift_reward.purchases.aggregate(units=Sum("units"))["units"] != 10
+            or (gift_reward.purchases.aggregate(units=Sum("units"))["units"] or 0)
+            + gift_reward.referral_uses.count()
+            != 10
         ):
             raise ValidationError("Обновите карту любителя цветов.")
     email = customer.email.strip() or contact.get("email", "").strip()
@@ -512,6 +514,10 @@ def transition_shop_order(part, actor, target):
         else "Processing"
     )
     order.save(update_fields=["status"])
+    if target == "completed":
+        from market.referrals import qualify_part
+
+        qualify_part(part)
     return part
 
 
