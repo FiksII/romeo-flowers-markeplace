@@ -43,7 +43,9 @@ Validation: initial tests failed on missing cost field and save/error behavior; 
 
 **Files:** docs/deployment.md; ignored .superpowers/deploy task scripts and manifests.
 
-- [ ] Merge into develop; verify current dev release and hashes before packaging full develop snapshot/delta.
-- [ ] Backup DB/media/runtime, prepare new release, install frozen dependencies, run release tests/checks, migrate and collectstatic.
-- [ ] Switch atomically, restart and verify services, HTTPS, admin input and report result, partner isolation.
-- [ ] Record release and promote verified develop into master; do not deploy production.
+- [x] Merge into develop; verify current dev release and hashes before packaging full develop snapshot/delta.
+- [x] Backup DB/media/runtime, prepare new release, install frozen dependencies, run release tests/checks, migrate and collectstatic.
+- [x] Switch atomically, restart and verify services, HTTPS, admin input and report result, partner isolation.
+- [x] Record release and promote verified develop into master; do not deploy production.
+
+Release: `/srv/romeo-marketplace/releases/20261024-054018-delivery-expenses`, develop `0a68ca9`. Full 681-file manifest and prior release verified; backups under `/srv/backups/romeo-marketplace-before-delivery-expenses-20261024-054018`. All 770 PostgreSQL tests passed, six pre-existing SDK warnings; temporary test databases/role removed. Authenticated live HTTPS verified save/zero/clear/validation and operator overview/balance/history; transaction smoke verified cancellation accounting and partner isolation. QA order/audit/session removed; services active, journal contains no error entries. GitHub push was initially blocked by automatic review for missing explicit source egress authorization; the user then explicitly authorized this repository and feature/develop/master branches, and the feature/develop push succeeded.
