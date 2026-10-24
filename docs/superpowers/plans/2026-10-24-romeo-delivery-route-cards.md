@@ -9,9 +9,11 @@
 - [x] Add regressions for both route ends, destination displayed once, explicit unknown destination, preserved payment/actions, unchanged partner card and live revision on shop address updates; observe failure.
 - [x] Implement scoped compact card/CSS, route reuse and CSS version bump.
 - [x] Run focused and full tests, frontend suite, Ruff/checks; review; inspect desktop/mobile layouts in browser with real rendered templates.
-- [ ] Merge into develop, verify current dev release, backup and deploy the full checked develop snapshot with migrate/collectstatic.
-- [ ] Verify HTTPS route cards and services, record release and promote to master without production deployment.
+- [x] Merge into develop, verify current dev release, backup and deploy the full checked develop snapshot with migrate/collectstatic.
+- [x] Verify HTTPS route cards and services, record release and promote to master without production deployment.
 
 **Checks:** Long shop/destination/recipient strings wrap at 320/390 px; photo and payment stay visible; unknown address is never replaced by shop address; confirmed online payment never requests cash; changing shop address refreshes live card.
 
 Validation: route regressions first failed because the route block was absent. Focused group passed 58 tests; a reviewer found the missing no-call instruction, reproduced with a failing regression and corrected in both board/details. Final full suite: 767 passed, 9 PostgreSQL tests skipped; 40 frontend tests passed. Ruff, system check, migration drift and diff checks passed; no migrations. Browser QA on 320/390/1280 px found no horizontal overflow, mouse and Space toggle native details. Same 1280 px synthetic one-bouquet example: prior card 941 px high, new card 559 px (additional recipient/notes variants 537/584 px).
+
+Release: `20261024-055846-route-cards`, verified develop `fbbedf2`, full 685-file manifest. Backup `/srv/backups/romeo-marketplace-before-route-cards-20261024-055846`. Server suite 767 passed, nine PostgreSQL checks skipped; actual PostgreSQL smoke rolled back after verifying known/unknown route, no-call, recipient/photo/payment/actions/cost and partner scope. Initial smoke assertion incorrectly counted a shop-address substring also present in the synthetic destination; corrected only the smoke harness to inspect each route section independently and resumed after verifying old/new source hashes unchanged. Live HTTPS passed with CSS v26; temporary orders/items/session removed. Production not deployed.
