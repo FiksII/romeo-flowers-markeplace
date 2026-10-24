@@ -1,6 +1,8 @@
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
 
 from django import template
+from django.core.exceptions import ValidationError
 
 from market.thumbnails import listing_photo as resized_listing_photo
 
@@ -12,6 +14,25 @@ def order_next_step(part, user):
     from market.access import next_order_step
 
     return next_order_step(user, part)
+
+
+@register.simple_tag
+def yandex_delivery_route(part):
+    """A plain Maps link: no request leaves the site until the courier opens it."""
+    from market.addresses import validate_address
+
+    if not part.is_romeo_delivery or not part.address.strip():
+        return ""
+    try:
+        point = validate_address(part.delivery_point)
+    except ValidationError:
+        destination = part.address.strip()
+    else:
+        destination = f"{point['latitude']},{point['longitude']}"
+    origin = f"{part.shop.latitude},{part.shop.longitude}"
+    return "https://yandex.ru/maps/?" + urlencode(
+        {"mode": "routes", "rtt": "auto", "rtext": f"{origin}~{destination}"}
+    )
 
 
 @register.simple_tag
@@ -174,6 +195,8 @@ def romeo_order_summary():
             "shop__address",
             "shop__settlement__name",
             "shop__pickup_instructions",
+            "shop__latitude",
+            "shop__longitude",
         )
     )
     summary["revision"] = hashlib.sha256(
