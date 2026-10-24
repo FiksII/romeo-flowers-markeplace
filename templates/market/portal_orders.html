@@ -7,7 +7,7 @@
   <div data-order-board>
   {% if operator_orders %}
   <section class="order-board" aria-labelledby="romeo-deliveries">
-    <div class="section-heading"><h2 id="romeo-deliveries">Доставка Ромео{% if romeo_parts %} <span class="nav-badge">{{ romeo_parts|length }}</span>{% endif %}</h2><span class="muted">Связаться с получателем, согласовать адрес и доставить заказ</span></div>
+    <div class="section-heading"><h2 id="romeo-deliveries">Доставка Ромео{% if romeo_parts %} <span class="nav-badge">{{ romeo_parts|length }}</span>{% endif %}</h2><span class="muted">Забрать в магазине и доставить получателю</span></div>
     {% if romeo_parts %}<div class="order-cards">{% for part in romeo_parts %}{% include 'market/partials/order_card.html' %}{% endfor %}</div>{% else %}<p class="muted order-empty">Активных доставок Ромео нет.</p>{% endif %}
   </section>
   {% endif %}

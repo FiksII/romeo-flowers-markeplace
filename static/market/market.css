@@ -518,6 +518,39 @@ html:not(.js) .live-only{display:none}
 .order-card-total strong{font-size:20px}
 .order-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
 @media (max-width:759px){.order-cards{grid-template-columns:1fr}.order-card{padding:16px}}
+.order-cards:has(.romeo-delivery-card){align-items:start}
+.romeo-delivery-card{gap:10px;padding:16px;align-content:start;min-width:0;font-size:14px}
+.romeo-delivery-card .order-card-head{gap:8px}
+.romeo-delivery-card .order-card-head>div{min-width:0}
+.romeo-delivery-card .order-card-number{font-size:16px;overflow-wrap:anywhere}
+.romeo-delivery-card .status-chip{flex:none;padding:4px 8px;font-size:12px}
+.delivery-card-slot{font-weight:500;font-variant-numeric:tabular-nums}
+.delivery-route{display:grid;gap:10px;margin:0;padding:12px 0;border-block:1px solid var(--border);font-size:14px;line-height:1.4}
+.delivery-route>div{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px}
+.delivery-route dt{color:var(--muted);font-size:12px;padding-top:2px}
+.delivery-route dd{display:grid;gap:2px;margin:0;min-width:0;overflow-wrap:anywhere}
+.delivery-route small{font-size:12px}
+.delivery-card-recipient,.delivery-card-customer{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;overflow-wrap:anywhere;min-width:0}
+.delivery-card-recipient>.muted{font-size:12px}
+.delivery-card-recipient strong{font-size:14px;font-weight:500;min-width:0}
+.delivery-card-recipient a{white-space:nowrap}
+.romeo-delivery-card .order-card-items{gap:8px}
+.romeo-delivery-card .order-card-items li{grid-template-columns:48px minmax(0,1fr);gap:10px}
+.romeo-delivery-card .order-card-items img,.romeo-delivery-card .order-card-noimage{width:48px;height:60px}
+.romeo-delivery-card .order-card-items strong{font-size:14px;overflow-wrap:anywhere}
+.delivery-card-payment{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--border)}
+.delivery-card-payment p{margin:0;font-size:13px;line-height:1.4}
+.delivery-card-amounts{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px}
+.delivery-card-amounts>strong{font-size:16px}
+.delivery-card-amounts>a{font-size:12px}
+.romeo-delivery-card .order-card-actions{gap:8px}
+.romeo-delivery-card .button-sm{padding:8px 10px;font-size:12px;white-space:normal;text-align:center}
+.romeo-delivery-card .order-card-actions>.text-link{font-size:13px}
+.delivery-card-extra{padding-top:8px;border-top:1px solid var(--border);font-size:13px;min-width:0}
+.delivery-card-extra summary{cursor:pointer;color:var(--muted);font-size:12px}
+.delivery-card-extra[open] summary{margin-bottom:8px}
+.delivery-card-extra p{margin:8px 0;overflow-wrap:anywhere}
+.delivery-card-extra form{margin-top:8px}
 .sale-price-table input{width:120px;min-width:0}
 
 .toast-stack{position:fixed;right:16px;bottom:16px;z-index:1000;display:grid;gap:10px;max-width:min(380px,calc(100vw - 32px))}

@@ -1,0 +1,4 @@
+<dl class="delivery-route" aria-label="Маршрут доставки">
+  <div><dt>Откуда</dt><dd><strong>{{ part.shop.name }}</strong><span>{% if part.shop.settlement.name not in part.shop.address %}{{ part.shop.settlement.name }}, {% endif %}{{ part.shop.address }}</span></dd></div>
+  <div><dt>Куда</dt><dd>{% if part.address %}<span>{{ part.address }}</span>{% else %}<span class="muted">Адрес ещё не уточнён</span>{% endif %}{% if part.address_details %}<span class="muted">{{ part.address_details }}</span>{% endif %}{% if part.needs_delivery_confirmation %}<small class="muted">Уточнить {% if part.slot_start %}адрес{% else %}адрес и время{% endif %} у получателя</small>{% elif part.delivery_contact == "no_call" %}<small class="muted">Доставить без звонка получателю.</small>{% elif part.delivery_point %}<small class="muted">Адрес согласован с получателем.</small>{% endif %}</dd></div>
+</dl>
