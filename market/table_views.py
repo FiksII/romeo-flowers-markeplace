@@ -158,6 +158,14 @@ def _order_response(request, parts, *, operator=False):
                 else "Уточним у получателя",
             )
         )
+        row_amount = rub(part.total if operator else part.partner_total)
+        if operator and part.is_romeo_delivery:
+            row_amount = format_html(
+                '{}<br><span class="field-help">Расходы на доставку: {}</span>',
+                row_amount,
+                rub(part.actual_delivery_cost)
+                if part.actual_delivery_cost is not None else "не указаны",
+            )
         rows.append(
             [
                 format_html(
@@ -168,7 +176,7 @@ def _order_response(request, parts, *, operator=False):
                 ),
                 timezone.localtime(part.created_at).strftime("%d.%m.%Y"),
                 receiving,
-                rub(part.total if operator else part.partner_total),
+                row_amount,
                 escape(part.get_payment_status_display()),
                 escape(part.get_status_display()),
             ]

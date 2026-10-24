@@ -15,12 +15,13 @@
   <div><span>Оплаченные товары · цена покупателей</span><strong>{{ stats.paid_total|rub }}</strong></div>
   <div><span>Доля Ромео с оплаченных товаров</span><strong>{{ stats.commission_total|rub }}</strong></div>
   <div><span>Сумма магазинов за оплаченные товары</span><strong>{{ stats.paid_base_total|rub }}</strong></div>
-  <div><span>Доставка Ромео</span><strong>{{ stats.delivery_revenue|rub }}</strong></div>
-  <div><span>Доля и доставка Ромео</span><strong>{{ stats.platform_total|rub }}</strong></div>
+  <div><span>Поступления за доставку Ромео</span><strong>{{ stats.delivery_revenue|rub }}</strong></div>
+  {% include 'market/partials/delivery_expenses_report.html' %}
   <div><span>Выплачено за период</span><strong>{{ stats.payout_total|rub }}</strong></div>
   <div><span>Возвращено покупателям</span><strong>{{ stats.refunded_total|rub }}</strong></div>
 </div>
 <p class="field-help">Стоимость товаров в созданных, неотменённых заказах {{ stats.created_total|rub }}. Доставка не входит в продажи товаров.</p>
+{% include 'market/partials/delivery_expenses_note.html' %}
 {% endif %}
 <section class="sales-chart" aria-label="Продажи оплаченных товаров по дням">
   <div class="section-heading"><h2>Продажи по дням</h2><span class="muted">{{ trend_total|rub }}</span></div>

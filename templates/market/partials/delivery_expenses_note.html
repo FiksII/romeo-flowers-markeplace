@@ -1,0 +1,2 @@
+{% load market_tags %}
+<p class="field-help">Расходы на доставку учтены по дате создания заказа, включая отменённые и возвращённые заказы. {% if stats.missing_delivery_costs %}У {{ stats.missing_delivery_costs }} {{ stats.missing_delivery_costs|ru_plural:"доставки,доставок,доставок" }} расходы ещё не указаны: результат предварительный, учтены только известные расходы.{% endif %}</p>

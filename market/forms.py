@@ -38,6 +38,19 @@ WEEKDAYS = [
     "Суббота",
     "Воскресенье",
 ]
+
+
+class DeliveryCostForm(forms.Form):
+    actual_delivery_cost = forms.DecimalField(
+        label="Фактические расходы на доставку, ₽",
+        required=False,
+        min_value=0,
+        max_digits=12,
+        decimal_places=2,
+        help_text="Сколько Ромео потратил на курьера или сторонний сервис. "
+        "Оставьте пустым, если сумма пока неизвестна; 0 — доставка без расходов.",
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+    )
 SHORT_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 UNLIMITED_CLASS = "market-flowers-unlimited"
 

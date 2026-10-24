@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, F, Q
-from django.http import HttpResponseNotAllowed
+from django.http import Http404, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -20,6 +20,7 @@ from market.access import (
     shops_for_user,
 )
 from market.forms import (
+    DeliveryCostForm,
     DeliveryDestinationForm,
     ExceptionForm,
     ListingPriceForm,
@@ -48,6 +49,7 @@ from market.models import (
 from market.orders import (
     ACTIVE_STATUSES,
     HISTORY_STATUSES,
+    set_delivery_cost,
     set_delivery_destination,
     transition_shop_order,
 )
@@ -676,7 +678,30 @@ def partner_order(request, slug, pk):
     part = get_object_or_404(
         shop.shop_orders.select_related("order__user__customer_phone"), pk=pk
     )
-    if request.method == "POST":
+    delivery_cost_form = None
+    cost_action = request.method == "POST" and request.POST.get("action") == "delivery-cost"
+    if cost_action and not request.user.is_superuser:
+        raise PermissionDenied
+    if cost_action and not part.is_romeo_delivery:
+        raise Http404
+    if request.user.is_superuser and part.is_romeo_delivery:
+        delivery_cost_form = DeliveryCostForm(
+            request.POST if cost_action else None,
+            initial={"actual_delivery_cost": part.actual_delivery_cost},
+        )
+    if cost_action:
+        if delivery_cost_form.is_valid():
+            try:
+                set_delivery_cost(
+                    part, request.user,
+                    delivery_cost_form.cleaned_data["actual_delivery_cost"],
+                )
+            except ValidationError as error:
+                delivery_cost_form.add_error(None, error)
+            else:
+                messages.success(request, "Расходы на доставку сохранены.")
+                return redirect("market:partner-order", slug=slug, pk=pk)
+    elif request.method == "POST":
         try:
             transition_shop_order(part, request.user, request.POST.get("status"))
             AuditEntry.objects.create(
@@ -692,7 +717,10 @@ def partner_order(request, slug, pk):
                 return redirect("market:operator-orders")
             return redirect("market:partner-orders", slug=slug)
         return redirect("market:partner-order", slug=slug, pk=pk)
-    return render(request, "market/partner_order.html", {"shop": shop, "part": part})
+    return render(
+        request, "market/partner_order.html",
+        {"shop": shop, "part": part, "delivery_cost_form": delivery_cost_form},
+    )
 
 
 @login_required
@@ -859,6 +887,7 @@ def operator_balances(request):
             "owed_to_shops": owed_to_shops,
             "owed_to_romeo": owed_to_romeo,
             "payouts": Payout.objects.select_related("shop", "created_by")[:30],
+            **dashboard_report(ShopOrder.objects.all(), request.GET.get("days")),
         },
     )
 

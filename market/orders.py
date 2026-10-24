@@ -40,6 +40,29 @@ from market.strategy import GiftStrategy, MarketplaceStrategy
 CENT = Decimal("0.01")
 
 
+@transaction.atomic
+def set_delivery_cost(part, actor, amount):
+    """Record Romeo's own expense without touching sale amounts or shop balances."""
+    if not actor.is_superuser:
+        raise PermissionDenied
+    part = ShopOrder.objects.select_for_update().get(pk=part.pk)
+    if not part.is_romeo_delivery:
+        raise ValidationError("Расходы можно указать только для доставки Ромео.")
+    amount = ShopOrder._meta.get_field("actual_delivery_cost").clean(amount, part)
+    previous = part.actual_delivery_cost
+    if previous != amount:
+        part.actual_delivery_cost = amount
+        part.save(update_fields=["actual_delivery_cost"])
+        AuditEntry.objects.create(
+            actor=actor,
+            shop_id=part.shop_id,
+            action=f"Расходы на доставку части заказа #{part.pk}: "
+            f"{previous if previous is not None else 'не указаны'} → "
+            f"{amount if amount is not None else 'не указаны'} ₽",
+        )
+    return part
+
+
 def basket_groups(basket):
     groups = {}
     for line in basket.all_lines():

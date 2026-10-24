@@ -32,14 +32,20 @@ def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
         created_at__gte=start,
         created_at__lt=end,
     )
+    romeo_deliveries = period.filter(method="delivery", delivery_owner="platform")
     stats = {
         "orders": period.count(),
         "created_total": total(live, "goods_total"),
         "paid_total": total(paid, "goods_total"),
         "paid_base_total": total(paid, "base_goods_total"),
         "delivery_revenue": total(
-            paid.filter(delivery_owner="platform"), "delivery_total"
+            paid.filter(method="delivery", delivery_owner="platform"), "delivery_total"
         ),
+        # A courier expense survives cancellation, refund and missing buyer payment.
+        "delivery_cost": total(romeo_deliveries, "actual_delivery_cost"),
+        "missing_delivery_costs": romeo_deliveries.exclude(status="cancelled").filter(
+            actual_delivery_cost__isnull=True
+        ).count(),
         "expected_commission": total(live, "commission_total"),
         "commission_total": total(paid, "commission_total"),
         "refunded_total": total(period.filter(payment_status="refunded"), "goods_total")
@@ -51,7 +57,9 @@ def dashboard_report(parts, requested_days=None, now=None, value="goods_total"):
         "paid_partner_total": total(paid, "partner_total"),
         "payout_total": total(payouts, "amount"),
     }
-    stats["platform_total"] = stats["commission_total"] + stats["delivery_revenue"]
+    stats["delivery_margin"] = stats["delivery_revenue"] - stats["delivery_cost"]
+    stats["platform_gross_total"] = stats["commission_total"] + stats["delivery_revenue"]
+    stats["platform_total"] = stats["platform_gross_total"] - stats["delivery_cost"]
     by_day = dict(
         paid.order_by()
         .annotate(day=TruncDate("created_at"))

@@ -473,6 +473,14 @@ class ShopOrder(models.Model):
         max_digits=12, decimal_places=2, default=0
     )
     delivery_total = models.DecimalField(max_digits=12, decimal_places=2)
+    actual_delivery_cost = models.DecimalField(
+        "Фактические расходы на доставку, ₽",
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal(0))],
+    )
     delivery_owner = models.CharField(
         max_length=8,
         default="platform",
@@ -507,7 +515,17 @@ class ShopOrder(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["order", "shop"], name="market_order_shop")
+            models.UniqueConstraint(fields=["order", "shop"], name="market_order_shop"),
+            models.CheckConstraint(
+                condition=models.Q(actual_delivery_cost__isnull=True)
+                | models.Q(actual_delivery_cost__gte=0),
+                name="market_delivery_cost_nonnegative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(actual_delivery_cost__isnull=True)
+                | models.Q(method="delivery", delivery_owner="platform"),
+                name="market_delivery_cost_romeo_only",
+            ),
         ]
         ordering = ["-created_at"]
 
@@ -518,6 +536,19 @@ class ShopOrder(models.Model):
     @property
     def platform_delivery_total(self):
         return self.delivery_total if self.delivery_owner == "platform" else Decimal(0)
+
+    @property
+    def is_romeo_delivery(self):
+        return self.method == "delivery" and self.delivery_owner == "platform"
+
+    @property
+    def platform_net_total(self):
+        revenue = (
+            self.commission_total + self.platform_delivery_total
+            if self.payment_status == "paid" and self.status != "cancelled"
+            else Decimal(0)
+        )
+        return revenue - (self.actual_delivery_cost or Decimal(0))
 
     @property
     def lines(self):
